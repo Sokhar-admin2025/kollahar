@@ -2,79 +2,64 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@supabase/supabase-js'
+// ÄNDRING 1: Vi byter ut importen till SSR-paketet
+import { createBrowserClient } from '@supabase/ssr'
 
 import { DASHBOARD_TEXTS } from '../../lib/content'
 import Button from '../../components/atoms/Button'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-)
-
 export default function CreateListing() {
   const router = useRouter()
+  
+  // ÄNDRING 2: Vi skapar klienten inuti komponenten (eller utanför, men med rätt funktion)
+  // Denna klient kan läsa dina inloggnings-cookies!
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+  )
   
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [price, setPrice] = useState('')
   const [location, setLocation] = useState('')
   const [category, setCategory] = useState('Övrigt')
-  const [images, setImages] = useState<string[]>([])
+  const [imageFiles, setImageFiles] = useState<File[]>([])
+  const [imagePreviews, setImagePreviews] = useState<string[]>([])
   
   const [uploading, setUploading] = useState(false)
   const [loading, setLoading] = useState(false)
 
   const t = DASHBOARD_TEXTS.create
 
-  // HÄR ÄR DEN NYA UPPDATERADE FUNKTIONEN
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     try {
       if (!e.target.files || e.target.files.length === 0) return
 
-      // SPÄRR 1: Max 5 bilder
-      if (images.length >= 5) {
+      if (imagePreviews.length >= 5) {
         alert(t.form.image.errorTooMany)
-        return // Avbryt funktionen här
+        return 
       }
 
       const file = e.target.files[0]
 
-      // SPÄRR 2: Max 2MB (2 * 1024 * 1024 bytes)
       if (file.size > 2 * 1024 * 1024) {
         alert(t.form.image.errorTooBig)
-        return // Avbryt funktionen här
+        return 
       }
 
-      setUploading(true)
-      
-      const fileExt = file.name.split('.').pop()
-      const fileName = `${Math.random()}.${fileExt}`
-      const filePath = `${fileName}`
-
-      // Vi använder rätt bucket: listing-images
-      const { error: uploadError } = await supabase.storage
-        .from('listing-images')
-        .upload(filePath, file)
-
-      if (uploadError) throw uploadError
-
-      const { data } = supabase.storage
-        .from('listing-images')
-        .getPublicUrl(filePath)
-      
-      setImages([...images, data.publicUrl])
-
+      const previewUrl = URL.createObjectURL(file)
+      setImageFiles([...imageFiles, file])
+      setImagePreviews([...imagePreviews, previewUrl])
     } catch (error: any) {
       alert('Fel vid uppladdning: ' + error.message)
-    } finally {
-      setUploading(false)
     }
   }
 
-  // Funktion för att ta bort en bild innan man publicerar
   const removeImage = (indexToRemove: number) => {
-    setImages(images.filter((_, index) => index !== indexToRemove))
+    const previewToRemove = imagePreviews[indexToRemove]
+    if (previewToRemove) URL.revokeObjectURL(previewToRemove)
+    setImageFiles(imageFiles.filter((_, index) => index !== indexToRemove))
+    setImagePreviews(imagePreviews.filter((_, index) => index !== indexToRemove))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -82,8 +67,39 @@ export default function CreateListing() {
     setLoading(true)
 
     try {
+      // Nu kommer denna hitta din session eftersom vi använder createBrowserClient!
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('Ingen användare inloggad')
+      
+      if (!user) {
+        alert('Du verkar ha blivit utloggad. Försök logga in igen.')
+        router.push('/login')
+        return
+      }
+
+      setUploading(true)
+
+      // Ladda upp bilderna
+      const uploadedImageUrls = await Promise.all(
+        imageFiles.map(async (file) => {
+          // Skapa unikt filnamn för att undvika krockar
+          const fileExt = file.name.split('.').pop()
+          const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`
+          // Spara i en mapp baserad på användarens ID för ordning och reda (valfritt, men bra)
+          const filePath = `${user.id}/${fileName}`
+
+          const { error: uploadError } = await supabase.storage
+            .from('listing-images')
+            .upload(filePath, file)
+
+          if (uploadError) throw uploadError
+
+          const { data } = supabase.storage
+            .from('listing-images')
+            .getPublicUrl(filePath)
+
+          return data.publicUrl
+        })
+      )
 
       const { error } = await supabase
         .from('listings')
@@ -93,19 +109,23 @@ export default function CreateListing() {
           price: parseInt(price),
           location,
           category,
-          images,
-          user_id: user.id,
+          images: uploadedImageUrls,
+          user_id: user.id, // Koppla annonsen till dig
           status: 'active'
         })
 
       if (error) throw error
 
+      // Succé! Skicka användaren till startsidan eller dashboard
       router.push('/dashboard')
-      router.refresh()
+      router.refresh() // Uppdatera sidan så nya annonsen syns
 
     } catch (error: any) {
+      console.error('Error creating listing:', error)
       alert('Kunde inte skapa annons: ' + error.message)
+    } finally {
       setLoading(false)
+      setUploading(false)
     }
   }
 
@@ -200,13 +220,12 @@ export default function CreateListing() {
                 {t.form.image.label}
               </label>
               <span className="text-xs text-gray-400">
-                {images.length}/5 bilder
+                {imagePreviews.length}/5 bilder
               </span>
             </div>
             
             <div className="flex flex-wrap gap-4 mb-3">
-              {/* Visa uppladdade bilder med en liten kryss-knapp för att ta bort */}
-              {images.map((url, index) => (
+              {imagePreviews.map((url, index) => (
                 <div key={index} className="w-24 h-24 relative rounded-lg overflow-hidden border border-gray-200 group">
                   <img src={url} alt="Uppladdad" className="w-full h-full object-cover" />
                   <button
@@ -219,8 +238,7 @@ export default function CreateListing() {
                 </div>
               ))}
               
-              {/* Knapp för att ladda upp (Visas bara om man har färre än 5 bilder) */}
-              {images.length < 5 && (
+              {imagePreviews.length < 5 && (
                 <label className={`w-24 h-24 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 hover:border-blue-400 transition ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
                   <span className="text-2xl text-gray-400">+</span>
                   <input 
