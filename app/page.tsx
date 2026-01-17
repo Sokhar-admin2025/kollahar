@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from '@/lib/supabase/client'
 
 // Vi importerar texter och knappar som vanligt
 import { DASHBOARD_TEXTS } from './lib/content'
@@ -12,10 +12,7 @@ import ListingCard from './components/ListingCard'
 import type { Listing } from './types'
 
 // Initiera Supabase
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-)
+const supabase = createClient()
 
 export default function HomePage() {
   const router = useRouter()
@@ -25,7 +22,6 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true)
   const [favoriteIds, setFavoriteIds] = useState<string[]>([])
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
-  const [authReady, setAuthReady] = useState(false)
 
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('Alla')
@@ -78,7 +74,6 @@ export default function HomePage() {
       if (!isMounted) return
       const userId = session?.user?.id ?? null
       setCurrentUserId(userId)
-      setAuthReady(true)
       if (userId) {
         await fetchFavorites(userId)
       } else {
@@ -91,7 +86,6 @@ export default function HomePage() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       const userId = session?.user?.id ?? null
       setCurrentUserId(userId)
-      setAuthReady(true)
       if (userId) {
         fetchFavorites(userId)
       } else {
@@ -267,11 +261,6 @@ export default function HomePage() {
                 key={ad.id}
                 listing={ad}
                 currentUserId={currentUserId}
-                authReady={authReady}
-                isFavorited={favoriteIdSet.has(ad.id)}
-                onToggleFavorite={handleFavoriteToggle}
-                locationPrefix={t.landing.listings.locationPrefix}
-                noImageLabel={t.listing.noImage}
               />
             ))}
           </div>

@@ -1,3 +1,5 @@
+'use client'
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { MapPin, Calendar, BedDouble } from 'lucide-react';
@@ -11,9 +13,10 @@ interface Listing {
   images: string[];
   category: string;
   created_at: string;
+  user_id?: string;
 }
 
-export default function ListingCard({ listing }: { listing: Listing }) {
+export default function ListingCard({ listing, currentUserId }: { listing: Listing; currentUserId?: string | null }) {
   // Formatera pris snyggt
   const formattedPrice = new Intl.NumberFormat('sv-SE', {
     style: 'currency',
@@ -21,13 +24,17 @@ export default function ListingCard({ listing }: { listing: Listing }) {
     maximumFractionDigits: 0,
   }).format(listing.price);
 
+  const isOwner = Boolean(currentUserId && listing.user_id && listing.user_id === currentUserId);
+
   return (
     <div className="group relative bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 border border-gray-100 overflow-hidden flex flex-col h-full">
       
       {/* --- FAVORITKNAPPEN (Ligger helt utanför länken) --- */}
-      <div className="absolute top-3 right-3 z-50">
-        <FavoriteButton listingId={listing.id} />
-      </div>
+      {!isOwner && (
+        <div className="absolute top-3 right-3 z-50">
+          <FavoriteButton listingId={listing.id} />
+        </div>
+      )}
 
       {/* --- LÄNKEN (Ligger bredvid, som ett syskon) --- */}
       <Link href={`/annons/${listing.id}`} className="block flex-1 flex flex-col">

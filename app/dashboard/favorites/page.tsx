@@ -75,10 +75,6 @@ export default async function FavoritesPage() {
                 key={listing.id}
                 listing={listing}
                 currentUserId={user.id}
-                authReady
-                isFavorited
-                locationPrefix={t.landing.listings.locationPrefix}
-                noImageLabel={t.listing.noImage}
               />
             ))}
           </div>

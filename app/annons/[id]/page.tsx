@@ -34,7 +34,6 @@ export default function ListingDetails() {
   const [currentUser, setCurrentUser] = useState<any>(null)
   const [contacting, setContacting] = useState(false)
   const [isFavorited, setIsFavorited] = useState(false)
-  const [authReady, setAuthReady] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -98,7 +97,6 @@ export default function ListingDetails() {
       if (!isMounted) return
       const user = session?.user ?? null
       setCurrentUser(user)
-      setAuthReady(true)
       if (user && listingId) {
         await fetchFavorite(user.id, listingId)
       } else {
@@ -111,7 +109,6 @@ export default function ListingDetails() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       const user = session?.user ?? null
       setCurrentUser(user)
-      setAuthReady(true)
       if (user && listingId) {
         fetchFavorite(user.id, listingId)
       } else {
@@ -208,15 +205,11 @@ export default function ListingDetails() {
           {/* --- INFO (HÖGER) --- */}
           <div className="flex flex-col h-full">
             <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-200 flex-1 flex flex-col relative">
-              <div className="absolute top-4 right-4">
-                <FavoriteButton
-                  listingId={ad.id}
-                  currentUserId={currentUser?.id ?? null}
-                  authReady={authReady}
-                  isFavorited={isFavorited}
-                  onToggle={(_, nextState) => setIsFavorited(nextState)}
-                />
-              </div>
+              {!(currentUser?.id && ad?.user_id === currentUser.id) && (
+                <div className="absolute top-4 right-4">
+                  <FavoriteButton listingId={ad.id} />
+                </div>
+              )}
               
               <div className="mb-6">
                 <h1 className="text-3xl font-extrabold text-gray-900 mb-2">{ad.title}</h1>

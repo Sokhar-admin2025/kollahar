@@ -8,6 +8,8 @@ import { Heart } from 'lucide-react'
 
 import { DASHBOARD_TEXTS } from '../lib/content'
 import Button from '../components/atoms/Button'
+import ListingCard from '../components/ListingCard'
+import type { Listing } from '../types'
 
 const supabase = createClient()
 
@@ -17,9 +19,10 @@ export default function Dashboard() {
   
   const [activeAds, setActiveAds] = useState<any[]>([])
   const [soldAds, setSoldAds] = useState<any[]>([])
+  const [favoriteAds, setFavoriteAds] = useState<Listing[]>([])
   
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<'active' | 'history'>('active')
+  const [activeTab, setActiveTab] = useState<'active' | 'favorites' | 'history'>('active')
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [adToDelete, setAdToDelete] = useState<any>(null)
@@ -48,6 +51,18 @@ export default function Dashboard() {
         setActiveAds(userAds.filter(ad => ad.status === 'active'))
         setSoldAds(userAds.filter(ad => ad.status === 'sold'))
       }
+
+      const { data: favorites } = await supabase
+        .from('favorites')
+        .select('*, listing:listings(*)')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+
+      const favoriteListings = (favorites as { listing: Listing | null }[] | null)
+        ?.map((favorite) => favorite.listing)
+        .filter((listing): listing is Listing => Boolean(listing)) ?? []
+
+      setFavoriteAds(favoriteListings)
       setLoading(false)
     }
     getData()
@@ -55,7 +70,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     const tab = searchParams.get('tab')
-    if (tab === 'history' || tab === 'active') {
+    if (tab === 'history' || tab === 'active' || tab === 'favorites') {
       setActiveTab(tab)
     }
   }, [searchParams])
@@ -175,13 +190,15 @@ export default function Dashboard() {
           >
             {t.tabs.active} ({activeAds.length})
           </button>
-          <Link
-            href="/dashboard/favorites"
-            className="pb-2 px-1 font-medium text-sm transition-colors relative focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-t text-gray-500 hover:text-gray-700 inline-flex items-center gap-2"
+          <button
+            onClick={() => setActiveTab('favorites')}
+            className={`pb-2 px-1 font-medium text-sm transition-colors relative focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-t inline-flex items-center gap-2 ${
+              activeTab === 'favorites' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'
+            }`}
           >
             <Heart size={16} />
             Sparade annonser
-          </Link>
+          </button>
           <button
             onClick={() => setActiveTab('history')}
             className={`pb-2 px-1 font-medium text-sm transition-colors relative focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-t ${
@@ -299,6 +316,30 @@ export default function Dashboard() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* FAVORITER */}
+        {activeTab === 'favorites' && (
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            {favoriteAds.length === 0 ? (
+              <div className="text-center py-10 text-gray-400 bg-gray-50 rounded border border-dashed border-gray-300">
+                <p>Du har inte sparat några annonser än.</p>
+                <Link href="/" className="text-blue-600 underline mt-2 inline-block">
+                  Till startsidan
+                </Link>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {favoriteAds.map((listing) => (
+                  <ListingCard
+                    key={listing.id}
+                    listing={listing}
+                    currentUserId={user?.id ?? null}
+                  />
+                ))}
               </div>
             )}
           </div>
