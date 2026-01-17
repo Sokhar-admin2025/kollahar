@@ -1,17 +1,15 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from '@/lib/supabase/client'
+import { Heart } from 'lucide-react'
 
 import { DASHBOARD_TEXTS } from '../lib/content'
 import Button from '../components/atoms/Button'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-)
+const supabase = createClient()
 
 export default function Dashboard() {
   const router = useRouter()
@@ -29,6 +27,7 @@ export default function Dashboard() {
   const [isDeleting, setIsDeleting] = useState(false)
 
   const t = DASHBOARD_TEXTS
+  const searchParams = useSearchParams()
 
   useEffect(() => {
     const getData = async () => {
@@ -53,6 +52,13 @@ export default function Dashboard() {
     }
     getData()
   }, [router])
+
+  useEffect(() => {
+    const tab = searchParams.get('tab')
+    if (tab === 'history' || tab === 'active') {
+      setActiveTab(tab)
+    }
+  }, [searchParams])
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
@@ -169,6 +175,13 @@ export default function Dashboard() {
           >
             {t.tabs.active} ({activeAds.length})
           </button>
+          <Link
+            href="/dashboard/favorites"
+            className="pb-2 px-1 font-medium text-sm transition-colors relative focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-t text-gray-500 hover:text-gray-700 inline-flex items-center gap-2"
+          >
+            <Heart size={16} />
+            Sparade annonser
+          </Link>
           <button
             onClick={() => setActiveTab('history')}
             className={`pb-2 px-1 font-medium text-sm transition-colors relative focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-t ${

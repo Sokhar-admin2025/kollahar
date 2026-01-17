@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
@@ -8,20 +8,8 @@ import { createClient } from '@supabase/supabase-js'
 // Vi importerar texter och knappar som vanligt
 import { DASHBOARD_TEXTS } from './lib/content'
 import Button from './components/atoms/Button'
-
-// Vi definierar typen här lokalt för att slippa import-strul
-interface Listing {
-  id: string;
-  created_at: string;
-  title: string;
-  description: string;
-  price: number;
-  location: string;
-  category: string;
-  images: string[];
-  user_id: string;
-  status: string;
-}
+import ListingCard from './components/ListingCard'
+import type { Listing } from './types'
 
 // Initiera Supabase
 const supabase = createClient(
@@ -35,6 +23,9 @@ export default function HomePage() {
   const [ads, setAds] = useState<Listing[]>([])          
   const [filteredAds, setFilteredAds] = useState<Listing[]>([]) 
   const [loading, setLoading] = useState(true)
+  const [favoriteIds, setFavoriteIds] = useState<string[]>([])
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  const [authReady, setAuthReady] = useState(false)
 
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('Alla')
@@ -56,10 +47,62 @@ export default function HomePage() {
         setAds((data as Listing[]) || [])
         setFilteredAds((data as Listing[]) || [])
       }
+
       setLoading(false)
     }
 
     fetchAds()
+  }, [])
+
+  useEffect(() => {
+    let isMounted = true
+
+    const fetchFavorites = async (userId: string) => {
+      const { data: favoritesData, error: favoritesError } = await supabase
+        .from('favorites')
+        .select('listing_id')
+        .eq('user_id', userId)
+
+      if (!isMounted) return
+
+      if (favoritesError) {
+        console.error('Fel vid hämtning av favoriter:', favoritesError)
+        setFavoriteIds([])
+      } else {
+        setFavoriteIds(favoritesData?.map((favorite) => favorite.listing_id) ?? [])
+      }
+    }
+
+    const initAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!isMounted) return
+      const userId = session?.user?.id ?? null
+      setCurrentUserId(userId)
+      setAuthReady(true)
+      if (userId) {
+        await fetchFavorites(userId)
+      } else {
+        setFavoriteIds([])
+      }
+    }
+
+    initAuth()
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      const userId = session?.user?.id ?? null
+      setCurrentUserId(userId)
+      setAuthReady(true)
+      if (userId) {
+        fetchFavorites(userId)
+      } else {
+        setFavoriteIds([])
+      }
+    })
+
+    return () => {
+      isMounted = false
+      subscription.unsubscribe()
+    }
   }, [])
 
   // 2. Filtrera listan
@@ -95,6 +138,17 @@ export default function HomePage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (user) router.push('/dashboard')
     else router.push('/login')
+  }
+
+  const favoriteIdSet = useMemo(() => new Set(favoriteIds), [favoriteIds])
+
+  const handleFavoriteToggle = (listingId: string, isFavorited: boolean) => {
+    setFavoriteIds((prev) => {
+      const next = new Set(prev)
+      if (isFavorited) next.add(listingId)
+      else next.delete(listingId)
+      return Array.from(next)
+    })
   }
 
   return (
@@ -209,45 +263,16 @@ export default function HomePage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {filteredAds.map((ad) => (
-              <Link 
-                href={`/annons/${ad.id}`} 
+              <ListingCard
                 key={ad.id}
-                className="group bg-white rounded-xl border border-gray-200 hover:shadow-xl hover:-translate-y-1 transition duration-300 overflow-hidden flex flex-col h-full"
-              >
-                <div className="aspect-square bg-gray-100 relative overflow-hidden">
-                  {ad.images && ad.images[0] ? (
-                    <img 
-                      src={ad.images[0]} 
-                      alt={ad.title} 
-                      className="w-full h-full object-cover group-hover:scale-105 transition duration-500" 
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-300 font-medium">
-                      {t.listing.noImage}
-                    </div>
-                  )}
-                  <div className="absolute top-2 left-2 bg-white/90 text-black text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider shadow-sm">
-                    {ad.category}
-                  </div>
-                </div>
-
-                <div className="p-4 flex flex-col flex-1">
-                  <div className="mb-auto">
-                    <h4 className="font-bold text-gray-900 text-lg mb-1 truncate">{ad.title}</h4>
-                    <div className="flex items-center text-gray-500 text-xs mb-3">
-                      <span className="mr-1">{t.landing.listings.locationPrefix}</span>
-                      {ad.location}
-                    </div>
-                  </div>
-                  
-                  <div className="pt-3 border-t border-gray-100 flex justify-between items-center mt-2">
-                    <span className="font-extrabold text-lg text-green-700">{ad.price} kr</span>
-                    <span className="text-xs text-gray-400">
-                      {new Date(ad.created_at).toLocaleDateString()}
-                    </span>
-                  </div>
-                </div>
-              </Link>
+                listing={ad}
+                currentUserId={currentUserId}
+                authReady={authReady}
+                isFavorited={favoriteIdSet.has(ad.id)}
+                onToggleFavorite={handleFavoriteToggle}
+                locationPrefix={t.landing.listings.locationPrefix}
+                noImageLabel={t.listing.noImage}
+              />
             ))}
           </div>
         )}

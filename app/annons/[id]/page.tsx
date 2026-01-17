@@ -8,6 +8,7 @@ import Link from 'next/link'
 import { DASHBOARD_TEXTS } from '../../lib/content'
 import Button from '../../components/atoms/Button'
 import { messageService } from '../../services/messageService'
+import FavoriteButton from '../../components/FavoriteButton'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || '',
@@ -18,6 +19,7 @@ export default function ListingDetails() {
   const params = useParams()
   const router = useRouter()
   const id = params?.id
+  const listingId = typeof id === 'string' ? id : id?.[0]
   const t = DASHBOARD_TEXTS.details
 
   // State för Annons
@@ -31,18 +33,16 @@ export default function ListingDetails() {
   const [loading, setLoading] = useState(true)
   const [currentUser, setCurrentUser] = useState<any>(null)
   const [contacting, setContacting] = useState(false)
+  const [isFavorited, setIsFavorited] = useState(false)
+  const [authReady, setAuthReady] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
-      // 1. Vem är inloggad?
-      const { data: { user } } = await supabase.auth.getUser()
-      setCurrentUser(user)
-
-      // 2. Hämta annonsen
+      // 1. Hämta annonsen
       const { data: adData, error } = await supabase
         .from('listings')
         .select('*')
-        .eq('id', id)
+        .eq('id', listingId)
         .single()
 
       if (error) {
@@ -65,11 +65,65 @@ export default function ListingDetails() {
           setSellerProfile(profileData)
         }
       }
+
       setLoading(false)
     }
 
-    if (id) fetchData()
-  }, [id])
+    if (listingId) fetchData()
+  }, [listingId])
+
+  useEffect(() => {
+    let isMounted = true
+
+    const fetchFavorite = async (userId: string, listing: string) => {
+      const { data: favoriteData, error: favoriteError } = await supabase
+        .from('favorites')
+        .select('listing_id')
+        .eq('user_id', userId)
+        .eq('listing_id', listing)
+        .maybeSingle()
+
+      if (!isMounted) return
+
+      if (favoriteError) {
+        console.error('Error fetching favorite:', favoriteError)
+        setIsFavorited(false)
+      } else {
+        setIsFavorited(!!favoriteData)
+      }
+    }
+
+    const initAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!isMounted) return
+      const user = session?.user ?? null
+      setCurrentUser(user)
+      setAuthReady(true)
+      if (user && listingId) {
+        await fetchFavorite(user.id, listingId)
+      } else {
+        setIsFavorited(false)
+      }
+    }
+
+    initAuth()
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      const user = session?.user ?? null
+      setCurrentUser(user)
+      setAuthReady(true)
+      if (user && listingId) {
+        fetchFavorite(user.id, listingId)
+      } else {
+        setIsFavorited(false)
+      }
+    })
+
+    return () => {
+      isMounted = false
+      subscription.unsubscribe()
+    }
+  }, [listingId])
 
   const handleContact = async () => {
     if (!currentUser) {
@@ -153,7 +207,16 @@ export default function ListingDetails() {
 
           {/* --- INFO (HÖGER) --- */}
           <div className="flex flex-col h-full">
-            <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-200 flex-1 flex flex-col">
+            <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-200 flex-1 flex flex-col relative">
+              <div className="absolute top-4 right-4">
+                <FavoriteButton
+                  listingId={ad.id}
+                  currentUserId={currentUser?.id ?? null}
+                  authReady={authReady}
+                  isFavorited={isFavorited}
+                  onToggle={(_, nextState) => setIsFavorited(nextState)}
+                />
+              </div>
               
               <div className="mb-6">
                 <h1 className="text-3xl font-extrabold text-gray-900 mb-2">{ad.title}</h1>
