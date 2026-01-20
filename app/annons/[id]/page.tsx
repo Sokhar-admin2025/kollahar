@@ -2,18 +2,30 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
 
-import { DASHBOARD_TEXTS } from '../../lib/content'
-import Button from '../../components/atoms/Button'
-import { messageService } from '../../services/messageService'
-import FavoriteButton from '../../components/FavoriteButton'
+import { DASHBOARD_TEXTS } from '@/app/lib/content'
+import Button from '@/app/components/atoms/Button'
+import { messageService } from '@/app/services/messageService'
+import FavoriteButton from '@/app/components/FavoriteButton'
+import { createClient } from '@/lib/supabase/client'
+import type { Listing } from '@/app/types'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-)
+const supabase = createClient()
+
+interface SellerProfile {
+  id: string
+  full_name: string | null
+  website: string | null
+  avatar_url: string | null
+  consent_marketing: boolean
+  consent_analytics: boolean
+  updated_at: string
+}
+
+interface CurrentUser {
+  id: string
+}
 
 export default function ListingDetails() {
   const params = useParams()
@@ -23,15 +35,15 @@ export default function ListingDetails() {
   const t = DASHBOARD_TEXTS.details
 
   // State för Annons
-  const [ad, setAd] = useState<any>(null)
+  const [ad, setAd] = useState<Listing | null>(null)
   const [activeImage, setActiveImage] = useState<string | null>(null)
   
   // State för Säljare (NYTT!)
-  const [sellerProfile, setSellerProfile] = useState<any>(null)
+  const [sellerProfile, setSellerProfile] = useState<SellerProfile | null>(null)
   
   // State för Applikation
   const [loading, setLoading] = useState(true)
-  const [currentUser, setCurrentUser] = useState<any>(null)
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null)
   const [contacting, setContacting] = useState(false)
   const [isFavorited, setIsFavorited] = useState(false)
 
@@ -95,7 +107,7 @@ export default function ListingDetails() {
     const initAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (!isMounted) return
-      const user = session?.user ?? null
+      const user = session?.user ? { id: session.user.id } : null
       setCurrentUser(user)
       if (user && listingId) {
         await fetchFavorite(user.id, listingId)
@@ -107,7 +119,7 @@ export default function ListingDetails() {
     initAuth()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      const user = session?.user ?? null
+      const user = session?.user ? { id: session.user.id } : null
       setCurrentUser(user)
       if (user && listingId) {
         fetchFavorite(user.id, listingId)
@@ -123,6 +135,8 @@ export default function ListingDetails() {
   }, [listingId])
 
   const handleContact = async () => {
+    if (!ad) return
+
     if (!currentUser) {
       alert(DASHBOARD_TEXTS.messages.actions.loginToChat)
       router.push('/login')

@@ -10,6 +10,7 @@ import { DASHBOARD_TEXTS } from '../lib/content'
 import Button from '../components/atoms/Button'
 import ListingCard from '../components/ListingCard'
 import type { Listing } from '../types'
+import { messageService } from '../services/messageService'
 
 const supabase = createClient()
 
@@ -31,6 +32,7 @@ export default function Dashboard() {
 
   const t = DASHBOARD_TEXTS
   const searchParams = useSearchParams()
+  const [hasUnreadMessages, setHasUnreadMessages] = useState(false)
 
   useEffect(() => {
     const getData = async () => {
@@ -63,6 +65,16 @@ export default function Dashboard() {
         .filter((listing): listing is Listing => Boolean(listing)) ?? []
 
       setFavoriteAds(favoriteListings)
+
+      // Kolla om användaren har olästa meddelanden
+      try {
+        const unreadSet = await messageService.getUnreadConversationIds(user.id)
+        setHasUnreadMessages(unreadSet.size > 0)
+      } catch (err) {
+        console.error('Kunde inte hämta olästa meddelanden:', err)
+        setHasUnreadMessages(false)
+      }
+
       setLoading(false)
     }
     getData()
@@ -147,6 +159,12 @@ export default function Dashboard() {
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
               </svg>
+              {hasUnreadMessages && (
+                <span
+                  className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-blue-500"
+                  aria-hidden="true"
+                />
+              )}
             </div>
           </Link>
 

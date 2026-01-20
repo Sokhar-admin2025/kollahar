@@ -8,6 +8,19 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ### ✨ Tillagt
 
+#### Annonsdetaljer & Profiler
+- **Listing Details (`/annons/[id]`)**: Visar nu säljarprofil via `profiles`-tabellen (namn, avatar, hemsida)
+- **Profiles-tabell**: SQL-setup med trigger från `auth.users` och RLS (public read, endast ägaren får uppdatera)
+
+#### Meddelanden & Inbox UX
+- **Conversations/Messages**: SQL-setup för `public.conversations` och `public.messages` med RLS-policys
+- **Inbox-layout**: Mobilanpassad chattvy där inbox och chatt delar skärm (slide-animation på små skärmar, kryss för att stänga chatt)
+- **Olästa meddelanden**: 
+  - Olästa konversationer markeras med blå punkt i inbox-listan
+  - Konversationer sorteras så att olästa kommer överst, därefter senaste interaktion
+  - Meddelanden markeras som lästa när användaren öppnar konversationen
+- **Dashboard-indikator**: Blå punkt på chattikonen i dashboard-headern när användaren har olästa meddelanden
+
 #### Redigering av Annonser
 - **CreateListingForm-komponent**: Återanvändbar form-komponent för både skapande och redigering
   - Accepterar optional `initialData` prop för redigeringsläge

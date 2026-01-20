@@ -17,6 +17,7 @@ export interface Listing {
 export interface Conversation {
   id: string;
   created_at: string;
+  updated_at: string;
   listing_id: string;
   buyer_id: string;
   seller_id: string;
@@ -24,6 +25,7 @@ export interface Conversation {
     title: string;
     images: string[];
   };
+  hasUnread?: boolean;
 }
 
 export interface Message {

@@ -1,10 +1,7 @@
-import { createClient } from '@supabase/supabase-js';
-import { Conversation, Message } from '../types';
+import { createClient } from '@/lib/supabase/client'
+import type { Conversation, Message } from '@/app/types'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-);
+const supabase = createClient()
 
 export const messageService = {
 
@@ -52,6 +49,24 @@ export const messageService = {
     return data as Conversation[];
   },
 
+  // 2b. Hämta vilka konversationer som har olästa meddelanden för en användare
+  getUnreadConversationIds: async (userId: string) => {
+    const { data, error } = await supabase
+      .from('messages')
+      .select('conversation_id, sender_id, is_read')
+      .eq('is_read', false)
+      .neq('sender_id', userId);
+
+    if (error) throw error;
+
+    const unreadSet = new Set<string>();
+    (data || []).forEach((row: { conversation_id: string }) => {
+      unreadSet.add(row.conversation_id);
+    });
+
+    return unreadSet;
+  },
+
   // 3. Hämta meddelanden i en specifik chatt
   getMessages: async (conversationId: string) => {
     const { data, error } = await supabase
@@ -62,6 +77,18 @@ export const messageService = {
 
     if (error) throw error;
     return data as Message[];
+  },
+
+  // 3b. Markera meddelanden som lästa i en konversation för en användare
+  markConversationAsRead: async (conversationId: string, userId: string) => {
+    const { error } = await supabase
+      .from('messages')
+      .update({ is_read: true })
+      .eq('conversation_id', conversationId)
+      .neq('sender_id', userId)
+      .eq('is_read', false);
+
+    if (error) throw error;
   },
 
   // 4. Skicka meddelande
