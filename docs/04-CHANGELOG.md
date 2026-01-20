@@ -8,6 +8,22 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ### ✨ Tillagt
 
+#### Redigering av Annonser
+- **CreateListingForm-komponent**: Återanvändbar form-komponent för både skapande och redigering
+  - Accepterar optional `initialData` prop för redigeringsläge
+  - Förfyller automatiskt formulär med befintlig data när `initialData` finns
+  - Dynamisk knapptext: "Publicera annons" (create) vs "Spara ändringar" (edit)
+  - Smart bilduppladdning: Hanterar både befintliga bilder (kan tas bort) och nya bilder
+  - Kombinerar befintliga och nya bilder vid sparning
+- **Edit-sida** (`/dashboard/edit/[id]`):
+  - Hämtar annons baserat på `params.id`
+  - **Säkerhetskontroll**: Verifierar att användaren äger annonsen (dubbel verifiering)
+  - Visar felmeddelande om annons inte hittas eller användaren saknar behörighet
+  - "Tillbaka"-knapp för enkel navigering
+- **Prisvalidering**: Validerar att pris är ett positivt heltal
+- **Memory leak-fix**: Rensar preview-URLs korrekt vid unmount
+- **Förbättrad error handling**: Tydliga felmeddelanden vid bilduppladdningsfel
+
 #### Hero-sektion med integrerat sök
 - **Modern Hero-design**: Sökfält och kategorifilter integrerade direkt i Hero-sektionen
 - **Förbättrad UX**: Sökfältet är nu huvudfokus på startsidan, inspirerat av Airbnb/Blocket
@@ -82,6 +98,11 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 - **Deletion Logs**: Loggning av raderade annonser för analytics
 
 ### 🔧 Ändrat
+
+#### Create Listing Page
+- **Refaktorering**: Extrakterad formulärlogik till återanvändbar `CreateListingForm`-komponent
+- **Förenklad struktur**: Create-sidan är nu enkel wrapper som renderar `CreateListingForm`
+- **Konsistens**: Samma komponent används för både create och edit, säkerställer konsistent UX
 
 #### Supabase Client Setup
 - **SSR Package**: Migrerat till `@supabase/ssr` för korrekt cookie-hantering

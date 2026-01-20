@@ -66,6 +66,82 @@ sequenceDiagram
    - Efter lyckad insert redirectas användaren till Dashboard
    - `router.refresh()` säkerställer att nya data hämtas
 
+## 🔄 Dataflöde: Redigera Annons
+
+Följande diagram visar hur data flödar när en användare redigerar en annons:
+
+```mermaid
+sequenceDiagram
+    participant User as 👤 Användare
+    participant EditPage as 📄 Edit Page<br/>(Client Component)
+    participant Form as 📝 CreateListingForm<br/>(Shared Component)
+    participant Client as 🔐 Supabase Client<br/>(Browser)
+    participant Storage as 📦 Storage Bucket<br/>(listing-images)
+    participant DB as 🗄️ Database<br/>(listings table)
+    participant Router as 🧭 Next.js Router
+
+    User->>EditPage: Besöker /dashboard/edit/[id]
+    EditPage->>Client: auth.getUser()<br/>(Kontrollera inloggning)
+    EditPage->>DB: select * from listings<br/>where id = [id]
+    DB-->>EditPage: ✅ Listing data
+    
+    EditPage->>EditPage: Verifiera ägare<br/>(user.id === listing.user_id)
+    
+    alt Ägare verifierad
+        EditPage->>Form: Renderera CreateListingForm<br/>med initialData
+        Form->>Form: Förfyll formulär med<br/>befintlig data
+        Form->>Form: Visa befintliga bilder
+        User->>Form: Redigerar data + lägger till<br/>nya bilder / tar bort gamla
+        User->>Form: Klickar "Spara ändringar"
+        
+        Form->>Form: Validerar formulärdata
+        
+        loop För varje ny bild
+            Form->>Storage: upload(filePath, file)
+            Storage-->>Form: ✅ Upload success
+            Form->>Storage: getPublicUrl(filePath)
+            Storage-->>Form: 🔗 Public URL
+        end
+        
+        Form->>Form: Kombinera befintliga + nya<br/>bild-URLs
+        
+        Form->>DB: update listings<br/>set title, description, ...<br/>where id = [id]<br/>and user_id = [user.id]
+        DB-->>Form: ✅ Annons uppdaterad
+        
+        Form->>Router: router.push('/dashboard')
+        Router->>User: ✅ Redirect till Dashboard
+    else Ej ägare
+        EditPage->>EditPage: Visa felmeddelande
+        EditPage->>Router: router.push('/dashboard')
+    end
+```
+
+### Steg-för-steg Förklaring
+
+1. **Hämta annonsdata** (`app/dashboard/edit/[id]/page.tsx`)
+   - Hämtar annons baserat på `params.id`
+   - Verifierar att användaren är inloggad
+   - **Säkerhetskontroll**: Verifierar att `listing.user_id === user.id`
+
+2. **Förfylld formulär**
+   - `CreateListingForm`-komponenten accepterar `initialData` prop
+   - Formuläret förfylls med befintlig data via `useEffect`
+   - Befintliga bilder visas och kan tas bort
+
+3. **Bildhantering i edit-läge**
+   - **Befintliga bilder**: Visas från `existingImageUrls` (kan tas bort)
+   - **Nya bilder**: Laddas upp som vanligt (preview innan sparning)
+   - **Kombinering**: Vid sparning kombineras `[...existingImageUrls, ...uploadedImageUrls]`
+
+4. **Databasupdate**
+   - Uppdaterar endast ändrade fält (title, description, price, location, category, images)
+   - **Dubbel säkerhetskontroll**: Verifierar `user_id` både i query och i komponenten
+   - Bevarar `created_at` och `user_id` (ändras inte)
+
+5. **Redirect**
+   - Efter lyckad update redirectas användaren till Dashboard
+   - `router.refresh()` säkerställer att uppdaterade data hämtas
+
 ## 🗄️ Entity-Relation Diagram
 
 Följande diagram visar hur entiteterna hänger ihop:
@@ -168,10 +244,18 @@ app/
 │   └── Content Area (Tab-specific content)
 │
 ├── dashboard/create/page.tsx (Create Listing)
-│   └── Form (Title, Category, Price, Location, Description, Images)
+│   └── CreateListingForm (Återanvändbar form-komponent)
+│       └── Form (Title, Category, Price, Location, Description, Images)
 │
 ├── dashboard/edit/[id]/page.tsx (Edit Listing)
-│   └── Form (Pre-filled, same as Create)
+│   ├── Fetch Listing (Verifierar ägare)
+│   └── CreateListingForm (Med initialData prop)
+│       └── Form (Pre-filled med befintlig data)
+│
+├── components/CreateListingForm.tsx (Shared Component)
+│   ├── Accepterar optional initialData prop
+│   ├── Hanterar både create och edit mode
+│   └── Bildhantering (befintliga + nya bilder)
 │
 └── annons/[id]/page.tsx (Listing Details)
     ├── Image Gallery

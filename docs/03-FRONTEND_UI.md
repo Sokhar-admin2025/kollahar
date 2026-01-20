@@ -220,6 +220,45 @@ Dashboard är **centralhubben** för användaren. Alla användarspecifika funkti
 - `?tab=favorites`: Visa favoriter
 - `?tab=history`: Visa historik
 
+### CreateListingForm Component
+
+**Plats:** `app/components/CreateListingForm.tsx`
+
+**Syfte:** Återanvändbar form-komponent för både att skapa och redigera annonser.
+
+**Props:**
+```typescript
+interface CreateListingFormProps {
+  initialData?: Listing  // Optional - om den finns är det edit-läge
+  onSuccess?: () => void // Optional callback vid lyckad sparning
+}
+```
+
+**Funktionalitet:**
+- **Dual Mode**: Identifierar automatiskt om det är create eller edit mode baserat på `initialData`
+- **Auto-fill**: Förfyller formulär med `initialData` när det finns
+- **Dynamisk knapptext**: "Publicera annons" (create) eller "Spara ändringar" (edit)
+- **Bildhantering**:
+  - **Create mode**: Lägger till nya bilder med preview
+  - **Edit mode**: Visar befintliga bilder + kan lägga till nya / ta bort gamla
+  - Kombinerar befintliga och nya bilder vid sparning
+- **Validering**: 
+  - Pris måste vara positivt heltal
+  - Max 5 bilder totalt (befintliga + nya)
+  - Max 2MB per bild
+- **Säkerhet**: Verifierar ägare vid redigering (dubbel kontroll)
+
+**State Management:**
+- `title`, `description`, `price`, `location`, `category`: Formulärfält
+- `imageFiles`: Array av nya filer att ladda upp
+- `imagePreviews`: Preview-URLs för nya bilder
+- `existingImageUrls`: URL:er för befintliga bilder (edit mode)
+- `uploading`: Loading-state för bilduppladdning
+- `loading`: Loading-state för form submission
+
+**Memory Management:**
+- Rensar preview-URLs korrekt vid unmount för att förhindra memory leaks
+
 ### Create Listing (`/dashboard/create`)
 
 **Struktur:**
@@ -228,7 +267,8 @@ Dashboard är **centralhubben** för användaren. Alla användarspecifika funkti
 │  Header                             │
 │  "Skapa ny annons"  [← Tillbaka]   │
 ├─────────────────────────────────────┤
-│  Form                               │
+│  CreateListingForm                  │
+│  (utan initialData)                 │
 │  - Rubrik (text)                    │
 │  - Kategori (select)                │
 │  - Pris (number)                    │
@@ -239,12 +279,9 @@ Dashboard är **centralhubben** för användaren. Alla användarspecifika funkti
 └─────────────────────────────────────┘
 ```
 
-**Bildhantering:**
-- Preview av uppladdade bilder
-- Ta bort bilder (X-knapp)
-- Max 5 bilder
-- Max 2MB per bild
-- Validering på client-side
+**Implementation:**
+- Enkel wrapper som renderar `CreateListingForm` utan `initialData`
+- All formulärlogik finns i `CreateListingForm`-komponenten
 
 **Submit Flow:**
 1. Validera formulär
@@ -255,10 +292,48 @@ Dashboard är **centralhubben** för användaren. Alla användarspecifika funkti
 
 ### Edit Listing (`/dashboard/edit/[id]`)
 
-Samma struktur som Create, men:
-- Formuläret är förfyllt med befintlig data
-- Använder `UPDATE` istället för `INSERT`
-- Validerar att användaren äger annonsen
+**Struktur:**
+```
+┌─────────────────────────────────────┐
+│  Header                             │
+│  "Redigera annons"  [← Avbryt]     │
+├─────────────────────────────────────┤
+│  Loading / Error State              │
+│  (hämtar annons, verifierar ägare)  │
+├─────────────────────────────────────┤
+│  CreateListingForm                  │
+│  (med initialData={listing})        │
+│  - Rubrik (pre-filled)              │
+│  - Kategori (pre-filled)            │
+│  - Pris (pre-filled)                │
+│  - Plats (pre-filled)               │
+│  - Beskrivning (pre-filled)         │
+│  - Bilder (befintliga + nya)        │
+│  - [Spara ändringar]                │
+└─────────────────────────────────────┘
+```
+
+**Implementation:**
+1. **Hämtning**: Hämtar annons baserat på `params.id`
+2. **Säkerhetskontroll**: Verifierar att `listing.user_id === user.id`
+3. **Render**: Renderar `CreateListingForm` med `initialData={listing}`
+4. **Felhantering**: Visar tydliga felmeddelanden om:
+   - Annonsen inte hittas
+   - Användaren saknar behörighet
+   - Ett oväntat fel uppstår
+
+**Bildhantering i Edit Mode:**
+- **Befintliga bilder**: Visas från `listing.images` (kan tas bort med X-knapp)
+- **Nya bilder**: Kan läggas till med samma upload-funktionalitet
+- **Kombinering**: Vid sparning kombineras `[...existingImageUrls, ...uploadedImageUrls]`
+- **Ta bort**: När en befintlig bild tas bort, försvinner den från `existingImageUrls`
+
+**Submit Flow:**
+1. Validera formulär
+2. Ladda upp nya bilder till Storage
+3. Kombinera befintliga och nya bild-URLs
+4. Update i `listings`-tabellen (med dubbel säkerhetskontroll)
+5. Redirect till Dashboard
 
 ### Listing Details (`/annons/[id]`)
 
