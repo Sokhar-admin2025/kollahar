@@ -5,3 +5,7 @@ export const AD_CONFIG = {
   MAX_ACTIVE_ADS_PER_USER: 20,
   BUCKET_NAME: 'listing-images'
 };
+
+export const AUTH_CONFIG = {
+  MIN_PASSWORD_LENGTH: 8
+};

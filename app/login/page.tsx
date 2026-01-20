@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { AUTH_CONFIG } from '@/lib/constants'
 
 // Kopplingen till Supabase
 const supabase = createClient()
@@ -45,6 +46,16 @@ export default function LoginPage() {
     setMessage(null)
     const cleanEmail = email.trim()
     
+    // Validera lösenordslängd innan anrop till Supabase
+    if (password.length < AUTH_CONFIG.MIN_PASSWORD_LENGTH) {
+      setMessage({ 
+        text: `Lösenordet måste vara minst ${AUTH_CONFIG.MIN_PASSWORD_LENGTH} tecken långt.`, 
+        type: 'error' 
+      })
+      setLoading(false)
+      return
+    }
+    
     const { error } = await supabase.auth.signUp({
       email: cleanEmail,
       password,
@@ -78,12 +89,21 @@ export default function LoginPage() {
         <div className="space-y-2">
           <label className="text-sm font-medium">Lösenord</label>
           <input
-            className="w-full rounded border border-gray-300 p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+            className={`w-full rounded border p-2 focus:ring-2 focus:ring-blue-500 outline-none ${
+              password.length > 0 && password.length < AUTH_CONFIG.MIN_PASSWORD_LENGTH
+                ? 'border-red-300 focus:ring-red-500'
+                : 'border-gray-300'
+            }`}
             type="password"
-            placeholder="Minst 6 tecken"
+            placeholder={`Minst ${AUTH_CONFIG.MIN_PASSWORD_LENGTH} tecken`}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
+          {password.length > 0 && password.length < AUTH_CONFIG.MIN_PASSWORD_LENGTH && (
+            <p className="text-xs text-red-600">
+              Lösenordet måste vara minst {AUTH_CONFIG.MIN_PASSWORD_LENGTH} tecken långt.
+            </p>
+          )}
         </div>
 
         {/* Här kollar vi om meddelandet är error (rött) eller success (grönt) */}

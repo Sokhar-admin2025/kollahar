@@ -203,6 +203,10 @@ Dashboard är **centralhubben** för användaren. Alla användarspecifika funkti
 **Tabs:**
 1. **Mina Annonser** (`active`): Lista över aktiva annonser med edit/delete-knappar
 2. **Sparade annonser** (`favorites`): Grid med favoriter (ListingCard)
+   - Visar alla sparade favoriter i ett responsivt grid
+   - Använder `ListingCard`-komponenten för konsistent utseende
+   - Tomt tillstånd med länk till startsidan när inga favoriter finns
+   - Hjälte-ikon (`Heart`) i fliknamnet för visuell tydlighet
 3. **Mina sålda prylar** (`history`): Tabell med sålda annonser
 
 **State Management:**
@@ -299,26 +303,38 @@ Samma struktur som Create, men:
 ├─────────────────────────────────────┤
 │  Hero Section                       │
 │  "Hitta fynd eller sälj..."        │
-│  [Lägg in en annons gratis]        │
-├─────────────────────────────────────┤
-│  Sök & Filter                       │
-│  [Sökfält]  [Kategorier]           │
+│  [Stort vitt sökfält]              │
+│  [Kategoriknappar]                 │
 ├─────────────────────────────────────┤
 │  Annons-Galleri                     │
 │  [Grid med ListingCard]            │
 └─────────────────────────────────────┘
 ```
 
-**Sök & Filter:**
-- Client-side filtering
-- Söker i `title` och `description`
-- Filter på `category`
-- Realtidsuppdatering
-
 **Hero Section:**
-- Bakgrundsbild med overlay
-- CTA-knapp
-- Responsive textstorlek
+- **Bakgrundsbild med overlay**: Mörk bakgrundsbild (`bg-gray-900`) med gradient overlay
+- **Integrerat sök**: Sökfältet är nu huvudfokus och ligger direkt i Hero-sektionen
+- **Stort vitt sökfält**: 
+  - Stor, vit bakgrund (`bg-white`) med rundade hörn (`rounded-xl`)
+  - Sökikon till vänster (`pl-14`)
+  - Stort padding (`py-5`) för tydlighet
+  - Skugga (`shadow-lg`) för djup
+- **Semi-transparenta kategoriknappar**:
+  - `bg-white/10` för inaktivt tillstånd
+  - `hover:bg-white/20` för hover
+  - `bg-white/30` för aktiv kategori
+  - `backdrop-blur-sm` för glasmorphism-effekt
+  - Vit text (`text-white`) för kontrast mot mörk bakgrund
+- **Responsive textstorlek**: `text-4xl md:text-6xl` för rubrik
+- **Centrerad layout**: Allt är centrerat med `max-w-3xl mx-auto`
+- **CTA-knapp borttagen**: Den stora "Sälj"-knappen är borttagen från Hero (finns kvar i navigation)
+
+**Sök & Filter:**
+- **Client-side filtering**: Filtrering sker direkt i webbläsaren
+- **Söker i `title` och `description`**: Case-insensitive sökning
+- **Filter på `category`**: Kategoriknappar för snabb filtrering
+- **Realtidsuppdatering**: Resultat uppdateras direkt när användaren skriver eller väljer kategori
+- **Integrerat i Hero**: Sök och filter är nu en del av Hero-sektionen för bättre UX
 
 ## 🎯 Accessibility (EAA)
 

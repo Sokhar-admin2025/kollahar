@@ -171,7 +171,7 @@ export default function HomePage() {
       </nav>
 
       {/* --- HERO SECTION --- */}
-      <div className="relative bg-gray-900 py-32 px-4 text-center overflow-hidden">
+      <div className="relative bg-gray-900 py-20 md:py-32 px-4 text-center overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img 
             src="https://images.unsplash.com/photo-1556740758-90de374c12ad?auto=format&fit=crop&w=1600&q=80" 
@@ -189,47 +189,40 @@ export default function HomePage() {
             {t.landing.hero.subtitle}
           </p>
           
-          <button 
-            onClick={handleSellClick}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-full font-bold text-lg shadow-lg hover:shadow-blue-500/30 transition transform hover:-translate-y-1"
-          >
-            {t.landing.hero.cta}
-          </button>
-        </div>
-      </div>
+          {/* --- SÖK & FILTER INNE I HERO --- */}
+          <div className="max-w-3xl mx-auto mt-12 mb-8">
+            {/* Sökfält */}
+            <div className="mb-6 relative">
+              <svg className="absolute left-6 top-1/2 transform -translate-y-1/2 text-gray-400 z-10" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              <input 
+                type="text"
+                placeholder={t.landing.search.placeholder}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-14 pr-6 py-5 bg-white rounded-xl text-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition shadow-lg"
+              />
+            </div>
 
-      {/* --- SÖK & FILTER --- */}
-      <div className="max-w-6xl mx-auto px-6 -mt-10 relative z-20 w-full mb-12">
-        <div className="bg-white rounded-xl shadow-xl p-6 md:p-8 border border-gray-100">
-          <div className="mb-6 relative">
-            <svg className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            <input 
-              type="text"
-              placeholder={t.landing.search.placeholder}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-lg text-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition hover:bg-white"
-            />
-          </div>
-
-          <div className="flex flex-col md:flex-row gap-4 items-center">
-            <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">
-              {t.landing.search.filterTitle}
-            </span>
-            <div className="flex flex-wrap gap-2">
-              {t.landing.search.categories.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`px-5 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                    selectedCategory === cat
-                      ? 'bg-gray-900 text-white shadow-md transform scale-105'
-                      : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-400 hover:bg-gray-50'
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
+            {/* Kategoriknappar */}
+            <div className="flex flex-col items-center gap-4">
+              <span className="text-xs font-bold text-white/70 uppercase tracking-widest">
+                {t.landing.search.filterTitle}
+              </span>
+              <div className="flex flex-wrap gap-3 justify-center">
+                {t.landing.search.categories.map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => setSelectedCategory(cat)}
+                    className={`px-6 py-3 rounded-full text-sm font-medium transition-all duration-200 ${
+                      selectedCategory === cat
+                        ? 'bg-white/30 text-white shadow-lg backdrop-blur-sm'
+                        : 'bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>

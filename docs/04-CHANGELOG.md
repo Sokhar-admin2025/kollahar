@@ -6,6 +6,21 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ## [Unreleased] (Local Development)
 
+### ✨ Tillagt
+
+#### Hero-sektion med integrerat sök
+- **Modern Hero-design**: Sökfält och kategorifilter integrerade direkt i Hero-sektionen
+- **Förbättrad UX**: Sökfältet är nu huvudfokus på startsidan, inspirerat av Airbnb/Blocket
+- **Semi-transparenta kategoriknappar**: `bg-white/10` med `hover:bg-white/20` för elegant utseende mot mörk bakgrund
+- **Stort vitt sökfält**: Stort, vitt sökfält med rundade hörn (`rounded-xl`) och skugga för tydlighet
+- **CTA-knapp borttagen**: Den stora "Sälj"-knappen i Hero-sektionen är borttagen (knappen i navigation finns kvar)
+
+#### Dashboard-flikar för Favoriter
+- **Favoriter-flik**: Ny flik i Dashboard för att visa sparade favoriter
+- **Grid-layout**: Favoriter visas i grid med `ListingCard`-komponenter
+- **Tomt tillstånd**: Tydligt meddelande när inga favoriter finns sparade
+- **URL-synkning**: Flik-state synkas med URL-parametrar (`?tab=favorites`)
+
 ### Planerat
 - [ ] Server-side search med Supabase Full-Text Search
 - [ ] Filter på pris, plats, datum
@@ -161,4 +176,4 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ---
 
-**Senast uppdaterad**: 2025-01-16
+**Senast uppdaterad**: 2025-01-17

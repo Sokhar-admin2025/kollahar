@@ -158,8 +158,7 @@ erDiagram
 app/
 ├── page.tsx (HomePage)
 │   ├── Navigation (Header)
-│   ├── Hero Section
-│   ├── Search & Filter
+│   ├── Hero Section (med integrerat sök & filter)
 │   └── ListingCard[] (Grid)
 │
 ├── dashboard/page.tsx (Dashboard)
