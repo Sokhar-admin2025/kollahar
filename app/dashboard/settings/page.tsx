@@ -2,17 +2,14 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
 
-import { DASHBOARD_TEXTS } from '../../lib/content'
-import Button from '../../components/atoms/Button'
+import { DASHBOARD_TEXTS } from '@/app/lib/content'
+import Button from '@/app/components/atoms/Button'
+import { createClient } from '@/lib/supabase/client'
 
-// Koppla upp mot Supabase
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-)
+// Supabase-klient via delad SSR-kompatibel wrapper
+const supabase = createClient()
 
 export default function SettingsPage() {
   const router = useRouter()

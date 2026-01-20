@@ -21,6 +21,11 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
   - Meddelanden markeras som lästa när användaren öppnar konversationen
 - **Dashboard-indikator**: Blå punkt på chattikonen i dashboard-headern när användaren har olästa meddelanden
 
+#### Dashboard & Login UX
+- **Dashboard-tabs**: Flikarna `Mina Annonser`, `Sparade annonser` och `Mina sålda prylar` visar konsekvent antal i parentes (även 0)
+- **Dashboard-navigering**: Länk `← Till alla annonser` ovanför flikarna för snabb återgång till startsidan
+- **Login-sida**: Ny `← Tillbaka`-länk ovanför login-kortet som tar användaren till föregående sida, med fallback till startsidan
+
 #### Redigering av Annonser
 - **CreateListingForm-komponent**: Återanvändbar form-komponent för både skapande och redigering
   - Accepterar optional `initialData` prop för redigeringsläge

@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { Heart } from 'lucide-react'
 
 import { DASHBOARD_TEXTS } from '../lib/content'
 import Button from '../components/atoms/Button'
@@ -198,33 +197,41 @@ export default function Dashboard() {
           </Button>
         </div>
 
-        {/* FLIKAR */}
-        <div className="flex space-x-4 border-b border-gray-200">
-          <button
-            onClick={() => setActiveTab('active')}
-            className={`pb-2 px-1 font-medium text-sm transition-colors relative focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-t ${
-              activeTab === 'active' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'
-            }`}
+        {/* FLIKAR + länk till annonssidan */}
+        <div className="flex items-center justify-between border-b border-gray-200">
+          <div className="flex space-x-4">
+            <button
+              onClick={() => setActiveTab('active')}
+              className={`pb-2 px-1 font-medium text-sm transition-colors relative focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-t ${
+                activeTab === 'active' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              {t.tabs.active} ({activeAds.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('favorites')}
+              className={`pb-2 px-1 font-medium text-sm transition-colors relative focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-t ${
+                activeTab === 'favorites' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Sparade annonser ({favoriteAds.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('history')}
+              className={`pb-2 px-1 font-medium text-sm transition-colors relative focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-t ${
+                activeTab === 'history' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              {t.tabs.history} ({soldAds.length})
+            </button>
+          </div>
+
+          <Link
+            href="/"
+            className="inline-block text-sm font-medium text-gray-500 hover:text-black transition"
           >
-            {t.tabs.active} ({activeAds.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('favorites')}
-            className={`pb-2 px-1 font-medium text-sm transition-colors relative focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-t inline-flex items-center gap-2 ${
-              activeTab === 'favorites' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            <Heart size={16} />
-            Sparade annonser
-          </button>
-          <button
-            onClick={() => setActiveTab('history')}
-            className={`pb-2 px-1 font-medium text-sm transition-colors relative focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-t ${
-              activeTab === 'history' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            {t.tabs.history} ({soldAds.length})
-          </button>
+            ← Till alla annonser
+          </Link>
         </div>
 
         {/* AKTIVA ANNONSER */}

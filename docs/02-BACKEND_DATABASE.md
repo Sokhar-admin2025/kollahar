@@ -290,6 +290,9 @@ CREATE TABLE public.deletion_logs (
 - **Struktur**: `{random}.{ext}`
 - **Max filstorlek**: 2MB
 - **Tillåtna format**: JPEG, PNG, WebP
+  
+**Setup:**
+- Se `supabase/setup_avatars.sql` för att skapa bucketen och RLS-policys.
 
 ## 🔒 Row Level Security (RLS) Policies
 
@@ -509,6 +512,12 @@ CREATE INDEX idx_conversations_listing_id ON public.conversations(listing_id);
 Migrations ligger i `supabase/migrations/`:
 
 - `20260116090000_create_favorites.sql`: Skapar favorites-tabellen och RLS policies
+
+Utöver migrations finns även manuella setup-skript:
+
+- `supabase/setup_profiles.sql`: Skapar `public.profiles` + trigger från `auth.users` + RLS
+- `supabase/setup_conversations_messages.sql`: Skapar `public.conversations` och `public.messages` + RLS
+- `supabase/setup_avatars.sql`: Skapar `avatars`-bucket i Storage + RLS-policys
 
 ### Skapa Ny Migration
 

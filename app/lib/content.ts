@@ -23,7 +23,7 @@ export const DASHBOARD_TEXTS = {
   },
   tabs: {
     active: "Mina Annonser",
-    history: "Mina sålda prylar 💰"
+    history: "Mina sålda prylar"
   },
   emptyStates: {
     active: "Här ekar det tomt. Dags att rensa garaget?",

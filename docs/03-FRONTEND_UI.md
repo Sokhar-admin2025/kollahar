@@ -201,13 +201,18 @@ Dashboard är **centralhubben** för användaren. Alla användarspecifika funkti
 ```
 
 **Tabs:**
-1. **Mina Annonser** (`active`): Lista över aktiva annonser med edit/delete-knappar
+1. **Mina Annonser** (`active`): Lista över aktiva annonser med edit/delete-knappar (visar antal i parentes)
 2. **Sparade annonser** (`favorites`): Grid med favoriter (ListingCard)
    - Visar alla sparade favoriter i ett responsivt grid
    - Använder `ListingCard`-komponenten för konsistent utseende
    - Tomt tillstånd med länk till startsidan när inga favoriter finns
-   - Hjälte-ikon (`Heart`) i fliknamnet för visuell tydlighet
+   - Fliktext: `Sparade annonser` + antal i parentes (även när det är 0)
 3. **Mina sålda prylar** (`history`): Tabell med sålda annonser
+   - Fliktext: `Mina sålda prylar` + antal i parentes (även när det är 0)
+   - Datum för publicering och såld-datum visas i tabell
+
+**Navigering från Dashboard:**
+- Liten länk uppe till höger ovanför flikarna: `← Till alla annonser` som leder till startsidan (`/`).
 
 **State Management:**
 - `activeTab`: 'active' | 'favorites' | 'history'
