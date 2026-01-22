@@ -127,17 +127,17 @@ export default function SettingsPage() {
   if (loading) return <div className="p-10 text-center">Laddar inställningar...</div>
 
   return (
-    <div className="min-h-screen bg-gray-50 py-10 px-4">
+    <div className="min-h-screen bg-brand-beige py-10 px-4">
       <div className="max-w-2xl mx-auto">
         
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-bold text-gray-900">{t.title}</h1>
-            <Link href="/dashboard" className="text-sm text-gray-500 hover:text-black">{t.back}</Link>
+            <h1 className="text-2xl font-display text-brand-green">{t.title}</h1>
+            <Link href="/dashboard" className="text-sm text-brand-text/70 hover:text-brand-green">{t.back}</Link>
         </div>
 
         {/* Formulär */}
-        <form onSubmit={handleSave} className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 space-y-8">
+        <form onSubmit={handleSave} className="bg-white p-8 rounded-xl shadow-md border border-gray-200 space-y-8">
             
             {/* SEKTION: PROFIL */}
             <div>
@@ -153,7 +153,7 @@ export default function SettingsPage() {
                         )}
                     </div>
                     <div>
-                        <label className="cursor-pointer bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition shadow-sm">
+                        <label className="cursor-pointer bg-white border border-gray-300 text-brand-text px-4 py-2 rounded-xl text-sm font-medium hover:bg-brand-beige transition shadow-sm">
                             {t.form.avatar.changeBtn}
                             {/* Dolt fil-input fält */}
                             <input type="file" className="hidden" accept="image/*" onChange={uploadAvatar} />
@@ -169,7 +169,7 @@ export default function SettingsPage() {
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
                         placeholder={t.form.name.placeholder}
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                        className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none"
                     />
                 </div>
 
@@ -181,7 +181,7 @@ export default function SettingsPage() {
                         value={website}
                         onChange={(e) => setWebsite(e.target.value)}
                         placeholder={t.form.website.placeholder}
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                        className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none"
                     />
                 </div>
             </div>
@@ -195,25 +195,25 @@ export default function SettingsPage() {
                 
                 <div className="space-y-4">
                     {/* Marknadsföring Checkbox */}
-                    <label className="flex items-start gap-3 cursor-pointer p-3 rounded-lg border border-transparent hover:bg-gray-50 transition">
+                    <label className="flex items-start gap-3 cursor-pointer p-3 rounded-lg border border-transparent hover:bg-brand-beige transition">
                         <input 
                             type="checkbox" 
                             checked={consentMarketing}
                             onChange={(e) => setConsentMarketing(e.target.checked)}
-                            className="mt-1 w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                            className="mt-1 w-5 h-5 text-brand-green rounded focus:ring-brand-green"
                         />
-                        <span className="text-sm text-gray-700">{t.form.consents.marketing}</span>
+                        <span className="text-sm text-brand-text">{t.form.consents.marketing}</span>
                     </label>
 
                     {/* Analytics Checkbox */}
-                    <label className="flex items-start gap-3 cursor-pointer p-3 rounded-lg border border-transparent hover:bg-gray-50 transition">
+                    <label className="flex items-start gap-3 cursor-pointer p-3 rounded-lg border border-transparent hover:bg-brand-beige transition">
                         <input 
                             type="checkbox" 
                             checked={consentAnalytics}
                             onChange={(e) => setConsentAnalytics(e.target.checked)}
-                            className="mt-1 w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                            className="mt-1 w-5 h-5 text-brand-green rounded focus:ring-brand-green"
                         />
-                        <span className="text-sm text-gray-700">{t.form.consents.analytics}</span>
+                        <span className="text-sm text-brand-text">{t.form.consents.analytics}</span>
                     </label>
                 </div>
             </div>

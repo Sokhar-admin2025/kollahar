@@ -39,7 +39,7 @@ export default function ListingCard({ listing, currentUserId }: { listing: Listi
       {/* --- LÄNKEN (Ligger bredvid, som ett syskon) --- */}
       <Link href={`/annons/${listing.id}`} className="block flex-1 flex flex-col">
         {/* Bild-container */}
-        <div className="relative aspect-[4/3] w-full bg-gray-100 overflow-hidden">
+        <div className="relative aspect-[4/3] w-full bg-brand-beige overflow-hidden">
           {listing.images && listing.images[0] ? (
             <Image
               src={listing.images[0]}
@@ -60,18 +60,18 @@ export default function ListingCard({ listing, currentUserId }: { listing: Listi
         {/* Innehåll */}
         <div className="p-4 flex flex-col flex-1">
           <div className="flex justify-between items-start mb-2">
-            <h3 className="font-semibold text-gray-900 line-clamp-1 group-hover:text-blue-600 transition-colors">
+            <h3 className="font-semibold text-brand-text line-clamp-1 group-hover:text-brand-green transition-colors">
               {listing.title}
             </h3>
           </div>
           
           <div className="mt-auto space-y-2">
-            <p className="text-lg font-bold text-blue-600">
+            <p className="text-lg font-bold text-brand-green">
               {formattedPrice}
-              <span className="text-xs font-normal text-gray-500 ml-1">/mån</span>
+              <span className="text-xs font-normal text-brand-text/60 ml-1">/mån</span>
             </p>
             
-            <div className="flex items-center text-gray-500 text-sm gap-4 pt-2 border-t border-gray-50">
+            <div className="flex items-center text-brand-text/70 text-sm gap-4 pt-2 border-t border-gray-50">
               <div className="flex items-center gap-1">
                 <MapPin className="w-4 h-4" />
                 <span className="truncate max-w-[100px]">{listing.location}</span>

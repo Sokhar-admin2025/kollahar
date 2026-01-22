@@ -8,6 +8,56 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ### ✨ Tillagt
 
+#### Designsystem - Sokhar Theme
+- **Typsnitt**: Implementerat Knewave för rubriker (display) och DM Sans för brödtext
+  - Knewave laddas via `next/font/google` med variabel `--font-knewave`
+  - DM Sans laddas via `next/font/google` med variabel `--font-dm-sans`
+  - DM Sans är standard-typsnitt på `<body>` via `font-body`
+- **Brand Colors**: Lagt till i Tailwind theme (via `globals.css`):
+  - `brand-green: #2C4638` (från logotypen)
+  - `brand-beige: #F4F3F0` (varm bakgrundsfärg)
+  - `brand-text: #1A1A1A` (primär textfärg)
+- **Border Radius**: Standard 12px (`rounded-xl`) för konsistent design
+- **Typografi-optimering**: 
+  - Knewave har justerat letter-spacing (0.0425em för normala rubriker, 0.068em för större)
+  - Förbättrad line-height (1.3 för normala, 1.25 för större rubriker)
+  - Font-smoothing för bättre rendering
+- **Brand Identity**: Uppdaterat brand-text till "Kolla här!" (kundvagn-emoji borttagen)
+
+#### Designsystem applicerat på hela applikationen
+- **Global bakgrund**: Alla sidor använder nu `bg-brand-beige` istället för `bg-gray-50/100`
+- **Innehållskort**: Alla formulär, listor och detaljvyer har `bg-white` med `rounded-xl` och `shadow-md`
+- **Rubriker**: H1-rubriker använder `font-display` (Knewave) och `text-brand-green`
+- **Knappar**: Primära knappar använder `bg-brand-green` med `rounded-xl` och `shadow-lg`
+- **Länkar**: Sekundära länkar använder `text-brand-green` istället för blå
+- **Uppdaterade sidor**:
+  - Startsidan (`app/page.tsx`) - Hero, bakgrund, knappar
+  - Annons-detaljsida (`app/annons/[id]/page.tsx`) - Färger, typografi, knappar
+  - Login-sida (`app/login/page.tsx`) - Formulär, knappar, bakgrund
+  - Dashboard (`app/dashboard/page.tsx`) - Alla flikar, modaler, tabbar
+  - Create/Edit formulär (`app/components/CreateListingForm.tsx`) - Inputs, knappar
+  - Settings (`app/dashboard/settings/page.tsx`) - Formulär, checkboxes
+  - Messages (`app/dashboard/messages/page.tsx`) - Chat, meddelanden
+  - Footer (`app/components/organisms/Footer.tsx`) - Brand-green bakgrund
+  - ListingCard (`app/components/ListingCard.tsx`) - Färger, typografi
+  - Button-komponent (`app/components/atoms/Button.tsx`) - Primary variant uppdaterad
+
+### 🔧 Ändrat
+
+#### Typografi
+- **Knewave-justeringar**: 
+  - Letter-spacing reducerat med 15% för tätare text
+  - Line-height optimerad för bättre läsbarhet
+  - Font-smoothing aktiverat för skarpare rendering
+- **Rubrik-hierarki**: H1-rubriker använder Knewave, annonsrubriker använder DM Sans (bättre läsbarhet)
+
+#### Färgschema
+- **Primära actions**: Ändrat från blå (`blue-600`) till brand-green (`brand-green`)
+- **Bakgrundsfärger**: Konsistent beige-bakgrund genom hela applikationen
+- **Textfärger**: Brand-text används konsekvent istället för grå nyanser
+
+### ✨ Tillagt
+
 #### Annonsdetaljer & Profiler
 - **Listing Details (`/annons/[id]`)**: Visar nu säljarprofil via `profiles`-tabellen (namn, avatar, hemsida)
 - **Profiles-tabell**: SQL-setup med trigger från `auth.users` och RLS (public read, endast ägaren får uppdatera)
@@ -215,4 +265,4 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ---
 
-**Senast uppdaterad**: 2025-01-17
+**Senast uppdaterad**: 2025-01-17 (Designsystem implementerat)

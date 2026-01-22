@@ -151,24 +151,24 @@ function Dashboard() {
   if (loading) return <div className="flex min-h-screen items-center justify-center">Laddar...</div>
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6 relative">
+    <div className="min-h-screen bg-brand-beige p-6 relative">
       <header className="mx-auto max-w-4xl mb-8 flex flex-col md:flex-row items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">{t.header.title}</h1>
-          <p className="text-gray-600">{t.header.welcome} <span className="font-semibold">{user?.email}</span></p>
+          <h1 className="text-3xl font-display text-brand-green">{t.header.title}</h1>
+          <p className="text-brand-text/80">{t.header.welcome} <span className="font-semibold">{user?.email}</span></p>
         </div>
         
         <div className="flex items-center gap-6">
           
           {/* 1. Meddelanden (Pratbubbla) */}
           <Link href="/dashboard/messages" title="Mina meddelanden">
-            <div className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-full transition cursor-pointer relative">
+            <div className="p-2 text-brand-text/70 hover:text-brand-green hover:bg-brand-green/10 rounded-full transition cursor-pointer relative">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
               </svg>
               {hasUnreadMessages && (
                 <span
-                  className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-blue-500"
+                  className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-brand-green"
                   aria-hidden="true"
                 />
               )}
@@ -177,7 +177,7 @@ function Dashboard() {
 
           {/* 2. NYTT: Inställningar (Kugghjul) */}
           <Link href="/dashboard/settings" title="Inställningar">
-            <div className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition cursor-pointer">
+            <div className="p-2 text-brand-text/70 hover:text-brand-green hover:bg-brand-green/10 rounded-full transition cursor-pointer">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="3"></circle>
                 <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
@@ -194,10 +194,10 @@ function Dashboard() {
 
       <main className="mx-auto max-w-4xl space-y-6">
         
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 flex items-center justify-between">
+        <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200 flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold">{t.ctaCard.title}</h2>
-            <p className="text-gray-500 text-sm">{t.ctaCard.subtitle}</p>
+            <h2 className="text-xl font-semibold text-brand-text">{t.ctaCard.title}</h2>
+            <p className="text-brand-text/60 text-sm">{t.ctaCard.subtitle}</p>
           </div>
           
           <Button onClick={() => router.push('/dashboard/create')}>
@@ -210,24 +210,24 @@ function Dashboard() {
           <div className="flex space-x-4">
             <button
               onClick={() => setActiveTab('active')}
-              className={`pb-2 px-1 font-medium text-sm transition-colors relative focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-t ${
-                activeTab === 'active' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'
+              className={`pb-2 px-1 font-medium text-sm transition-colors relative focus:outline-none focus:ring-2 focus:ring-brand-green rounded-t ${
+                activeTab === 'active' ? 'text-brand-green border-b-2 border-brand-green' : 'text-brand-text/60 hover:text-brand-text'
               }`}
             >
               {t.tabs.active} ({activeAds.length})
             </button>
             <button
               onClick={() => setActiveTab('favorites')}
-              className={`pb-2 px-1 font-medium text-sm transition-colors relative focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-t ${
-                activeTab === 'favorites' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'
+              className={`pb-2 px-1 font-medium text-sm transition-colors relative focus:outline-none focus:ring-2 focus:ring-brand-green rounded-t ${
+                activeTab === 'favorites' ? 'text-brand-green border-b-2 border-brand-green' : 'text-brand-text/60 hover:text-brand-text'
               }`}
             >
               Sparade annonser ({favoriteAds.length})
             </button>
             <button
               onClick={() => setActiveTab('history')}
-              className={`pb-2 px-1 font-medium text-sm transition-colors relative focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-t ${
-                activeTab === 'history' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'
+              className={`pb-2 px-1 font-medium text-sm transition-colors relative focus:outline-none focus:ring-2 focus:ring-brand-green rounded-t ${
+                activeTab === 'history' ? 'text-brand-green border-b-2 border-brand-green' : 'text-brand-text/60 hover:text-brand-text'
               }`}
             >
               {t.tabs.history} ({soldAds.length})
@@ -236,7 +236,7 @@ function Dashboard() {
 
           <Link
             href="/"
-            className="inline-block text-sm font-medium text-gray-500 hover:text-black transition"
+            className="inline-block text-sm font-medium text-brand-text/70 hover:text-brand-green transition"
           >
             ← Till alla annonser
           </Link>
@@ -244,9 +244,9 @@ function Dashboard() {
 
         {/* AKTIVA ANNONSER */}
         {activeTab === 'active' && (
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200">
             {activeAds.length === 0 ? (
-              <div className="text-center py-10 text-gray-400 bg-gray-50 rounded border border-dashed border-gray-300">
+              <div className="text-center py-10 text-brand-text/60 bg-brand-beige rounded-xl border border-dashed border-gray-300">
                 <p>{t.emptyStates.active}</p>
               </div>
             ) : (
@@ -255,7 +255,7 @@ function Dashboard() {
                   <div 
                     key={ad.id} 
                     onClick={() => router.push(`/annons/${ad.id}`)}
-                    className="group flex gap-4 p-4 border rounded hover:bg-gray-50 transition cursor-pointer relative"
+                    className="group flex gap-4 p-4 border rounded-xl hover:bg-brand-beige transition cursor-pointer relative"
                   >
                     {/* KNAPPAR: Redigera & Radera */}
                     <div className="absolute top-4 right-4 z-10 flex gap-2" onClick={(e) => e.stopPropagation()}>
@@ -307,7 +307,7 @@ function Dashboard() {
 
         {/* HISTORIK (UPPDATERAD TABELL - Status borttagen, datum tillagt) */}
         {activeTab === 'history' && (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
             {soldAds.length === 0 ? (
               <div className="p-10 text-center text-gray-400">
                 <p>{t.emptyStates.history}</p>
@@ -315,7 +315,7 @@ function Dashboard() {
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm text-left">
-                  <thead className="text-xs text-gray-700 uppercase bg-gray-50 border-b">
+                  <thead className="text-xs text-brand-text/70 uppercase bg-brand-beige border-b">
                     <tr>
                       <th className="px-6 py-3">{t.listing.historyHeaders.datePublished}</th>
                       <th className="px-6 py-3">{t.listing.historyHeaders.title}</th>
@@ -325,7 +325,7 @@ function Dashboard() {
                   </thead>
                   <tbody>
                     {soldAds.map((ad) => (
-                      <tr key={ad.id} className="bg-white border-b hover:bg-gray-50">
+                      <tr key={ad.id} className="bg-white border-b hover:bg-brand-beige/50">
                         {/* 1. SKAPAD DATUM */}
                         <td className="px-6 py-4">
                           {new Date(ad.created_at).toLocaleDateString()}
@@ -356,11 +356,11 @@ function Dashboard() {
 
         {/* FAVORITER */}
         {activeTab === 'favorites' && (
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200">
             {favoriteAds.length === 0 ? (
-              <div className="text-center py-10 text-gray-400 bg-gray-50 rounded border border-dashed border-gray-300">
+              <div className="text-center py-10 text-brand-text/60 bg-brand-beige rounded-xl border border-dashed border-gray-300">
                 <p>Du har inte sparat några annonser än.</p>
-                <Link href="/" className="text-blue-600 underline mt-2 inline-block">
+                <Link href="/" className="text-brand-green underline mt-2 inline-block hover:text-brand-green/80">
                   Till startsidan
                 </Link>
               </div>
@@ -389,48 +389,48 @@ function Dashboard() {
               <div className="bg-red-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-3xl">💔</span>
               </div>
-              <h3 className="text-2xl font-bold text-gray-900">{t.deleteModal.title}</h3>
+              <h3 className="text-2xl font-display text-brand-green">{t.deleteModal.title}</h3>
               <p className="text-gray-500 mt-2" dangerouslySetInnerHTML={{ __html: t.deleteModal.description(adToDelete?.title).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }}></p>
             </div>
 
-            <div className="bg-gray-50 p-4 rounded-lg mb-6 text-left">
-              <p className="text-sm font-semibold text-gray-700 mb-3">{t.deleteModal.question}</p>
+            <div className="bg-brand-beige p-4 rounded-xl mb-6 text-left">
+              <p className="text-sm font-semibold text-brand-text mb-3">{t.deleteModal.question}</p>
               
               <div className="space-y-3">
-                <label className="flex items-center gap-3 cursor-pointer p-2 rounded hover:bg-gray-100">
+                <label className="flex items-center gap-3 cursor-pointer p-2 rounded-xl hover:bg-white/50 transition">
                   <input 
                     type="radio" 
                     name="reason" 
                     value="sold_here" 
                     checked={deleteReason === 'sold_here'}
                     onChange={(e) => setDeleteReason(e.target.value)}
-                    className="w-4 h-4 text-black focus:ring-black"
+                    className="w-4 h-4 text-brand-green focus:ring-brand-green"
                   />
-                  <span className="text-sm text-gray-700">{t.deleteModal.options.soldHere}</span>
+                  <span className="text-sm text-brand-text">{t.deleteModal.options.soldHere}</span>
                 </label>
 
-                <label className="flex items-center gap-3 cursor-pointer p-2 rounded hover:bg-gray-100">
+                <label className="flex items-center gap-3 cursor-pointer p-2 rounded-xl hover:bg-white/50 transition">
                   <input 
                     type="radio" 
                     name="reason" 
                     value="sold_elsewhere" 
                     checked={deleteReason === 'sold_elsewhere'}
                     onChange={(e) => setDeleteReason(e.target.value)}
-                    className="w-4 h-4 text-black focus:ring-black"
+                    className="w-4 h-4 text-brand-green focus:ring-brand-green"
                   />
-                  <span className="text-sm text-gray-700">{t.deleteModal.options.soldElsewhere}</span>
+                  <span className="text-sm text-brand-text">{t.deleteModal.options.soldElsewhere}</span>
                 </label>
 
-                <label className="flex items-center gap-3 cursor-pointer p-2 rounded hover:bg-gray-100">
+                <label className="flex items-center gap-3 cursor-pointer p-2 rounded-xl hover:bg-white/50 transition">
                   <input 
                     type="radio" 
                     name="reason" 
                     value="just_delete" 
                     checked={deleteReason === 'just_delete'}
                     onChange={(e) => setDeleteReason(e.target.value)}
-                    className="w-4 h-4 text-black focus:ring-black"
+                    className="w-4 h-4 text-brand-green focus:ring-brand-green"
                   />
-                  <span className="text-sm text-gray-700">{t.deleteModal.options.justDelete}</span>
+                  <span className="text-sm text-brand-text">{t.deleteModal.options.justDelete}</span>
                 </label>
               </div>
             </div>

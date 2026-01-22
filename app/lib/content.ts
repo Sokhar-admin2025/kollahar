@@ -5,7 +5,7 @@
 export const DASHBOARD_TEXTS = {
   // --- GEMENSAMT / NAVIGATION ---
   navigation: {
-    brand: "🛒 Min Marknadsplats",
+    brand: "Kolla här!",
     myPage: "Min sida",
     sellBtn: "Sälj något"
   },

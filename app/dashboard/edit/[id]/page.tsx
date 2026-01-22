@@ -67,9 +67,9 @@ export default function EditListing() {
 
   if (fetching) {
     return (
-      <div className="min-h-screen bg-gray-50 py-10 px-4">
+      <div className="min-h-screen bg-brand-beige py-10 px-4">
         <div className="max-w-2xl mx-auto">
-          <div className="p-10 text-center text-gray-600">{tEdit.loadingData}</div>
+          <div className="p-10 text-center text-brand-text/70">{tEdit.loadingData}</div>
         </div>
       </div>
     )
@@ -77,15 +77,15 @@ export default function EditListing() {
 
   if (error || !listing) {
     return (
-      <div className="min-h-screen bg-gray-50 py-10 px-4">
+      <div className="min-h-screen bg-brand-beige py-10 px-4">
         <div className="max-w-2xl mx-auto">
           <div className="mb-8 flex items-center justify-between">
-            <h1 className="text-3xl font-bold text-gray-900">{tEdit.header}</h1>
+            <h1 className="text-3xl font-display text-brand-green">{tEdit.header}</h1>
             <Button variant="link" onClick={() => router.push('/dashboard')}>
               {tEdit.backLink}
             </Button>
           </div>
-          <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200">
+          <div className="bg-white p-8 rounded-xl shadow-md border border-gray-200">
             <p className="text-red-600 mb-4">{error || 'Annonsen hittades inte.'}</p>
             <Button variant="primary" onClick={() => router.push('/dashboard')}>
               Tillbaka till Dashboard
@@ -97,11 +97,11 @@ export default function EditListing() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-10 px-4">
+    <div className="min-h-screen bg-brand-beige py-10 px-4">
       <div className="max-w-2xl mx-auto">
         
         <div className="mb-8 flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-gray-900">{tEdit.header}</h1>
+          <h1 className="text-3xl font-display text-brand-green">{tEdit.header}</h1>
           <Button variant="link" onClick={() => router.push('/dashboard')}>
             {tEdit.backLink}
           </Button>

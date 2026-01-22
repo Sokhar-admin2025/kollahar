@@ -35,38 +35,38 @@ export default async function FavoritesPage() {
   const t = DASHBOARD_TEXTS
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-brand-beige flex flex-col">
       <main className="max-w-6xl mx-auto p-6 w-full flex-grow">
         <div className="flex justify-between items-end mb-6">
-          <h3 className="text-2xl font-bold text-gray-900">Favoriter</h3>
-          <span className="text-sm text-gray-500">{favoriteListings.length} träffar</span>
+          <h3 className="text-2xl font-display text-brand-green">Favoriter</h3>
+          <span className="text-sm text-brand-text/70">{favoriteListings.length} träffar</span>
         </div>
 
         <div className="flex space-x-4 border-b border-gray-200 mb-6">
           <Link
             href="/dashboard"
-            className="pb-2 px-1 font-medium text-sm transition-colors relative focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-t text-gray-500 hover:text-gray-700"
+            className="pb-2 px-1 font-medium text-sm transition-colors relative focus:outline-none focus:ring-2 focus:ring-brand-green rounded-t text-brand-text/60 hover:text-brand-text"
           >
             {t.tabs.active}
           </Link>
           <Link
             href="/dashboard/favorites"
-            className="pb-2 px-1 font-medium text-sm transition-colors relative focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-t text-blue-600 border-b-2 border-blue-600 inline-flex items-center gap-2"
+            className="pb-2 px-1 font-medium text-sm transition-colors relative focus:outline-none focus:ring-2 focus:ring-brand-green rounded-t text-brand-green border-b-2 border-brand-green inline-flex items-center gap-2"
           >
             <Heart size={16} />
             Sparade annonser ({favoriteListings.length})
           </Link>
           <Link
             href="/dashboard?tab=history"
-            className="pb-2 px-1 font-medium text-sm transition-colors relative focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-t text-gray-500 hover:text-gray-700"
+            className="pb-2 px-1 font-medium text-sm transition-colors relative focus:outline-none focus:ring-2 focus:ring-brand-green rounded-t text-brand-text/60 hover:text-brand-text"
           >
             {t.tabs.history}
           </Link>
         </div>
 
         {favoriteListings.length === 0 ? (
-          <div className="text-center py-20 bg-white rounded-lg border border-dashed border-gray-300">
-            <p className="text-gray-500 text-lg">Du har inte sparat några annonser än</p>
+          <div className="text-center py-20 bg-white rounded-xl shadow-md border border-dashed border-gray-300">
+            <p className="text-brand-text/70 text-lg">Du har inte sparat några annonser än</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">

@@ -71,7 +71,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-gray-50">
+    <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-brand-beige">
       <div className="w-full max-w-md space-y-4">
         <button
           type="button"
@@ -82,17 +82,17 @@ export default function LoginPage() {
               router.push('/')
             }
           }}
-          className="mb-2 inline-block text-sm font-medium text-gray-500 hover:text-black transition"
+          className="mb-2 inline-block text-sm font-medium text-brand-text/70 hover:text-brand-green transition"
         >
           ← Tillbaka
         </button>
-        <div className="space-y-4 rounded-lg border p-8 shadow-lg bg-white text-black">
-          <h1 className="text-2xl font-bold text-center mb-6">Logga in / Skapa konto</h1>
+        <div className="space-y-4 rounded-xl border p-8 shadow-md bg-white text-brand-text">
+          <h1 className="text-2xl font-display text-brand-green text-center mb-6">Logga in / Skapa konto</h1>
           
           <div className="space-y-2">
             <label className="text-sm font-medium">E-post</label>
             <input
-              className="w-full rounded border border-gray-300 p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+              className="w-full rounded-xl border border-gray-300 p-2 focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none"
               type="email"
               placeholder="din@email.com"
               value={email}
@@ -103,7 +103,7 @@ export default function LoginPage() {
           <div className="space-y-2">
             <label className="text-sm font-medium">Lösenord</label>
             <input
-              className={`w-full rounded border p-2 focus:ring-2 focus:ring-blue-500 outline-none ${
+              className={`w-full rounded-xl border p-2 focus:ring-2 focus:ring-brand-green outline-none ${
                 password.length > 0 && password.length < AUTH_CONFIG.MIN_PASSWORD_LENGTH
                   ? 'border-red-300 focus:ring-red-500'
                   : 'border-gray-300'
@@ -135,7 +135,7 @@ export default function LoginPage() {
             <button
               onClick={handleSignIn}
               disabled={loading}
-              className="w-full rounded bg-black p-3 text-white font-medium hover:bg-gray-800 disabled:opacity-50 transition-colors"
+              className="w-full rounded-xl bg-brand-green p-3 text-white font-medium hover:bg-brand-green/90 disabled:opacity-50 transition-colors shadow-md"
             >
               {loading ? 'Arbetar...' : 'Logga in'}
             </button>
@@ -143,7 +143,7 @@ export default function LoginPage() {
             <button
               onClick={handleSignUp}
               disabled={loading}
-              className="w-full rounded border border-gray-300 p-3 text-gray-700 font-medium hover:bg-gray-50 disabled:opacity-50 transition-colors"
+              className="w-full rounded-xl border border-brand-green p-3 text-brand-green font-medium hover:bg-brand-green/10 disabled:opacity-50 transition-colors"
             >
               Skapa nytt konto
             </button>

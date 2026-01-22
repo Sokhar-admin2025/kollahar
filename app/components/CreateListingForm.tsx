@@ -218,7 +218,7 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
   const totalImages = allImages.length
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 space-y-6">
+    <form onSubmit={handleSubmit} className="bg-white p-8 rounded-xl shadow-md border border-gray-200 space-y-6">
       
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -227,7 +227,7 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
         <input
           type="text"
           required
-          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+          className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition"
           placeholder={t.form.title.placeholder}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
@@ -239,7 +239,7 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
           {t.form.category.label}
         </label>
         <select
-          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white"
+          className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition bg-white"
           value={category}
           onChange={(e) => setCategory(e.target.value)}
         >
@@ -257,7 +257,7 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
           <input
             type="number"
             required
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+            className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition"
             placeholder={t.form.price.placeholder}
             value={price}
             onChange={(e) => setPrice(e.target.value)}
@@ -270,7 +270,7 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
           <input
             type="text"
             required
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+            className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition"
             placeholder={t.form.location.placeholder}
             value={location}
             onChange={(e) => setLocation(e.target.value)}
@@ -285,7 +285,7 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
         <textarea
           required
           rows={4}
-          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+          className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition"
           placeholder={t.form.description.placeholder}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
@@ -333,7 +333,7 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
           
           {/* Ladda upp ny bild */}
           {totalImages < 5 && (
-            <label className={`w-24 h-24 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 hover:border-blue-400 transition ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
+            <label className={`w-24 h-24 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:bg-brand-beige hover:border-brand-green transition ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
               <span className="text-2xl text-gray-400">+</span>
               <input 
                 type="file" 
@@ -345,7 +345,7 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
             </label>
           )}
         </div>
-        {uploading && <p className="text-sm text-blue-600 animate-pulse">{t.form.image.uploading}</p>}
+        {uploading && <p className="text-sm text-brand-green animate-pulse">{t.form.image.uploading}</p>}
       </div>
 
       <hr className="border-gray-100" />

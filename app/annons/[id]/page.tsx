@@ -168,17 +168,17 @@ export default function ListingDetails() {
   if (loading) return <div className="p-10 text-center">{t.loading}</div>
   
   if (!ad) return (
-    <div className="p-10 text-center">
-      <h2 className="text-xl font-bold mb-4">{t.notFound.title}</h2>
-      <Link href="/" className="text-blue-600 underline">{t.notFound.link}</Link>
+    <div className="p-10 text-center bg-brand-beige min-h-screen">
+      <h2 className="text-xl font-display text-brand-green mb-4">{t.notFound.title}</h2>
+      <Link href="/" className="text-brand-green underline hover:text-brand-green/80">{t.notFound.link}</Link>
     </div>
   )
 
   return (
-    <div className="min-h-screen bg-gray-50 py-10 px-4">
+    <div className="min-h-screen bg-brand-beige py-10 px-4">
       <div className="max-w-4xl mx-auto">
         
-        <Link href="/" className="inline-block mb-6 text-sm font-medium text-gray-500 hover:text-black transition">
+        <Link href="/" className="inline-block mb-6 text-sm font-medium text-brand-text/70 hover:text-brand-green transition">
           {t.backToHome}
         </Link>
 
@@ -186,11 +186,11 @@ export default function ListingDetails() {
           
           {/* --- BILDGALLERI (VÄNSTER) --- */}
           <div className="flex flex-col gap-4">
-            <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-200 aspect-square relative">
+            <div className="bg-white rounded-xl overflow-hidden shadow-md border border-gray-200 aspect-square relative">
               {activeImage ? (
                 <img src={activeImage} alt={ad.title} className="w-full h-full object-cover transition-all duration-300" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
+                <div className="w-full h-full flex items-center justify-center bg-brand-beige text-brand-text/60">
                   {t.noImage}
                 </div>
               )}
@@ -205,8 +205,8 @@ export default function ListingDetails() {
                   <button 
                     key={index}
                     onClick={() => setActiveImage(img)}
-                    className={`relative w-20 h-20 rounded-lg overflow-hidden border-2 flex-shrink-0 transition ${
-                      activeImage === img ? 'border-blue-600 ring-2 ring-blue-100' : 'border-transparent opacity-70 hover:opacity-100'
+                    className={`relative w-20 h-20 rounded-xl overflow-hidden border-2 flex-shrink-0 transition ${
+                      activeImage === img ? 'border-brand-green ring-2 ring-brand-green/20' : 'border-transparent opacity-70 hover:opacity-100'
                     }`}
                   >
                     <img src={img} alt={`Bild ${index + 1}`} className="w-full h-full object-cover" />
@@ -218,7 +218,7 @@ export default function ListingDetails() {
 
           {/* --- INFO (HÖGER) --- */}
           <div className="flex flex-col h-full">
-            <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-200 flex-1 flex flex-col relative">
+            <div className="bg-white p-8 rounded-xl shadow-md border border-gray-200 flex-1 flex flex-col relative">
               {!(currentUser?.id && ad?.user_id === currentUser.id) && (
                 <div className="absolute top-4 right-4">
                   <FavoriteButton listingId={ad.id} />
@@ -226,8 +226,8 @@ export default function ListingDetails() {
               )}
               
               <div className="mb-6">
-                <h1 className="text-3xl font-extrabold text-gray-900 mb-2">{ad.title}</h1>
-                <div className="flex items-center text-gray-500 text-sm">
+                <h1 className="text-3xl font-bold text-brand-green mb-2">{ad.title}</h1>
+                <div className="flex items-center text-brand-text/70 text-sm">
                   <span className="mr-2">📍</span>
                   {ad.location}
                   <span className="mx-2">•</span>
@@ -235,21 +235,21 @@ export default function ListingDetails() {
                 </div>
               </div>
 
-              <div className="text-4xl font-bold text-blue-600 mb-8">
+              <div className="text-4xl font-bold text-brand-green mb-8">
                 {ad.price} kr
               </div>
 
-              <div className="prose prose-sm text-gray-600 mb-8 flex-grow">
-                <h3 className="text-gray-900 font-semibold mb-2">{t.sections.description}</h3>
+              <div className="prose prose-sm text-brand-text mb-8 flex-grow">
+                <h3 className="text-brand-text font-semibold mb-2">{t.sections.description}</h3>
                 <p className="whitespace-pre-line">{ad.description}</p>
               </div>
 
               {/* --- NYTT: SÄLJARKORT --- */}
               <div className="mt-auto">
                 <div className="mb-4 pt-6 border-t border-gray-100">
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Säljare</p>
+                  <p className="text-xs font-bold text-brand-text/60 uppercase tracking-widest mb-3">Säljare</p>
                   
-                  <div className="flex items-center gap-4 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                  <div className="flex items-center gap-4 bg-brand-beige p-3 rounded-xl border border-gray-200">
                     {/* Säljarens Bild */}
                     <div className="w-12 h-12 rounded-full bg-white border border-gray-200 overflow-hidden flex-shrink-0">
                       {sellerProfile?.avatar_url ? (
@@ -261,16 +261,16 @@ export default function ListingDetails() {
                     
                     {/* Säljarens Namn */}
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-bold text-gray-900 truncate">
+                      <h4 className="font-bold text-brand-text truncate">
                         {sellerProfile?.full_name || 'Anonym säljare'}
                       </h4>
                       {sellerProfile?.website && (
-                         <a href={sellerProfile.website} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline truncate block">
+                         <a href={sellerProfile.website} target="_blank" rel="noopener noreferrer" className="text-xs text-brand-green hover:underline truncate block">
                            {sellerProfile.website.replace(/^https?:\/\//, '')}
                          </a>
                       )}
                       {!sellerProfile?.website && (
-                        <p className="text-xs text-gray-500">Medlem på Sokhar</p>
+                        <p className="text-xs text-brand-text/60">Medlem på Sokhar</p>
                       )}
                     </div>
                   </div>
@@ -280,13 +280,13 @@ export default function ListingDetails() {
                 {ad.status === 'active' ? (
                   <Button 
                     onClick={handleContact} 
-                    className="w-full py-4 text-lg font-bold shadow-lg shadow-blue-500/20"
+                    className="w-full py-4 text-lg font-bold shadow-lg"
                     disabled={contacting}
                   >
                     {contacting ? 'Öppnar chatt...' : t.contact.button}
                   </Button>
                 ) : (
-                   <div className="bg-gray-100 p-4 rounded-lg text-center text-gray-500 font-medium">
+                   <div className="bg-brand-beige p-4 rounded-xl text-center text-brand-text/70 font-medium">
                      Denna vara är inte längre till salu.
                    </div>
                 )}

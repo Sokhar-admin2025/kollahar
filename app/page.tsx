@@ -146,19 +146,19 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-brand-beige flex flex-col">
       
       {/* --- HEADER --- */}
-      <nav className="bg-white border-b p-4 sticky top-0 z-20 shadow-sm">
+      <nav className="bg-white border-b border-gray-200 p-4 sticky top-0 z-20 shadow-sm">
         <div className="max-w-6xl mx-auto flex justify-between items-center">
-          <h1 className="text-xl font-bold tracking-tight cursor-pointer text-gray-900" onClick={() => window.scrollTo(0,0)}>
+          <h1 className="text-xl font-display text-brand-green tracking-tight cursor-pointer" onClick={() => window.scrollTo(0,0)}>
             {t.navigation.brand}
           </h1>
           
           <div className="flex gap-4 items-center">
             <button 
               onClick={handleDashboardClick} 
-              className="text-sm font-medium hover:underline text-gray-700"
+              className="text-sm font-medium hover:underline text-brand-text/70 hover:text-brand-green transition"
             >
               {t.navigation.myPage}
             </button>
@@ -171,21 +171,12 @@ export default function HomePage() {
       </nav>
 
       {/* --- HERO SECTION --- */}
-      <div className="relative bg-gray-900 py-20 md:py-32 px-4 text-center overflow-hidden">
-        <div className="absolute inset-0 z-0">
-          <img 
-            src="https://images.unsplash.com/photo-1556740758-90de374c12ad?auto=format&fit=crop&w=1600&q=80" 
-            alt="Marketplace background" 
-            className="w-full h-full object-cover opacity-40"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-gray-900/90"></div>
-        </div>
-
+      <div className="relative bg-brand-beige py-20 md:py-32 px-4 text-center overflow-hidden">
         <div className="relative z-10 max-w-4xl mx-auto">
-          <h2 className="text-4xl md:text-6xl font-extrabold mb-6 tracking-tight text-white drop-shadow-sm">
+          <h2 className="text-4xl md:text-6xl font-display font-extrabold mb-6 tracking-tight text-brand-green drop-shadow-sm">
             {t.landing.hero.title}
           </h2>
-          <p className="text-gray-200 text-lg md:text-xl mb-10 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-brand-text text-lg md:text-xl mb-10 max-w-2xl mx-auto leading-relaxed">
             {t.landing.hero.subtitle}
           </p>
           
@@ -193,19 +184,19 @@ export default function HomePage() {
           <div className="max-w-3xl mx-auto mt-12 mb-8">
             {/* Sökfält */}
             <div className="mb-6 relative">
-              <svg className="absolute left-6 top-1/2 transform -translate-y-1/2 text-gray-400 z-10" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              <svg className="absolute left-6 top-1/2 transform -translate-y-1/2 text-brand-text/50 z-10" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
               <input 
                 type="text"
                 placeholder={t.landing.search.placeholder}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-14 pr-6 py-5 bg-white rounded-xl text-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition shadow-lg"
+                className="w-full pl-14 pr-6 py-5 bg-white rounded-xl text-lg focus:ring-2 focus:ring-brand-green focus:outline-none transition shadow-lg"
               />
             </div>
 
             {/* Kategoriknappar */}
             <div className="flex flex-col items-center gap-4">
-              <span className="text-xs font-bold text-white/70 uppercase tracking-widest">
+              <span className="text-xs font-bold text-brand-text/70 uppercase tracking-widest">
                 {t.landing.search.filterTitle}
               </span>
               <div className="flex flex-wrap gap-3 justify-center">
@@ -213,10 +204,10 @@ export default function HomePage() {
                   <button
                     key={cat}
                     onClick={() => setSelectedCategory(cat)}
-                    className={`px-6 py-3 rounded-full text-sm font-medium transition-all duration-200 ${
+                    className={`px-6 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
                       selectedCategory === cat
-                        ? 'bg-white/30 text-white shadow-lg backdrop-blur-sm'
-                        : 'bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm'
+                        ? 'bg-brand-green text-white shadow-lg'
+                        : 'bg-white text-brand-text hover:bg-brand-green/10 border border-brand-green/20'
                     }`}
                   >
                     {cat}
@@ -231,18 +222,18 @@ export default function HomePage() {
       {/* --- ANNONS-GALLERI --- */}
       <main className="max-w-6xl mx-auto p-6 w-full flex-grow">
         <div className="flex justify-between items-end mb-6">
-          <h3 className="text-2xl font-bold text-gray-900">{t.landing.listings.header}</h3>
-          <span className="text-sm text-gray-500">{filteredAds.length} träffar</span>
+          <h3 className="text-2xl font-display text-brand-green">{t.landing.listings.header}</h3>
+          <span className="text-sm text-brand-text/70">{filteredAds.length} träffar</span>
         </div>
 
         {loading ? (
-          <div className="text-center py-20 text-gray-400">Laddar annonser...</div>
+          <div className="text-center py-20 text-brand-text/60">Laddar annonser...</div>
         ) : filteredAds.length === 0 ? (
-          <div className="text-center py-20 bg-white rounded-lg border border-dashed border-gray-300">
-            <p className="text-gray-500 text-lg">{t.landing.listings.empty}</p>
+          <div className="text-center py-20 bg-white rounded-xl shadow-md border border-dashed border-gray-300">
+            <p className="text-brand-text/70 text-lg">{t.landing.listings.empty}</p>
             <button 
               onClick={() => {setSearchQuery(''); setSelectedCategory('Alla')}} 
-              className="text-blue-600 underline mt-2"
+              className="text-brand-green underline mt-2 hover:text-brand-green/80"
             >
               Rensa sökning
             </button>

@@ -131,16 +131,16 @@ export default function InboxPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-brand-beige flex flex-col">
       
       {/* Header */}
-      <div className="bg-white border-b px-6 py-4 flex items-center sticky top-0 z-10">
-        <h1 className="text-xl font-bold text-gray-800">{t.pageTitle}</h1>
+      <div className="bg-white border-b px-6 py-4 flex items-center sticky top-0 z-10 shadow-sm">
+        <h1 className="text-xl font-display text-brand-green">{t.pageTitle}</h1>
       </div>
 
       <div className="max-w-6xl mx-auto w-full flex-grow p-4 md:p-6 h-[calc(100vh-100px)] flex flex-col gap-4">
         <div className="flex justify-start">
-          <Link href="/dashboard" className="text-sm text-gray-500 hover:text-black">
+          <Link href="/dashboard" className="text-sm text-brand-text/70 hover:text-brand-green">
             ← Tillbaka till Dashboard
           </Link>
         </div>
@@ -155,8 +155,8 @@ export default function InboxPage() {
               md:translate-x-0
             `}
           >
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col h-full">
-            <div className="p-4 border-b bg-gray-50 font-medium text-gray-600">
+            <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden flex flex-col h-full">
+            <div className="p-4 border-b bg-brand-beige font-medium text-brand-text">
               {t.navLabel}
             </div>
             
@@ -173,8 +173,8 @@ export default function InboxPage() {
                     <li 
                       key={conv.id}
                       onClick={() => handleSelectConversation(conv)}
-                      className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-blue-50 transition ${
-                        selectedConversation?.id === conv.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
+                      className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-brand-green/10 transition ${
+                        selectedConversation?.id === conv.id ? 'bg-brand-green/10 border-l-4 border-l-brand-green' : ''
                       }`}
                     >
                       <div className="flex items-center gap-3">
@@ -191,7 +191,7 @@ export default function InboxPage() {
                           <p className="text-xs text-gray-500 flex items-center gap-2">
                             {new Date(conv.created_at).toLocaleDateString()}
                             {conv.hasUnread && (
-                              <span className="inline-flex h-2 w-2 rounded-full bg-blue-500" aria-hidden="true" />
+                              <span className="inline-flex h-2 w-2 rounded-full bg-brand-green" aria-hidden="true" />
                             )}
                           </p>
                         </div>
@@ -213,7 +213,7 @@ export default function InboxPage() {
               md:translate-x-0 md:col-span-2
             `}
           >
-            <div className="relative bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col h-full overflow-hidden">
+            <div className="relative bg-white rounded-xl shadow-md border border-gray-200 flex flex-col h-full overflow-hidden">
               {!selectedConversation ? (
                 // Om ingen chatt är vald
                 <div className="flex-1 flex flex-col items-center justify-center text-gray-400 p-8 text-center">
@@ -224,11 +224,11 @@ export default function InboxPage() {
                 // Om chatt ÄR vald
                 <>
                   {/* Chatt-header */}
-                  <div className="p-4 border-b bg-gray-50 flex justify-between items-center">
+                  <div className="p-4 border-b bg-brand-beige flex justify-between items-center">
                     <div>
-                      <span className="text-xs text-gray-500 uppercase tracking-wide">Angående:</span>
-                      <h3 className="font-bold text-gray-800">
-                        <Link href={`/annons/${selectedConversation.listing_id}`} className="hover:underline">
+                      <span className="text-xs text-brand-text/60 uppercase tracking-wide">Angående:</span>
+                      <h3 className="font-bold text-brand-text">
+                        <Link href={`/annons/${selectedConversation.listing_id}`} className="hover:text-brand-green transition">
                           {selectedConversation.listing?.title}
                         </Link>
                       </h3>
@@ -238,7 +238,7 @@ export default function InboxPage() {
                     <button
                       type="button"
                       onClick={handleBackToInboxMobile}
-                      className="md:hidden inline-flex items-center justify-center rounded-full p-1 text-gray-600 hover:text-black focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="md:hidden inline-flex items-center justify-center rounded-full p-1 text-brand-text/70 hover:text-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green"
                       aria-label="Stäng chatt och visa inkorg"
                     >
                       <X className="w-5 h-5" />
@@ -246,7 +246,7 @@ export default function InboxPage() {
                   </div>
 
                   {/* Meddelande-logg */}
-                  <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/50">
+                  <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-brand-beige/50">
                     {loadingMessages ? (
                       <div className="text-center text-gray-400 text-sm">Laddar meddelanden...</div>
                     ) : (
@@ -254,13 +254,13 @@ export default function InboxPage() {
                         const isMe = msg.sender_id === userId
                         return (
                           <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                            <div className={`max-w-[70%] rounded-2xl px-4 py-2 shadow-sm text-sm ${
+                            <div className={`max-w-[70%] rounded-xl px-4 py-2 shadow-sm text-sm ${
                               isMe 
-                                ? 'bg-blue-600 text-white rounded-br-none' 
-                                : 'bg-white text-gray-800 border border-gray-200 rounded-bl-none'
+                                ? 'bg-brand-green text-white rounded-br-none' 
+                                : 'bg-white text-brand-text border border-gray-200 rounded-bl-none'
                             }`}>
                               <p>{msg.content}</p>
-                              <span className={`text-[10px] block mt-1 opacity-70 ${isMe ? 'text-blue-100' : 'text-gray-400'}`}>
+                              <span className={`text-[10px] block mt-1 opacity-70 ${isMe ? 'text-white/80' : 'text-brand-text/60'}`}>
                                 {new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                               </span>
                             </div>
@@ -278,7 +278,7 @@ export default function InboxPage() {
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
                         placeholder={t.chat.placeholder}
-                        className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                        className="flex-1 p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none"
                         disabled={sending}
                       />
                       <Button type="submit" disabled={sending || !newMessage.trim()}>

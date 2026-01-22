@@ -8,27 +8,32 @@ Detta dokument är för **Frontend-utvecklare & Designers** och beskriver design
 
 Sokhar använder **Tailwind CSS v4** med standardkonfiguration. Alla styles är utility-baserade, inga custom CSS-filer (förutom `globals.css` för base styles).
 
-### Färgpalett
+### Färgpalett (Sokhar Brand Colors)
 
 ```css
-/* Primärfärger */
---blue-600: #2563eb    /* Primär CTA, länkar */
---blue-700: #1d4ed8    /* Hover-states */
---gray-50: #f9fafb     /* Bakgrund */
---gray-100: #f3f4f6    /* Ljus bakgrund */
---gray-200: #e5e7eb    /* Borders */
---gray-500: #6b7280    /* Sekundär text */
---gray-900: #111827    /* Primär text */
---red-600: #dc2626     /* Favoriter, danger */
---green-100: #dcfce7   /* Success-states */
+/* Brand Colors - Definierade i globals.css */
+--color-brand-green: #2C4638    /* Primär accent, knappar, länkar */
+--color-brand-beige: #F4F3F0     /* Bakgrundsfärg, varm och mjuk */
+--color-brand-text: #1A1A1A      /* Primär textfärg */
+
+/* Användning i Tailwind */
+bg-brand-green      /* Grön bakgrund */
+text-brand-green    /* Grön text */
+bg-brand-beige      /* Beige bakgrund */
+text-brand-text     /* Primär text */
 ```
 
 ### Typografi
 
-- **Font Family**: System fonts (sans-serif stack)
-- **Headings**: `font-bold`, `font-extrabold`
-- **Body**: `font-medium`, `font-semibold`
-- **Sizes**: `text-xs`, `text-sm`, `text-base`, `text-lg`, `text-xl`, `text-2xl`, `text-3xl`, `text-4xl`
+- **Display Font (Rubriker)**: **Knewave** - Lekfull, handskriven stil för H1-rubriker
+  - Används via `font-display` class
+  - Letter-spacing: 0.0425em (normal), 0.068em (stora rubriker)
+  - Line-height: 1.3 (normal), 1.25 (stora rubriker)
+  - Font-smoothing aktiverat för bättre rendering
+- **Body Font**: **DM Sans** - Modern, läsbar sans-serif för brödtext
+  - Används via `font-body` class (standard på `<body>`)
+  - Laddas via `next/font/google`
+- **Font Sizes**: `text-xs`, `text-sm`, `text-base`, `text-lg`, `text-xl`, `text-2xl`, `text-3xl`, `text-4xl`
 
 ### Spacing
 
