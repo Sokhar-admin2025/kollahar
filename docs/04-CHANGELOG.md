@@ -44,6 +44,15 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
   - Title: "Kollahär! - En marknadsplats för trygg handel"
   - Description: "Köp och sälj enkelt i en trygg marknadsplats. Var med och bygg framtiden tillsammans!"
 
+#### EAA-kompatibilitet (Tillgänglighet)
+- **Sökfunktion**: EAA-kompatibel sökfunktion med explicit sök-knapp
+  - Sök-knapp inkorporerad i sökfältets högra kant (både desktop och mobil)
+  - Form-submit funktionalitet: Enter-tangent fungerar för att söka
+  - Real-time filtering: Resultaten uppdateras automatiskt medan användaren skriver
+  - ARIA-live region: Feedback till skärmläsare när resultaten uppdateras
+  - Rensningskryss: Egen kryss-knapp i temat (webbläsarens inbyggda dold via CSS)
+  - Tydlig feedback: Antal träffar visas och meddelas via ARIA
+
 ---
 
 ## [1.1.0] - 2025-01-17

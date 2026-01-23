@@ -54,3 +54,27 @@ body {
   letter-spacing: 0.068em; /* 15% tätare än 0.08em */
   line-height: 1.25;
 }
+
+/* Screen reader only - döljer visuellt men synlig för skärmläsare */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Dölj webbläsarens inbyggda clear-knapp för search-input */
+input[type="search"]::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+  display: none;
+}
+
+input[type="search"]::-moz-search-clear-button {
+  display: none;
+}
