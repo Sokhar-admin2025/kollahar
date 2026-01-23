@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 
 import { DASHBOARD_TEXTS } from '../lib/content'
 import Button from './atoms/Button'
+import LocationInput from './LocationInput'
 import type { Listing } from '../types'
 
 interface CreateListingFormProps {
@@ -267,13 +268,11 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
           <label className="block text-sm font-medium text-gray-700 mb-1">
             {t.form.location.label}
           </label>
-          <input
-            type="text"
-            required
-            className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition"
-            placeholder={t.form.location.placeholder}
+          <LocationInput
             value={location}
-            onChange={(e) => setLocation(e.target.value)}
+            onChange={setLocation}
+            placeholder={t.form.location.placeholder}
+            required
           />
         </div>
       </div>

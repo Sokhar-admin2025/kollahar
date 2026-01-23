@@ -152,18 +152,18 @@ export default function HomePage() {
       
       {/* --- HEADER --- */}
       <nav className="bg-white border-b border-gray-200 p-4 sticky top-0 z-20 shadow-sm">
-        <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
+        <div className="max-w-6xl mx-auto flex items-center justify-between gap-2">
           {/* Logotyp / Brand */}
           <button
             type="button"
             onClick={() => window.scrollTo(0, 0)}
-            className="text-xl font-display text-brand-green tracking-tight cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-green focus:ring-offset-2 focus:ring-offset-white"
+            className="text-2xl md:text-3xl font-display text-brand-green tracking-tight cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-green focus:ring-offset-2 focus:ring-offset-white"
           >
             {t.navigation.brand}
           </button>
 
           {/* Sökfält - Desktop (mitt i headern) */}
-          <div className="hidden md:flex flex-1 justify-center">
+          <div className="hidden md:flex flex-1 justify-start ml-4">
             <div className="relative w-full max-w-xl">
               <svg
                 className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-text/50"
@@ -237,21 +237,21 @@ export default function HomePage() {
       </nav>
 
       {/* --- HERO SECTION --- */}
-      <div className="relative bg-brand-beige py-12 md:py-20 px-4 text-center overflow-hidden">
+      <div className="relative bg-brand-beige py-6 md:py-10 px-4 text-center overflow-hidden">
         <div className="relative z-10 max-w-4xl mx-auto">
           {/* Hero-logotyp överst (endast desktop) */}
           <img
             src="/hero-logo.png"
             alt="Kollahär Logo"
-            className="hidden md:block h-24 md:h-32 mx-auto mb-6 object-contain"
+            className="hidden md:block h-24 md:h-32 mx-auto mb-3 object-contain"
           />
 
-          <h2 className="text-2xl md:text-4xl font-display font-extrabold mb-4 tracking-tight text-brand-green drop-shadow-sm">
+          <h2 className="text-2xl md:text-4xl font-display font-extrabold mb-2 tracking-tight text-brand-green drop-shadow-sm">
             {t.landing.hero.title}
           </h2>
           
           {/* --- SÖK (Mobil) & KATEGORIER --- */}
-          <div className="max-w-3xl mx-auto mt-6 mb-4">
+          <div className="max-w-3xl mx-auto mt-3 mb-2">
             {/* Sökfält - endast mobil (lätt att nå med tummen) */}
             <div className="mb-4 relative block md:hidden">
               <svg
@@ -310,8 +310,8 @@ export default function HomePage() {
       </div>
 
       {/* --- ANNONS-GALLERI --- */}
-      <main className="max-w-6xl mx-auto p-6 w-full flex-grow">
-        <div className="flex justify-between items-end mb-6">
+      <main className="max-w-6xl mx-auto p-3 w-full flex-grow">
+        <div className="flex justify-between items-end mb-3">
           <h3 className="text-2xl font-display text-brand-green">{t.landing.listings.header}</h3>
           <span className="text-sm text-brand-text/70">{filteredAds.length} träffar</span>
         </div>
@@ -329,7 +329,7 @@ export default function HomePage() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {filteredAds.map((ad) => (
               <ListingCard
                 key={ad.id}

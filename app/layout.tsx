@@ -21,8 +21,8 @@ const dmSans = DM_Sans({
 })
 
 export const metadata: Metadata = {
-  title: 'Kollahär - Sveriges tryggaste marknadsplats',
-  description: 'Köp och sälj enkelt och tryggt på Kollahär. Sveriges tryggaste marknadsplats för allt från elektronik till gamla möbler.',
+  title: 'Kollahär! - En marknadsplats för trygg handel',
+  description: 'Köp och sälj enkelt i en trygg marknadsplats. Var med och bygg framtiden tillsammans!',
 }
 
 export default function RootLayout({

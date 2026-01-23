@@ -46,34 +46,35 @@ export default function ListingCard({ listing, currentUserId }: { listing: Listi
               alt={listing.title}
               fill
               className="object-cover group-hover:scale-105 transition-transform duration-300"
+              quality={90}
+              sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
             />
           ) : (
             <div className="flex items-center justify-center h-full text-gray-400">
               Ingen bild
             </div>
           )}
-          <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md text-xs font-medium text-gray-700">
+          <div className="absolute top-2 left-2 md:top-3 md:left-3 bg-white/90 backdrop-blur-sm px-1.5 py-0.5 md:px-2 md:py-1 rounded-md text-[10px] md:text-xs font-medium text-gray-700">
             {listing.category}
           </div>
         </div>
 
         {/* Innehåll */}
-        <div className="p-4 flex flex-col flex-1">
-          <div className="flex justify-between items-start mb-2">
-            <h3 className="font-semibold text-brand-text line-clamp-1 group-hover:text-brand-green transition-colors">
+        <div className="p-2 md:p-4 flex flex-col flex-1">
+          <div className="flex justify-between items-start mb-1">
+            <h3 className="text-sm md:text-base font-semibold text-brand-text line-clamp-2 group-hover:text-brand-green transition-colors antialiased">
               {listing.title}
             </h3>
           </div>
           
-          <div className="mt-auto space-y-2">
-            <p className="text-lg font-bold text-brand-green">
-              {formattedPrice}
-            </p>
-            
-            <div className="flex items-center text-brand-text/70 text-sm gap-4 pt-2 border-t border-gray-50">
-              <div className="flex items-center gap-1">
-                <MapPin className="w-4 h-4" />
-                <span className="truncate max-w-[100px]">{listing.location}</span>
+          <div className="mt-auto space-y-1">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-sm md:text-base font-bold text-brand-green antialiased">
+                {formattedPrice}
+              </p>
+              <div className="flex items-center text-brand-text/70 text-xs gap-0.5">
+                <MapPin className="w-3.5 h-3.5 text-brand-text/70" />
+                <span className="truncate max-w-[100px] antialiased">{listing.location}</span>
               </div>
             </div>
           </div>

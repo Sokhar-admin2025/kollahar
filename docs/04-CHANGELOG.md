@@ -6,6 +6,17 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ## [Unreleased] (Local Development)
 
+### ✨ Tillagt
+
+#### Platsval med autocomplete och dropdown
+- **LocationInput-komponent**: Ny komponent för platsval när användare skapar annonser
+  - Autocomplete med sökfunktion (primär metod) - sök bland svenska kommuner medan du skriver
+  - Dropdown med län → kommun (alternativ metod) - strukturerad val via två dropdowns
+  - Validering: Endast svenska kommuner accepteras
+  - Formatering: Sparas som "Kommun, Län" (t.ex. "Stockholm, Stockholms län")
+  - ~290 svenska kommuner och 21 län inkluderade
+  - UX: Autocomplete stängs när dropdown öppnas och vice versa
+
 ### 🔄 Ändrat
 
 #### Rebranding
@@ -13,6 +24,25 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
   - Alla synliga texter i UI uppdaterade (metadata, footer, alt-texter)
   - Alla dokumentationsfiler uppdaterade
   - Tekniska identifierare (package.json name) behåller "sokhar" för kompatibilitet
+
+#### UI/UX-förbättringar
+- **Hero-sektion**: Minskat spacing med 50% (`py-12 md:py-20` → `py-6 md:py-10`)
+  - Logo margin, titel margin och sök-sektion spacing minskat
+- **Annonslistning**: Optimerad för mobil
+  - Grid: 2 kolumner på mobil istället för 1 (`grid-cols-2`)
+  - ListingCard: Minskat padding på mobil (`p-4` → `p-2 md:p-4`)
+  - Typografi: Mindre textstorlekar på mobil (titel `text-sm`, pris `text-sm`, plats `text-xs`)
+  - Spacing: Tätare layout (`space-y-2` → `space-y-1`, `gap-6` → `gap-3`)
+  - Resultat: Tätare, Pinterest/Tise-liknande vy på mobil
+- **ListingCard förbättringar**:
+  - Streck mellan pris och plats borttaget
+  - Plats högerställd om priset på samma rad
+  - Förbättrad skärpa: Ökat kontrast, större ikoner, `antialiased` på text
+  - Bildkvalitet: `quality={90}` och `sizes`-prop för optimal rendering
+- **Header**: Brand-text "Kolla här!" större (`text-xl` → `text-2xl md:text-3xl`) och närmare sökfältet
+- **Metadata**: Uppdaterad title och description
+  - Title: "Kollahär! - En marknadsplats för trygg handel"
+  - Description: "Köp och sälj enkelt i en trygg marknadsplats. Var med och bygg framtiden tillsammans!"
 
 ---
 
