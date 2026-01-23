@@ -17,6 +17,15 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
   - ~290 svenska kommuner och 21 län inkluderade
   - UX: Autocomplete stängs när dropdown öppnas och vice versa
 
+#### Testdata och konfiguration
+- **Seed-data**: Korrekt seed-fil (`supabase/seed_dummy_data.sql`) med 63 testannonser
+  - Använder korrekt kolumnnamn `images` (ARRAY) istället för `image_url`
+  - Använder exakt angivna Unsplash-URL:er per kategori (Möbler, Fordon, Elektronik, Kläder, Övrigt)
+  - Dollar quoting ($$) för title och description för att hantera specialtecken
+  - 15 Möbler + 15 Fordon + 15 Elektronik + 10 Kläder + 8 Övrigt
+- **Delete-script**: `supabase/delete_dummy_data.sql` för att ta bort testdata
+  - Tar bort i korrekt ordning (messages → conversations → listings) för att respektera foreign keys
+
 ### 🔄 Ändrat
 
 #### Rebranding
@@ -52,6 +61,11 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
   - ARIA-live region: Feedback till skärmläsare när resultaten uppdateras
   - Rensningskryss: Egen kryss-knapp i temat (webbläsarens inbyggda dold via CSS)
   - Tydlig feedback: Antal träffar visas och meddelas via ARIA
+
+#### Konfiguration
+- **Next.js Image**: Lagt till `images.unsplash.com` i `next.config.ts` remotePatterns
+  - Tillåter externa bilder från Unsplash för testdata
+  - Fixar "hostname not configured"-fel vid rendering av seed-data bilder
 
 ---
 
