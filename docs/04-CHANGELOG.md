@@ -67,6 +67,23 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
   - Tillåter externa bilder från Unsplash för testdata
   - Fixar "hostname not configured"-fel vid rendering av seed-data bilder
 
+#### Sökning och navigation
+- **Bevara sökning vid navigation**: Sökning och filtrering bevaras när man navigerar tillbaka från annonsdetaljsidan
+  - Använder URL-parametrar (`?q=stol&category=...`) för att bevara sökning
+  - Läser från URL vid sidladdning och återställer sökningen automatiskt
+  - Uppdaterar URL när sökning/kategori ändras (använder `replaceState` för att undvika extra historik-poster)
+  - "Tillbaka till alla annonser"-länken behåller URL-parametrarna
+  - Wrappat komponenter i `<Suspense>` för Next.js 16-kompatibilitet (`useSearchParams`)
+
+### 🐛 Fixat
+
+#### Tillgänglighet och kontrast (iPhone Chrome)
+- **Placeholder-text i sökfält**: Ökat kontrast för bättre synlighet på iPhone Chrome
+  - Lagt till `placeholder:text-brand-text/50` på både desktop och mobil sökfält
+- **Kategori-tagg på annonsdetaljsidan**: Förbättrad kontrast och synlighet
+  - Ändrat från `bg-white/90` till `bg-brand-green/95 text-white` med `shadow-lg`
+  - Tagg syns nu tydligt med mörkgrön bakgrund och vit text
+
 ---
 
 ## [1.1.0] - 2025-01-17
