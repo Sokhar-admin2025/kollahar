@@ -68,7 +68,6 @@ export default function ListingCard({ listing, currentUserId }: { listing: Listi
           <div className="mt-auto space-y-2">
             <p className="text-lg font-bold text-brand-green">
               {formattedPrice}
-              <span className="text-xs font-normal text-brand-text/60 ml-1">/mån</span>
             </p>
             
             <div className="flex items-center text-brand-text/70 text-sm gap-4 pt-2 border-t border-gray-50">

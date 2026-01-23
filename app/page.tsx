@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { Menu } from 'lucide-react'
+import UserMenu from './components/UserMenu'
 
 // Vi importerar texter och knappar som vanligt
 import { DASHBOARD_TEXTS } from './lib/content'
@@ -150,69 +152,157 @@ export default function HomePage() {
       
       {/* --- HEADER --- */}
       <nav className="bg-white border-b border-gray-200 p-4 sticky top-0 z-20 shadow-sm">
-        <div className="max-w-6xl mx-auto flex justify-between items-center">
-          <h1 className="text-xl font-display text-brand-green tracking-tight cursor-pointer" onClick={() => window.scrollTo(0,0)}>
+        <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
+          {/* Logotyp / Brand */}
+          <button
+            type="button"
+            onClick={() => window.scrollTo(0, 0)}
+            className="text-xl font-display text-brand-green tracking-tight cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-green focus:ring-offset-2 focus:ring-offset-white"
+          >
             {t.navigation.brand}
-          </h1>
-          
-          <div className="flex gap-4 items-center">
-            <button 
-              onClick={handleDashboardClick} 
-              className="text-sm font-medium hover:underline text-brand-text/70 hover:text-brand-green transition"
+          </button>
+
+          {/* Sökfält - Desktop (mitt i headern) */}
+          <div className="hidden md:flex flex-1 justify-center">
+            <div className="relative w-full max-w-xl">
+              <svg
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-text/50"
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input
+                type="search"
+                aria-label={t.landing.search.placeholder}
+                placeholder={t.landing.search.placeholder}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-11 pr-4 py-2.5 rounded-full border border-gray-300 text-sm md:text-base bg-white focus:outline-none focus:ring-2 focus:ring-brand-green focus:border-brand-green"
+              />
+            </div>
+          </div>
+
+          {/* Navigation / Actions */}
+          <div className="flex items-center gap-2">
+            {/* Desktop: UserMenu för inloggad, annars Logga in + Sälj-knapp */}
+            {currentUserId ? (
+              <div className="hidden md:flex items-center gap-3">
+                <Button onClick={handleSellClick}>
+                  {t.navigation.sellBtn}
+                </Button>
+                <UserMenu />
+              </div>
+            ) : (
+              <div className="hidden md:flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => router.push('/login')}
+                  className="text-sm font-medium hover:underline text-brand-text/70 hover:text-brand-green transition"
+                >
+                  Logga in
+                </button>
+                <Button onClick={handleSellClick}>
+                  {t.navigation.sellBtn}
+                </Button>
+              </div>
+            )}
+
+            {/* Mobil: enklare menyikon */}
+            <button
+              type="button"
+              onClick={() => {
+                if (currentUserId) {
+                  router.push('/dashboard')
+                } else {
+                  router.push('/login')
+                }
+              }}
+              className="inline-flex md:hidden items-center justify-center h-10 w-10 rounded-full border border-brand-green/30 text-brand-green hover:bg-brand-green/10 focus:outline-none focus:ring-2 focus:ring-brand-green focus:ring-offset-2 focus:ring-offset-white"
+              aria-label={currentUserId ? 'Öppna Min Dashboard' : 'Logga in'}
             >
-              {t.navigation.myPage}
+              <Menu className="h-5 w-5" aria-hidden="true" />
             </button>
-            
-            <Button onClick={handleSellClick}>
-              {t.navigation.sellBtn}
-            </Button>
           </div>
         </div>
       </nav>
 
       {/* --- HERO SECTION --- */}
-      <div className="relative bg-brand-beige py-20 md:py-32 px-4 text-center overflow-hidden">
+      <div className="relative bg-brand-beige py-12 md:py-20 px-4 text-center overflow-hidden">
         <div className="relative z-10 max-w-4xl mx-auto">
-          <h2 className="text-4xl md:text-6xl font-display font-extrabold mb-6 tracking-tight text-brand-green drop-shadow-sm">
+          {/* Hero-logotyp överst (endast desktop) */}
+          <img
+            src="/hero-logo.png"
+            alt="Sokhar"
+            className="hidden md:block h-24 md:h-32 mx-auto mb-6 object-contain"
+          />
+
+          <h2 className="text-2xl md:text-4xl font-display font-extrabold mb-4 tracking-tight text-brand-green drop-shadow-sm">
             {t.landing.hero.title}
           </h2>
-          <p className="text-brand-text text-lg md:text-xl mb-10 max-w-2xl mx-auto leading-relaxed">
-            {t.landing.hero.subtitle}
-          </p>
           
-          {/* --- SÖK & FILTER INNE I HERO --- */}
-          <div className="max-w-3xl mx-auto mt-12 mb-8">
-            {/* Sökfält */}
-            <div className="mb-6 relative">
-              <svg className="absolute left-6 top-1/2 transform -translate-y-1/2 text-brand-text/50 z-10" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-              <input 
-                type="text"
+          {/* --- SÖK (Mobil) & KATEGORIER --- */}
+          <div className="max-w-3xl mx-auto mt-6 mb-4">
+            {/* Sökfält - endast mobil (lätt att nå med tummen) */}
+            <div className="mb-4 relative block md:hidden">
+              <svg
+                className="absolute left-5 top-1/2 -translate-y-1/2 text-brand-text/50 z-10"
+                xmlns="http://www.w3.org/2000/svg"
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input
+                type="search"
+                aria-label={t.landing.search.placeholder}
                 placeholder={t.landing.search.placeholder}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-14 pr-6 py-5 bg-white rounded-xl text-lg focus:ring-2 focus:ring-brand-green focus:outline-none transition shadow-lg"
+                className="w-full pl-12 pr-4 py-3 rounded-full bg-white text-base focus:outline-none focus:ring-2 focus:ring-brand-green shadow-md"
               />
             </div>
 
-            {/* Kategoriknappar */}
-            <div className="flex flex-col items-center gap-4">
+            {/* Kategoriknappar (Pill-shape, EAA-vänliga) */}
+            <div className="flex flex-col items-center gap-3">
               <span className="text-xs font-bold text-brand-text/70 uppercase tracking-widest">
                 {t.landing.search.filterTitle}
               </span>
               <div className="flex flex-wrap gap-3 justify-center">
-                {t.landing.search.categories.map((cat) => (
-                  <button
-                    key={cat}
-                    onClick={() => setSelectedCategory(cat)}
-                    className={`px-6 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
-                      selectedCategory === cat
-                        ? 'bg-brand-green text-white shadow-lg'
-                        : 'bg-white text-brand-text hover:bg-brand-green/10 border border-brand-green/20'
-                    }`}
-                  >
-                    {cat}
-                  </button>
-                ))}
+                {t.landing.search.categories.map((cat) => {
+                  const isActive = selectedCategory === cat
+                  return (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => setSelectedCategory(cat)}
+                      className={`min-h-[44px] px-5 md:px-6 rounded-full text-sm md:text-base font-medium inline-flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-brand-green focus:ring-offset-2 focus:ring-offset-brand-beige ${
+                        isActive
+                          ? 'bg-brand-green text-white border border-brand-green shadow-md'
+                          : 'bg-white text-brand-text border border-gray-300 hover:bg-brand-green/10'
+                      }`}
+                    >
+                      {cat}
+                    </button>
+                  )
+                })}
               </div>
             </div>
           </div>

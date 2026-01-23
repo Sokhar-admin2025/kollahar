@@ -8,6 +8,35 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ### ✨ Tillagt
 
+#### User Menu & Navigation
+- **UserMenu-komponent** (`app/components/UserMenu.tsx`): Ny användarmeny med avatar och dropdown
+  - Hämtar användarens profil (namn, avatar) från `profiles`-tabellen
+  - Visar avatar-bild om tillgänglig, annars initialer eller User-ikon
+  - Dropdown-meny med länkar till Dashboard, Inställningar och Logga ut
+  - Stängs vid klick utanför (click-outside detection)
+  - Fullt EAA-anpassad med ARIA-attribut och tangentbordsnavigation
+  - Responsiv design för både mobil och desktop
+- **Header-uppdatering**: Startsidan använder nu UserMenu för inloggade användare
+  - Desktop: Sökfält i mitten av headern, UserMenu till höger
+  - Mobil: Sökfält dolt i header, finns kvar i Hero-sektionen
+  - Ej inloggade: Visar "Logga in"-länk istället för UserMenu
+
+#### Header & Hero Layout-optimering
+- **Desktop Header**: Sökfält flyttat från Hero till mitten av headern (mellan logga och navigation)
+- **Mobil Header**: Sökfält dolt, endast logga + hamburgermeny
+- **Hero-sektion**: 
+  - Hero-logotyp (`hero-logo.png`) dold på mobil (`hidden md:block`)
+  - Undertext "Sveriges tryggaste marknadsplats..." borttagen
+  - Padding reducerad (`py-12 md:py-20`) för att få annonser högre upp ("above the fold")
+  - Sökfält endast synligt på mobil i Hero-sektionen
+- **Kategorier**: 
+  - Flyttade under Hero-texten
+  - Pill-shape design (rundade knappar)
+  - Minst 44px höjd för touch-vänlighet (EAA-krav)
+  - Inaktiv: Vit bakgrund, grå border
+  - Aktiv/Hover: `bg-brand-green` med vit text
+  - Fokus-stilar för tangentbordsnavigation
+
 #### Designsystem - Sokhar Theme
 - **Typsnitt**: Implementerat Knewave för rubriker (display) och DM Sans för brödtext
   - Knewave laddas via `next/font/google` med variabel `--font-knewave`
@@ -54,7 +83,13 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 #### Färgschema
 - **Primära actions**: Ändrat från blå (`blue-600`) till brand-green (`brand-green`)
 - **Bakgrundsfärger**: Konsistent beige-bakgrund genom hela applikationen
+- **Brand-beige justerad**: Uppdaterat från `#F4F3F0` till `#f2eeec` för matchning med hero-logotyp
 - **Textfärger**: Brand-text används konsekvent istället för grå nyanser
+
+#### UI-förbättringar
+- **Prisvisning**: Borttaget "/mån"-suffix från `ListingCard`-komponenten
+- **Hero-rubrik**: Storlek justerad för bättre visuell hierarki
+- **State-synkning**: Sökfält i header och Hero använder samma `searchQuery` state
 
 ### ✨ Tillagt
 

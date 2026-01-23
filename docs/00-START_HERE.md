@@ -132,6 +132,7 @@ sokhar/
 - **[Backend & Databas](./02-BACKEND_DATABASE.md)**: Server Actions, Supabase Schema, RLS Policies
 - **[Frontend & UI](./03-FRONTEND_UI.md)**: Designsystem, komponenter, sidstruktur
 - **[Changelog](./04-CHANGELOG.md)**: Versionshistorik och ändringar
+- **[Roadmap & Go-Live Checklist](./05-ROADMAP.md)**: Planerade features, tekniska förbättringar och go-live-krav
 
 ## 🆘 Felsökning
 
