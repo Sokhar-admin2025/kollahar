@@ -1,4 +1,4 @@
-# 🗄️ Backend & Databas - Sokhar Marketplace
+# 🗄️ Backend & Databas - Kollahär Marketplace
 
 Detta dokument är för **Backend-utvecklare** och beskriver Server Actions, Supabase Schema, RLS Policies och databasstrukturen.
 
@@ -6,7 +6,7 @@ Detta dokument är för **Backend-utvecklare** och beskriver Server Actions, Sup
 
 ### Client vs Server Components
 
-Sokhar använder en **hybrid-approach** för datahämtning:
+Kollahär använder en **hybrid-approach** för datahämtning:
 
 #### Client Components (Datahämtning i useEffect)
 

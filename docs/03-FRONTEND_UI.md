@@ -1,4 +1,4 @@
-# 🎨 Frontend & UI - Sokhar Marketplace
+# 🎨 Frontend & UI - Kollahär Marketplace
 
 Detta dokument är för **Frontend-utvecklare & Designers** och beskriver designsystemet, komponentstrukturen och siduppbyggnaden.
 
@@ -6,9 +6,9 @@ Detta dokument är för **Frontend-utvecklare & Designers** och beskriver design
 
 ### Tailwind CSS Setup
 
-Sokhar använder **Tailwind CSS v4** med standardkonfiguration. Alla styles är utility-baserade, inga custom CSS-filer (förutom `globals.css` för base styles).
+Kollahär använder **Tailwind CSS v4** med standardkonfiguration. Alla styles är utility-baserade, inga custom CSS-filer (förutom `globals.css` för base styles).
 
-### Färgpalett (Sokhar Brand Colors)
+### Färgpalett (Kollahär Brand Colors)
 
 ```css
 /* Brand Colors - Definierade i globals.css */

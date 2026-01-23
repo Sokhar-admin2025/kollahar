@@ -242,7 +242,7 @@ export default function HomePage() {
           {/* Hero-logotyp överst (endast desktop) */}
           <img
             src="/hero-logo.png"
-            alt="Sokhar"
+            alt="Kollahär Logo"
             className="hidden md:block h-24 md:h-32 mx-auto mb-6 object-contain"
           />
 

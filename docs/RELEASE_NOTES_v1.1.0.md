@@ -1,4 +1,4 @@
-# 🚀 Release Notes - Sokhar v1.1.0
+# 🚀 Release Notes - Kollahär v1.1.0
 
 **Releasedatum:** 2025-01-17  
 **Version:** 1.1.0  
@@ -8,13 +8,13 @@
 
 ## 📋 Översikt
 
-Denna release introducerar Sokhar designsystem, förbättrad användarupplevelse med UserMenu, komplett chattfunktionalitet med olästa indikatorer, och omfattande dokumentation för framtida utveckling.
+Denna release introducerar Kollahär designsystem, förbättrad användarupplevelse med UserMenu, komplett chattfunktionalitet med olästa indikatorer, och omfattande dokumentation för framtida utveckling.
 
 ---
 
 ## ✨ Nya Features
 
-### 🎨 Designsystem - Sokhar Theme
+### 🎨 Designsystem - Kollahär Theme
 - **Typsnitt**: Knewave för rubriker, DM Sans för brödtext
 - **Brand Colors**: `brand-green` (#2C4638), `brand-beige` (#F4F3F0), `brand-text` (#1A1A1A)
 - **Konsistent styling**: Alla sidor använder nu designsystemet
@@ -143,7 +143,7 @@ Se `docs/05-ROADMAP.md` för planerade features:
 
 ## 🙏 Tack
 
-Tack för att du använder Sokhar! Om du har frågor eller feedback, kontakta utvecklingsteamet.
+Tack för att du använder Kollahär! Om du har frågor eller feedback, kontakta utvecklingsteamet.
 
 ---
 

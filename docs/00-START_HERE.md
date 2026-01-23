@@ -1,10 +1,10 @@
-# 🚀 Start Här - Sokhar Marketplace
+# 🚀 Start Här - Kollahär Marketplace
 
-Välkommen till Sokhar! Detta är din guide för att komma igång med projektet.
+Välkommen till Kollahär! Detta är din guide för att komma igång med projektet.
 
 ## 📋 Projektets Syfte & Vision
 
-**Sokhar** är en modern marknadsplats (Blocket-stil) där användare kan köpa och sälja produkter. Projektet är byggt med fokus på:
+**Kollahär** är en modern marknadsplats (Blocket-stil) där användare kan köpa och sälja produkter. Projektet är byggt med fokus på:
 
 - **Säkerhet först**: Row Level Security (RLS), autentisering och validering
 - **Användarvänlighet**: Ren, minimalistisk design med mycket whitespace
@@ -74,7 +74,7 @@ npm start
 ## 📁 Mappstruktur Översikt
 
 ```
-sokhar/
+kollahar/
 ├── app/                    # Next.js App Router
 │   ├── annons/[id]/       # Detaljsida för annonser
 │   ├── components/         # React-komponenter

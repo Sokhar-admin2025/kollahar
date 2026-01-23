@@ -1,6 +1,6 @@
-# 🗺️ Roadmap & Go-Live Checklist - Sokhar Marketplace
+# 🗺️ Roadmap & Go-Live Checklist - Kollahär Marketplace
 
-Detta dokument samlar alla planerade features, tekniska förbättringar och go-live-krav för Sokhar.
+Detta dokument samlar alla planerade features, tekniska förbättringar och go-live-krav för Kollahär.
 
 **Status-ikoner:**
 - ✅ **Klart** - Implementerat och testat
@@ -238,7 +238,7 @@ Detta dokument samlar alla planerade features, tekniska förbättringar och go-l
 
 ---
 
-## 🎨 Design & UI (Sokhar Theme)
+## 🎨 Design & UI (Kollahär Theme)
 
 ### Chatt-styling
 - 📋 **Uppdatera meddelandevyn** (`/dashboard/messages`) för att följa designsystemet
@@ -275,7 +275,7 @@ Detta dokument samlar alla planerade features, tekniska förbättringar och go-l
 ### Metadata
 - 📋 **SEO Metadata** - Sätt upp korrekta `title` och `description` för SEO
   - **Nuvarande**: `title: 'Min Marknadsplats'`, `description: 'Köp och sälj enkelt och tryggt'`
-  - **Föreslaget**: `title: 'Sokhar - Sveriges tryggaste marknadsplats'`, `description: 'Köp och sälj enkelt och tryggt på Sveriges tryggaste marknadsplats'`
+  - **Föreslaget**: `title: 'Kollahär - Sveriges tryggaste marknadsplats'`, `description: 'Köp och sälj enkelt och tryggt på Sveriges tryggaste marknadsplats'`
   
   **Relaterade filer:**
   - `app/layout.tsx` - Uppdatera `metadata`-objektet (rad ~23-26)
@@ -286,7 +286,7 @@ Detta dokument samlar alla planerade features, tekniska förbättringar och go-l
 
 ### Om oss-sida
 - 📋 **Skapa 'Om oss'-sida** - En enkel informationssida (`/about`) som beskriver konceptet
-  - **Innehåll**: Beskrivning av Sokhar, vision, värderingar
+  - **Innehåll**: Beskrivning av Kollahär, vision, värderingar
   - **Stil**: Följer designsystemet (bg-brand-beige, brand-green accent)
   
   **Relaterade filer:**
@@ -361,7 +361,7 @@ Detta dokument samlar alla planerade features, tekniska förbättringar och go-l
 
 ---
 
-## 📋 Design & UI Backlog (Sokhar Theme)
+## 📋 Design & UI Backlog (Kollahär Theme)
 
 Detta är en sammanfattning av alla design- och UI-uppgifter som diskuterats:
 

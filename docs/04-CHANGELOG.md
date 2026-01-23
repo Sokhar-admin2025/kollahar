@@ -1,4 +1,4 @@
-# 📝 Changelog - Sokhar Marketplace
+# 📝 Changelog - Kollahär Marketplace
 
 Alla betydande ändringar i projektet dokumenteras här.
 
@@ -6,7 +6,13 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ## [Unreleased] (Local Development)
 
-_Inga nya ändringar ännu._
+### 🔄 Ändrat
+
+#### Rebranding
+- **Namnbyte**: Applikationen har bytt namn från "Sokhar" till "Kollahär"
+  - Alla synliga texter i UI uppdaterade (metadata, footer, alt-texter)
+  - Alla dokumentationsfiler uppdaterade
+  - Tekniska identifierare (package.json name) behåller "sokhar" för kompatibilitet
 
 ---
 
@@ -43,7 +49,7 @@ _Inga nya ändringar ännu._
   - Aktiv/Hover: `bg-brand-green` med vit text
   - Fokus-stilar för tangentbordsnavigation
 
-#### Designsystem - Sokhar Theme
+#### Designsystem - Kollahär Theme
 - **Typsnitt**: Implementerat Knewave för rubriker (display) och DM Sans för brödtext
   - Knewave laddas via `next/font/google` med variabel `--font-knewave`
   - DM Sans laddas via `next/font/google` med variabel `--font-dm-sans`

@@ -270,7 +270,7 @@ export default function ListingDetails() {
                          </a>
                       )}
                       {!sellerProfile?.website && (
-                        <p className="text-xs text-brand-text/60">Medlem på Sokhar</p>
+                        <p className="text-xs text-brand-text/60">Medlem på Kollahär</p>
                       )}
                     </div>
                   </div>
@@ -292,7 +292,7 @@ export default function ListingDetails() {
                 )}
                 
                 <p className="text-xs text-center text-gray-400 mt-4">
-                  🔒 Handla tryggt. All kommunikation sker via Sokhar.
+                  🔒 Handla tryggt. All kommunikation sker via Kollahär.
                 </p>
               </div>
 

@@ -1,10 +1,10 @@
-# 🏗️ Systemarkitektur - Sokhar Marketplace
+# 🏗️ Systemarkitektur - Kollahär Marketplace
 
 Detta dokument beskriver systemets övergripande arkitektur, dataflöden och entitetsrelationer. Detta är dokumentationen för **Arkitekter & AI-assistenter**.
 
 ## 📊 Systemöversikt
 
-Sokhar är en **fullstack Next.js-applikation** med Supabase som Backend-as-a-Service (BaaS). Applikationen följer Next.js App Router-mönstret med en tydlig separation mellan Client och Server Components.
+Kollahär är en **fullstack Next.js-applikation** med Supabase som Backend-as-a-Service (BaaS). Applikationen följer Next.js App Router-mönstret med en tydlig separation mellan Client och Server Components.
 
 ### Arkitekturprinciper
 
@@ -330,7 +330,7 @@ const uploadedImageUrls = await Promise.all(
 
 ## 🔄 State Management
 
-Sokhar använder **React State** (useState, useEffect) för lokal state-hantering. Ingen global state management (Redux, Zustand) används eftersom:
+Kollahär använder **React State** (useState, useEffect) för lokal state-hantering. Ingen global state management (Redux, Zustand) används eftersom:
 
 1. Supabase hanterar server state
 2. Next.js App Router hanterar routing state

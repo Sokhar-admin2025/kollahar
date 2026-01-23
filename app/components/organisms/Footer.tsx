@@ -36,7 +36,7 @@ export default function Footer() {
         <div className="border-t border-white/20 pt-8 flex flex-col md:flex-row justify-between items-center text-sm text-white/70">
           <p>{t.copyright}</p>
           <div className="flex gap-4 mt-4 md:mt-0">
-            <span>Made with ❤️ by Sokhar</span>
+            <span>Made with ❤️ by Kollahär</span>
           </div>
         </div>
       </div>
