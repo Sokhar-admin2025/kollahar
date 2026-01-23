@@ -8,6 +8,31 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ### ✨ Tillagt
 
+#### Dashboard mobil UX/UI-förbättringar
+- **Edit/Delete-knappar**: Flyttade från absolut position till flex-layout i höjd med "Aktiv"-taggen
+  - Förhindrar att knappar och rubriker krockar på mobil
+  - Bättre visuell hierarki och läsbarhet
+- **Historia-tabellen**: Horisontell scrollbar på mobil
+  - Tabellen scrollbar istället för att krocka på små skärmar
+  - `whitespace-nowrap` på alla celler för att förhindra wrap
+  - Minskat padding på mobil (`px-4 md:px-6`)
+- **Sparade annonser grid-layout**: Matchar nu exakt samma layout som startsidan
+  - 2 kolumner på mobil, 3 på tablet, 4 på desktop
+  - Samma `gap-3` som startsidan
+  - Annonserna är nu mindre och mer kompakta
+- **"Till alla annonser"-länk**: Dold på mobil för att ge mer utrymme åt flikarna
+  - Visas endast på desktop/tablet (`hidden md:inline-block`)
+  - Användare kan använda loggan i headern för navigation på mobil
+
+#### Realtid-borttagning av favoriter
+- **FavoriteButton**: Stödjer nu `onFavoriteRemoved` callback
+- **ListingCard**: Skickar vidare callback till FavoriteButton
+- **Dashboard**: När favorit avmarkeras tas annonsen bort från listan direkt i realtid
+  - Ingen siduppdatering krävs
+  - Smooth UX när användare avmarkerar favoriter
+
+### ✨ Tillagt
+
 #### Platsval med autocomplete och dropdown
 - **LocationInput-komponent**: Ny komponent för platsval när användare skapar annonser
   - Autocomplete med sökfunktion (primär metod) - sök bland svenska kommuner medan du skriver
@@ -83,6 +108,18 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
   - Navigerar alltid till startsidan (`/`) istället för `router.back()`
 
 ### 🐛 Fixat
+
+#### Text-kontrast förbättringar (Dashboard & Formulär)
+- **Dashboard alla flikar**: Förbättrad text-synlighet på mobil (iPhone Chrome)
+  - Alla `text-brand-text/60`, `/70`, `/50` ändrade till `text-brand-text`
+  - Lagt till `antialiased` på text för bättre skärpa
+  - Fixat i: Aktiva annonser, Sparade annonser, Historia, Messages, Settings, Edit-sidan
+- **CreateListingForm**: Förbättrad text-kontrast
+  - Labels och input-text använder nu `text-brand-text` med `antialiased`
+  - Bättre läsbarhet på mobil
+- **Messages-sidan**: Förbättrad text-kontrast
+  - Alla gråa texter (`text-gray-400`, `text-gray-500`) ändrade till `text-brand-text`
+  - Tidsstämplar och meddelanden är nu tydligt läsbara
 
 #### Tillgänglighet och kontrast (iPhone Chrome)
 - **Placeholder-text i sökfält**: Ökat kontrast för bättre synlighet på iPhone Chrome

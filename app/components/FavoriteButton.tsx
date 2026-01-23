@@ -10,7 +10,12 @@ const supabase = createBrowserClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-export default function FavoriteButton({ listingId }: { listingId: string }) {
+interface FavoriteButtonProps {
+  listingId: string
+  onFavoriteRemoved?: (listingId: string) => void
+}
+
+export default function FavoriteButton({ listingId, onFavoriteRemoved }: FavoriteButtonProps) {
   const [isFavorited, setIsFavorited] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -64,6 +69,11 @@ export default function FavoriteButton({ listingId }: { listingId: string }) {
           .delete()
           .eq('user_id', user.id)
           .eq('listing_id', listingId);
+        
+        // Anropa callback om favoriten togs bort
+        if (onFavoriteRemoved) {
+          onFavoriteRemoved(listingId);
+        }
       } else {
         // Lägg till favorit
         await supabase

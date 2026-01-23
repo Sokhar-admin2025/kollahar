@@ -142,7 +142,7 @@ export default function InboxPage() {
 
       <div className="max-w-6xl mx-auto w-full flex-grow p-4 md:p-6 h-[calc(100vh-100px)] flex flex-col gap-4">
         <div className="flex justify-start">
-          <Link href="/dashboard" className="text-sm text-brand-text/70 hover:text-brand-green">
+          <Link href="/dashboard" className="text-sm text-brand-text hover:text-brand-green antialiased">
             ← Tillbaka till Dashboard
           </Link>
         </div>
@@ -164,9 +164,9 @@ export default function InboxPage() {
             
             <div className="overflow-y-auto flex-1">
               {loadingInbox ? (
-                <div className="p-4 text-center text-gray-400">{t.inbox.loading}</div>
+                <div className="p-4 text-center text-brand-text antialiased">{t.inbox.loading}</div>
               ) : conversations.length === 0 ? (
-                <div className="p-8 text-center text-gray-400">
+                <div className="p-8 text-center text-brand-text antialiased">
                   <p>{t.inbox.empty}</p>
                 </div>
               ) : (
@@ -190,7 +190,7 @@ export default function InboxPage() {
                           <h4 className="font-bold text-sm text-gray-900 truncate">
                             {conv.listing?.title || 'Okänd annons'}
                           </h4>
-                          <p className="text-xs text-gray-500 flex items-center gap-2">
+                          <p className="text-xs text-brand-text flex items-center gap-2 antialiased">
                             {new Date(conv.created_at).toLocaleDateString()}
                             {conv.hasUnread && (
                               <span className="inline-flex h-2 w-2 rounded-full bg-brand-green" aria-hidden="true" />
@@ -218,7 +218,7 @@ export default function InboxPage() {
             <div className="relative bg-white rounded-xl shadow-md border border-gray-200 flex flex-col h-full overflow-hidden">
               {!selectedConversation ? (
                 // Om ingen chatt är vald
-                <div className="flex-1 flex flex-col items-center justify-center text-gray-400 p-8 text-center">
+                <div className="flex-1 flex flex-col items-center justify-center text-brand-text p-8 text-center antialiased">
                   <div className="text-6xl mb-4">💬</div>
                   <p>{t.chat.noSelection}</p>
                 </div>
@@ -228,7 +228,7 @@ export default function InboxPage() {
                   {/* Chatt-header */}
                   <div className="p-4 border-b bg-brand-beige flex justify-between items-center">
                     <div>
-                      <span className="text-xs text-brand-text/60 uppercase tracking-wide">Angående:</span>
+                      <span className="text-xs text-brand-text uppercase tracking-wide antialiased">Angående:</span>
                       <h3 className="font-bold text-brand-text">
                         <Link href={`/annons/${selectedConversation.listing_id}`} className="hover:text-brand-green transition">
                           {selectedConversation.listing?.title}
@@ -240,7 +240,7 @@ export default function InboxPage() {
                     <button
                       type="button"
                       onClick={handleBackToInboxMobile}
-                      className="md:hidden inline-flex items-center justify-center rounded-full p-1 text-brand-text/70 hover:text-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green"
+                      className="md:hidden inline-flex items-center justify-center rounded-full p-1 text-brand-text hover:text-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green"
                       aria-label="Stäng chatt och visa inkorg"
                     >
                       <X className="w-5 h-5" />
@@ -250,7 +250,7 @@ export default function InboxPage() {
                   {/* Meddelande-logg */}
                   <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-brand-beige/50">
                     {loadingMessages ? (
-                      <div className="text-center text-gray-400 text-sm">Laddar meddelanden...</div>
+                      <div className="text-center text-brand-text text-sm antialiased">Laddar meddelanden...</div>
                     ) : (
                       messages.map((msg) => {
                         const isMe = msg.sender_id === userId
@@ -262,7 +262,7 @@ export default function InboxPage() {
                                 : 'bg-white text-brand-text border border-gray-200 rounded-bl-none'
                             }`}>
                               <p>{msg.content}</p>
-                              <span className={`text-[10px] block mt-1 opacity-70 ${isMe ? 'text-white/80' : 'text-brand-text/60'}`}>
+                              <span className={`text-[10px] block mt-1 opacity-70 antialiased ${isMe ? 'text-white/80' : 'text-brand-text'}`}>
                                 {new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                               </span>
                             </div>

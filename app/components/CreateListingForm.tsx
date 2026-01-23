@@ -222,13 +222,13 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
     <form onSubmit={handleSubmit} className="bg-white p-8 rounded-xl shadow-md border border-gray-200 space-y-6">
       
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-brand-text mb-1 antialiased">
           {t.form.title.label}
         </label>
         <input
           type="text"
           required
-          className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition"
+          className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-brand-text antialiased"
           placeholder={t.form.title.placeholder}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
@@ -236,11 +236,11 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-brand-text mb-1 antialiased">
           {t.form.category.label}
         </label>
         <select
-          className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition bg-white"
+          className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition bg-white text-brand-text antialiased"
           value={category}
           onChange={(e) => setCategory(e.target.value)}
         >
@@ -252,20 +252,20 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-brand-text mb-1 antialiased">
             {t.form.price.label}
           </label>
           <input
             type="number"
             required
-            className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition"
+            className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-brand-text antialiased"
             placeholder={t.form.price.placeholder}
             value={price}
             onChange={(e) => setPrice(e.target.value)}
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-brand-text mb-1 antialiased">
             {t.form.location.label}
           </label>
           <LocationInput
@@ -278,13 +278,13 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-brand-text mb-1 antialiased">
           {t.form.description.label}
         </label>
         <textarea
           required
           rows={4}
-          className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition"
+          className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-brand-text antialiased"
           placeholder={t.form.description.placeholder}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
@@ -296,7 +296,7 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
           <label className="block text-sm font-medium text-gray-700">
             {t.form.image.label}
           </label>
-          <span className="text-xs text-gray-400">
+          <span className="text-xs text-brand-text antialiased">
             {totalImages}/5 bilder
           </span>
         </div>
@@ -333,7 +333,7 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
           {/* Ladda upp ny bild */}
           {totalImages < 5 && (
             <label className={`w-24 h-24 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:bg-brand-beige hover:border-brand-green transition ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
-              <span className="text-2xl text-gray-400">+</span>
+              <span className="text-2xl text-brand-text">+</span>
               <input 
                 type="file" 
                 accept="image/*" 

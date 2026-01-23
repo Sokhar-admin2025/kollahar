@@ -135,7 +135,7 @@ export default function SettingsPage() {
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
             <h1 className="text-2xl font-display text-brand-green">{t.title}</h1>
-            <Link href="/dashboard" className="text-sm text-brand-text/70 hover:text-brand-green">{t.back}</Link>
+            <Link href="/dashboard" className="text-sm text-brand-text hover:text-brand-green antialiased">{t.back}</Link>
         </div>
 
         {/* Formulär */}
@@ -151,7 +151,7 @@ export default function SettingsPage() {
                         {avatarUrl ? (
                             <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                         ) : (
-                            <div className="w-full h-full flex items-center justify-center text-gray-400 text-2xl">👤</div>
+                            <div className="w-full h-full flex items-center justify-center text-brand-text text-2xl">👤</div>
                         )}
                     </div>
                     <div>

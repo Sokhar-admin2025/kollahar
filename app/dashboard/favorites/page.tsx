@@ -39,13 +39,13 @@ export default async function FavoritesPage() {
       <main className="max-w-6xl mx-auto p-6 w-full flex-grow">
         <div className="flex justify-between items-end mb-6">
           <h3 className="text-2xl font-display text-brand-green">Favoriter</h3>
-          <span className="text-sm text-brand-text/70">{favoriteListings.length} träffar</span>
+          <span className="text-sm text-brand-text antialiased">{favoriteListings.length} träffar</span>
         </div>
 
         <div className="flex space-x-4 border-b border-gray-200 mb-6">
           <Link
             href="/dashboard"
-            className="pb-2 px-1 font-medium text-sm transition-colors relative focus:outline-none focus:ring-2 focus:ring-brand-green rounded-t text-brand-text/60 hover:text-brand-text"
+            className="pb-2 px-1 font-medium text-sm transition-colors relative focus:outline-none focus:ring-2 focus:ring-brand-green rounded-t text-brand-text hover:text-brand-text antialiased"
           >
             {t.tabs.active}
           </Link>
@@ -58,7 +58,7 @@ export default async function FavoritesPage() {
           </Link>
           <Link
             href="/dashboard?tab=history"
-            className="pb-2 px-1 font-medium text-sm transition-colors relative focus:outline-none focus:ring-2 focus:ring-brand-green rounded-t text-brand-text/60 hover:text-brand-text"
+            className="pb-2 px-1 font-medium text-sm transition-colors relative focus:outline-none focus:ring-2 focus:ring-brand-green rounded-t text-brand-text hover:text-brand-text antialiased"
           >
             {t.tabs.history}
           </Link>
@@ -66,7 +66,7 @@ export default async function FavoritesPage() {
 
         {favoriteListings.length === 0 ? (
           <div className="text-center py-20 bg-white rounded-xl shadow-md border border-dashed border-gray-300">
-            <p className="text-brand-text/70 text-lg">Du har inte sparat några annonser än</p>
+            <p className="text-brand-text text-lg antialiased">Du har inte sparat några annonser än</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">

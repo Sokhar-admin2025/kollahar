@@ -71,7 +71,7 @@ export default function EditListing() {
       <div className="min-h-screen bg-brand-beige flex flex-col">
         <Header />
         <div className="max-w-2xl mx-auto py-10 px-4 flex-grow">
-          <div className="p-10 text-center text-brand-text/70">{tEdit.loadingData}</div>
+          <div className="p-10 text-center text-brand-text antialiased">{tEdit.loadingData}</div>
         </div>
       </div>
     )

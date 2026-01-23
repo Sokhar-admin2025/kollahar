@@ -16,7 +16,13 @@ interface Listing {
   user_id?: string;
 }
 
-export default function ListingCard({ listing, currentUserId }: { listing: Listing; currentUserId?: string | null }) {
+interface ListingCardProps {
+  listing: Listing
+  currentUserId?: string | null
+  onFavoriteRemoved?: (listingId: string) => void
+}
+
+export default function ListingCard({ listing, currentUserId, onFavoriteRemoved }: ListingCardProps) {
   // Formatera pris snyggt
   const formattedPrice = new Intl.NumberFormat('sv-SE', {
     style: 'currency',
@@ -32,7 +38,7 @@ export default function ListingCard({ listing, currentUserId }: { listing: Listi
       {/* --- FAVORITKNAPPEN (Ligger helt utanför länken) --- */}
       {!isOwner && (
         <div className="absolute top-3 right-3 z-10">
-          <FavoriteButton listingId={listing.id} />
+          <FavoriteButton listingId={listing.id} onFavoriteRemoved={onFavoriteRemoved} />
         </div>
       )}
 
