@@ -6,6 +6,7 @@ import Link from 'next/link'
 
 import { DASHBOARD_TEXTS } from '@/app/lib/content'
 import Button from '@/app/components/atoms/Button'
+import Header from '@/app/components/organisms/Header'
 import { createClient } from '@/lib/supabase/client'
 
 // Supabase-klient via delad SSR-kompatibel wrapper
@@ -127,8 +128,9 @@ export default function SettingsPage() {
   if (loading) return <div className="p-10 text-center">Laddar inställningar...</div>
 
   return (
-    <div className="min-h-screen bg-brand-beige py-10 px-4">
-      <div className="max-w-2xl mx-auto">
+    <div className="min-h-screen bg-brand-beige flex flex-col">
+      <Header />
+      <div className="max-w-2xl mx-auto py-10 px-4 flex-grow">
         
         {/* Header */}
         <div className="flex justify-between items-center mb-6">

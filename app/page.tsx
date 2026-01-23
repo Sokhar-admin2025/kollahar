@@ -4,13 +4,13 @@ import { Suspense, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Menu } from 'lucide-react'
-import UserMenu from './components/UserMenu'
+import { Search, X } from 'lucide-react'
 
 // Vi importerar texter och knappar som vanligt
 import { DASHBOARD_TEXTS } from './lib/content'
-import Button from './components/atoms/Button'
 import ListingCard from './components/ListingCard'
+import Header from './components/organisms/Header'
+import ScrollToSearch from './components/ScrollToSearch'
 import type { Listing } from './types'
 
 // Initiera Supabase
@@ -161,8 +161,8 @@ function HomePageContent() {
     }
   }
 
-  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value)
+  const handleSearchInputChange = (value: string) => {
+    setSearchQuery(value)
     // Reset searchSubmitted när användaren börjar skriva igen
     if (searchSubmitted) {
       setSearchSubmitted(false)
@@ -170,20 +170,6 @@ function HomePageContent() {
   }
 
   // --- SÄKER NAVIGERING TILL "SÄLJ" ---
-  const handleSellClick = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
-      router.push('/dashboard/create')
-    } else {
-      router.push('/login')
-    }
-  }
-
-  const handleDashboardClick = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (user) router.push('/dashboard')
-    else router.push('/login')
-  }
 
   const favoriteIdSet = useMemo(() => new Set(favoriteIds), [favoriteIds])
 
@@ -200,132 +186,24 @@ function HomePageContent() {
     <div className="min-h-screen bg-brand-beige flex flex-col">
       
       {/* --- HEADER --- */}
-      <nav className="bg-white border-b border-gray-200 p-4 sticky top-0 z-20 shadow-sm">
-        <div className="max-w-6xl mx-auto flex items-center justify-between gap-2">
-          {/* Logotyp / Brand */}
-          <button
-            type="button"
-            onClick={() => window.scrollTo(0, 0)}
-            className="text-2xl md:text-3xl font-display text-brand-green tracking-tight cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-green focus:ring-offset-2 focus:ring-offset-white"
-          >
-            {t.navigation.brand}
-          </button>
-
-          {/* Sökfält - Desktop (mitt i headern) */}
-          <div className="hidden md:flex flex-1 justify-start ml-4">
-            <form onSubmit={handleSearch} className="relative w-full max-w-xl">
-              <svg
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-text/50 z-10"
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <circle cx="11" cy="11" r="8"></circle>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-              </svg>
-              <input
-                type="search"
-                aria-label={t.landing.search.placeholder}
-                placeholder={t.landing.search.placeholder}
-                value={searchQuery}
-                onChange={handleSearchInputChange}
-                className="w-full pl-11 pr-20 py-2.5 rounded-full border border-gray-300 text-sm md:text-base bg-white focus:outline-none focus:ring-2 focus:ring-brand-green focus:border-brand-green placeholder:text-brand-text/50"
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSearchQuery('')
-                    setSearchSubmitted(false)
-                  }}
-                  className="absolute right-20 top-1/2 -translate-y-1/2 p-1 text-brand-text/50 hover:text-brand-text focus:outline-none focus:ring-2 focus:ring-brand-green rounded-full transition-colors"
-                  aria-label="Rensa sökning"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
-                  >
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                  </svg>
-                </button>
-              )}
-              <button
-                type="submit"
-                className="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-1.5 bg-brand-green text-white text-sm font-medium rounded-full hover:bg-brand-green/90 focus:outline-none focus:ring-2 focus:ring-brand-green focus:ring-offset-2 transition-colors"
-                aria-label="Sök"
-              >
-                Sök
-              </button>
-            </form>
-          </div>
-
-          {/* Navigation / Actions */}
-          <div className="flex items-center gap-2">
-            {/* Desktop: UserMenu för inloggad, annars Logga in + Sälj-knapp */}
-            {currentUserId ? (
-              <div className="hidden md:flex items-center gap-3">
-                <Button onClick={handleSellClick}>
-                  {t.navigation.sellBtn}
-                </Button>
-                <UserMenu />
-              </div>
-            ) : (
-              <div className="hidden md:flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => router.push('/login')}
-                  className="text-sm font-medium hover:underline text-brand-text/70 hover:text-brand-green transition"
-                >
-                  Logga in
-                </button>
-                <Button onClick={handleSellClick}>
-                  {t.navigation.sellBtn}
-                </Button>
-              </div>
-            )}
-
-            {/* Mobil: enklare menyikon */}
-            <button
-              type="button"
-              onClick={() => {
-                if (currentUserId) {
-                  router.push('/dashboard')
-                } else {
-                  router.push('/login')
-                }
-              }}
-              className="inline-flex md:hidden items-center justify-center h-10 w-10 rounded-full border border-brand-green/30 text-brand-green hover:bg-brand-green/10 focus:outline-none focus:ring-2 focus:ring-brand-green focus:ring-offset-2 focus:ring-offset-white"
-              aria-label={currentUserId ? 'Öppna Min Dashboard' : 'Logga in'}
-            >
-              <Menu className="h-5 w-5" aria-hidden="true" />
-            </button>
-          </div>
-        </div>
-      </nav>
+      <Header
+        showSearch={true}
+        searchQuery={searchQuery}
+        onSearchChange={handleSearchInputChange}
+        onSearchSubmit={handleSearch}
+        onClearSearch={() => {
+          setSearchQuery('')
+          setSearchSubmitted(false)
+        }}
+      />
 
       {/* --- HERO SECTION --- */}
-      <div className="relative bg-brand-beige py-6 md:py-10 px-4 text-center overflow-hidden">
+      <div id="hero-section" className="relative bg-brand-beige py-6 md:py-10 px-4 text-center overflow-hidden">
         <div className="relative z-10 max-w-4xl mx-auto">
           {/* Hero-logotyp överst (endast desktop) */}
           <img
             src="/hero-logo.png"
-            alt="Kollahär Logo"
+            alt="Kollahär! Logo"
             className="hidden md:block h-24 md:h-32 mx-auto mb-3 object-contain"
           />
 
@@ -337,29 +215,18 @@ function HomePageContent() {
           <div className="max-w-3xl mx-auto mt-3 mb-2">
             {/* Sökfält - endast mobil (lätt att nå med tummen) */}
             <form onSubmit={handleSearch} className="mb-4 relative block md:hidden">
-              <svg
+              <Search
                 className="absolute left-5 top-1/2 -translate-y-1/2 text-brand-text/50 z-10"
-                xmlns="http://www.w3.org/2000/svg"
-                width="22"
-                height="22"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+                size={22}
                 aria-hidden="true"
-              >
-                <circle cx="11" cy="11" r="8"></circle>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-              </svg>
+              />
               <input
                 type="search"
                 aria-label={t.landing.search.placeholder}
                 placeholder={t.landing.search.placeholder}
                 value={searchQuery}
-                onChange={handleSearchInputChange}
-                className="w-full pl-12 pr-20 py-3 rounded-full bg-white text-base focus:outline-none focus:ring-2 focus:ring-brand-green shadow-md placeholder:text-brand-text/50"
+                onChange={(e) => handleSearchInputChange(e.target.value)}
+                className="w-full pl-12 pr-20 py-3 rounded-full bg-white text-base text-brand-text focus:outline-none focus:ring-2 focus:ring-brand-green shadow-md placeholder:text-brand-text/50"
               />
               {searchQuery && (
                 <button
@@ -371,21 +238,7 @@ function HomePageContent() {
                   className="absolute right-20 top-1/2 -translate-y-1/2 p-1 text-brand-text/50 hover:text-brand-text focus:outline-none focus:ring-2 focus:ring-brand-green rounded-full transition-colors"
                   aria-label="Rensa sökning"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
-                  >
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                  </svg>
+                  <X size={18} aria-hidden="true" />
                 </button>
               )}
               <button
@@ -475,6 +328,9 @@ function HomePageContent() {
           </div>
         )}
       </main>
+
+      {/* Scroll to Search-knapp */}
+      <ScrollToSearch />
     </div>
   )
 }

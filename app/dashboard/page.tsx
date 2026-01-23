@@ -4,10 +4,13 @@ import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { MessageSquare, Settings, LogOut, Edit, Trash2 } from 'lucide-react'
 
 import { DASHBOARD_TEXTS } from '../lib/content'
 import Button from '../components/atoms/Button'
 import ListingCard from '../components/ListingCard'
+import Header from '../components/organisms/Header'
+import ScrollToSearch from '../components/ScrollToSearch'
 import type { Listing } from '../types'
 import { messageService } from '../services/messageService'
 
@@ -151,21 +154,20 @@ function Dashboard() {
   if (loading) return <div className="flex min-h-screen items-center justify-center">Laddar...</div>
 
   return (
-    <div className="min-h-screen bg-brand-beige p-6 relative">
-      <header className="mx-auto max-w-4xl mb-8 flex flex-col md:flex-row items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-display text-brand-green">{t.header.title}</h1>
+    <div className="min-h-screen bg-brand-beige flex flex-col">
+      <Header />
+      
+      <div className="p-6 relative flex-grow">
+        <div id="dashboard-header" className="mx-auto max-w-4xl mb-8">
+          <h1 className="text-3xl font-display text-brand-green mb-2">{t.header.title}</h1>
           <p className="text-brand-text/80">{t.header.welcome} <span className="font-semibold">{user?.email}</span></p>
         </div>
         
-        <div className="flex items-center gap-6">
-          
-          {/* 1. Meddelanden (Pratbubbla) */}
-          <Link href="/dashboard/messages" title="Mina meddelanden">
-            <div className="p-2 text-brand-text/70 hover:text-brand-green hover:bg-brand-green/10 rounded-full transition cursor-pointer relative">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-              </svg>
+        <div className="mx-auto max-w-4xl mb-6 flex items-center gap-4 justify-end">
+          {/* Meddelanden */}
+          <Link href="/dashboard/messages" title="Mina meddelanden" className="relative">
+            <div className="p-2 text-brand-text/70 hover:text-brand-green hover:bg-brand-green/10 rounded-full transition cursor-pointer">
+              <MessageSquare size={24} />
               {hasUnreadMessages && (
                 <span
                   className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-brand-green"
@@ -175,22 +177,19 @@ function Dashboard() {
             </div>
           </Link>
 
-          {/* 2. NYTT: Inställningar (Kugghjul) */}
+          {/* Inställningar */}
           <Link href="/dashboard/settings" title="Inställningar">
             <div className="p-2 text-brand-text/70 hover:text-brand-green hover:bg-brand-green/10 rounded-full transition cursor-pointer">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="3"></circle>
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-              </svg>
+              <Settings size={24} />
             </div>
           </Link>
 
-          {/* 3. Logga ut */}
-          <Button variant="link" onClick={handleSignOut}>
+          {/* Logga ut */}
+          <Button variant="link" onClick={handleSignOut} className="flex items-center gap-2">
+            <LogOut size={18} />
             {t.header.logout}
           </Button>
         </div>
-      </header>
 
       <main className="mx-auto max-w-4xl space-y-6">
         
@@ -268,7 +267,7 @@ function Dashboard() {
                             }}
                             title="Redigera"
                         >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                            <Edit size={20} />
                         </Button>
 
                         {/* 2. Soptunnan */}
@@ -277,12 +276,7 @@ function Dashboard() {
                             onClick={(e) => promptDelete(e, ad)}
                             title={t.listing.deleteTitle}
                         >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <polyline points="3 6 5 6 21 6"></polyline>
-                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                <line x1="10" y1="11" x2="10" y2="17"></line>
-                                <line x1="14" y1="11" x2="14" y2="17"></line>
-                            </svg>
+                            <Trash2 size={20} />
                         </Button>
                     </div>
 
@@ -379,6 +373,7 @@ function Dashboard() {
         )}
 
       </main>
+      </div>
 
       {/* MODAL */}
       {isDeleteModalOpen && (
@@ -451,6 +446,9 @@ function Dashboard() {
           </div>
         </div>
       )}
+
+      {/* Scroll to Search-knapp */}
+      <ScrollToSearch heroElementId="dashboard-header" />
     </div>
   )
 }

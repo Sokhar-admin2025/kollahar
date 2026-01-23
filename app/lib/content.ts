@@ -78,8 +78,8 @@ export const DASHBOARD_TEXTS = {
     },
     // NY FOOTER-STRUKTUR
     footer: {
-      brand: "Kollahär",
-      copyright: "© 2025 Kollahär. Alla rättigheter reserverade.",
+      brand: "Kollahär!",
+      copyright: "© 2025 Kollahär! Alla rättigheter reserverade.",
       columns: [
         {
           title: "Marknadsplatsen",

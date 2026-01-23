@@ -74,6 +74,13 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
   - Uppdaterar URL när sökning/kategori ändras (använder `replaceState` för att undvika extra historik-poster)
   - "Tillbaka till alla annonser"-länken behåller URL-parametrarna
   - Wrappat komponenter i `<Suspense>` för Next.js 16-kompatibilitet (`useSearchParams`)
+- **ScrollToSearch-knapp**: Förenklad till enkel scroll-till-toppen-funktion
+  - Visas endast när Hero inte är synlig OCH användaren scrollar uppåt
+  - Scrollar till toppen av sidan (ingen fokusering på sökfält)
+  - Ikon: Endast `ArrowUp` (Search-ikon borttagen)
+- **Login-sida navigation**: "Tillbaka"-knapp uppdaterad
+  - Text: "← Tillbaka till annonserna"
+  - Navigerar alltid till startsidan (`/`) istället för `router.back()`
 
 ### 🐛 Fixat
 
@@ -83,6 +90,13 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 - **Kategori-tagg på annonsdetaljsidan**: Förbättrad kontrast och synlighet
   - Ändrat från `bg-white/90` till `bg-brand-green/95 text-white` med `shadow-lg`
   - Tagg syns nu tydligt med mörkgrön bakgrund och vit text
+- **Sökfält event-hantering**: Fixat `handleSearchInputChange` för att ta emot string direkt
+  - Header-komponenten skickar nu string-värde istället för event-objekt
+  - Mobil-sökfältet använder inline-funktion för att konvertera event till string
+  - Fixar "Cannot read properties of undefined (reading 'value')"-fel
+- **Z-index för hjärtknappar**: Hjärtknapparna flyter inte längre ovanför header vid scrollning
+  - Hjärtknappar: `z-50` → `z-10` (fortfarande ovanför kortet)
+  - Header: `z-20` → `z-50` (alltid ovanför hjärtknappar)
 
 ---
 

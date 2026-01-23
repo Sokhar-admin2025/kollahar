@@ -31,7 +31,7 @@ export default function ListingCard({ listing, currentUserId }: { listing: Listi
       
       {/* --- FAVORITKNAPPEN (Ligger helt utanför länken) --- */}
       {!isOwner && (
-        <div className="absolute top-3 right-3 z-50">
+        <div className="absolute top-3 right-3 z-10">
           <FavoriteButton listingId={listing.id} />
         </div>
       )}

@@ -8,6 +8,7 @@ import { DASHBOARD_TEXTS } from '@/app/lib/content'
 import { messageService } from '@/app/services/messageService'
 import type { Conversation, Message } from '@/app/types'
 import Button from '@/app/components/atoms/Button'
+import Header from '@/app/components/organisms/Header'
 import { createClient } from '@/lib/supabase/client'
 import { X } from 'lucide-react'
 
@@ -132,10 +133,11 @@ export default function InboxPage() {
 
   return (
     <div className="min-h-screen bg-brand-beige flex flex-col">
+      <Header />
       
-      {/* Header */}
-      <div className="bg-white border-b px-6 py-4 flex items-center sticky top-0 z-10 shadow-sm">
-        <h1 className="text-xl font-display text-brand-green">{t.pageTitle}</h1>
+      {/* Page Title */}
+      <div className="max-w-6xl mx-auto w-full px-4 md:px-6 pt-6">
+        <h1 className="text-2xl font-display text-brand-green mb-4">{t.pageTitle}</h1>
       </div>
 
       <div className="max-w-6xl mx-auto w-full flex-grow p-4 md:p-6 h-[calc(100vh-100px)] flex flex-col gap-4">

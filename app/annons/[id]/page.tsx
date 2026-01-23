@@ -8,6 +8,7 @@ import { DASHBOARD_TEXTS } from '@/app/lib/content'
 import Button from '@/app/components/atoms/Button'
 import { messageService } from '@/app/services/messageService'
 import FavoriteButton from '@/app/components/FavoriteButton'
+import Header from '@/app/components/organisms/Header'
 import { createClient } from '@/lib/supabase/client'
 import type { Listing } from '@/app/types'
 
@@ -197,9 +198,10 @@ function ListingDetails() {
   )
 
   return (
-    <div className="min-h-screen bg-brand-beige py-10 px-4">
-      <div className="max-w-4xl mx-auto">
-        
+    <div className="min-h-screen bg-brand-beige flex flex-col">
+      <Header />
+      
+      <div className="max-w-4xl mx-auto py-10 px-4 flex-grow">
         <Link href={backUrl} className="inline-block mb-6 text-sm font-medium text-brand-text/70 hover:text-brand-green transition">
           {t.backToHome}
         </Link>
@@ -292,7 +294,7 @@ function ListingDetails() {
                          </a>
                       )}
                       {!sellerProfile?.website && (
-                        <p className="text-xs text-brand-text/60">Medlem på Kollahär</p>
+                        <p className="text-xs text-brand-text/60">Medlem på Kollahär!</p>
                       )}
                     </div>
                   </div>
@@ -314,7 +316,7 @@ function ListingDetails() {
                 )}
                 
                 <p className="text-xs text-center text-gray-400 mt-4">
-                  🔒 Handla tryggt. All kommunikation sker via Kollahär.
+                  🔒 Handla tryggt. All kommunikation sker via Kollahär!.
                 </p>
               </div>
 

@@ -75,16 +75,10 @@ export default function LoginPage() {
       <div className="w-full max-w-md space-y-4">
         <button
           type="button"
-          onClick={() => {
-            if (typeof window !== 'undefined' && window.history.length > 1) {
-              router.back()
-            } else {
-              router.push('/')
-            }
-          }}
+          onClick={() => router.push('/')}
           className="mb-2 inline-block text-sm font-medium text-brand-text/70 hover:text-brand-green transition"
         >
-          ← Tillbaka
+          ← Tillbaka till annonserna
         </button>
         <div className="space-y-4 rounded-xl border p-8 shadow-md bg-white text-brand-text">
           <h1 className="text-2xl font-display text-brand-green text-center mb-6">Logga in / Skapa konto</h1>
