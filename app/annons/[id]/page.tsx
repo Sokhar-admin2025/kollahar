@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { Suspense, useEffect, useState } from 'react'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
 import { DASHBOARD_TEXTS } from '@/app/lib/content'
@@ -12,6 +12,14 @@ import { createClient } from '@/lib/supabase/client'
 import type { Listing } from '@/app/types'
 
 const supabase = createClient()
+
+export default function ListingDetailsPage() {
+  return (
+    <Suspense fallback={<div className="p-10 text-center">Laddar...</div>}>
+      <ListingDetails />
+    </Suspense>
+  )
+}
 
 interface SellerProfile {
   id: string
@@ -27,12 +35,26 @@ interface CurrentUser {
   id: string
 }
 
-export default function ListingDetails() {
+function ListingDetails() {
   const params = useParams()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const id = params?.id
   const listingId = typeof id === 'string' ? id : id?.[0]
   const t = DASHBOARD_TEXTS.details
+
+  // Bygg tillbaka-URL med bevara sökparametrar
+  const backUrl = (() => {
+    const q = searchParams.get('q')
+    const category = searchParams.get('category')
+    if (q || category) {
+      const params = new URLSearchParams()
+      if (q) params.set('q', q)
+      if (category) params.set('category', category)
+      return `/?${params.toString()}`
+    }
+    return '/'
+  })()
 
   // State för Annons
   const [ad, setAd] = useState<Listing | null>(null)
@@ -178,7 +200,7 @@ export default function ListingDetails() {
     <div className="min-h-screen bg-brand-beige py-10 px-4">
       <div className="max-w-4xl mx-auto">
         
-        <Link href="/" className="inline-block mb-6 text-sm font-medium text-brand-text/70 hover:text-brand-green transition">
+        <Link href={backUrl} className="inline-block mb-6 text-sm font-medium text-brand-text/70 hover:text-brand-green transition">
           {t.backToHome}
         </Link>
 
@@ -194,7 +216,7 @@ export default function ListingDetails() {
                   {t.noImage}
                 </div>
               )}
-              <div className="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-sm">
+              <div className="absolute top-4 left-4 bg-brand-green/95 text-white backdrop-blur px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg">
                 {ad.category}
               </div>
             </div>

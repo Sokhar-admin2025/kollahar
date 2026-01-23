@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { Suspense, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Menu } from 'lucide-react'
 import UserMenu from './components/UserMenu'
@@ -17,7 +17,16 @@ import type { Listing } from './types'
 const supabase = createClient()
 
 export default function HomePage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center">Laddar...</div>}>
+      <HomePageContent />
+    </Suspense>
+  )
+}
+
+function HomePageContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   
   const [ads, setAds] = useState<Listing[]>([])          
   const [filteredAds, setFilteredAds] = useState<Listing[]>([]) 
@@ -25,8 +34,9 @@ export default function HomePage() {
   const [favoriteIds, setFavoriteIds] = useState<string[]>([])
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
 
-  const [searchQuery, setSearchQuery] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState('Alla')
+  // Läs från URL-parametrar vid första laddningen
+  const [searchQuery, setSearchQuery] = useState(() => searchParams.get('q') || '')
+  const [selectedCategory, setSelectedCategory] = useState(() => searchParams.get('category') || 'Alla')
   const [searchSubmitted, setSearchSubmitted] = useState(false)
 
   const t = DASHBOARD_TEXTS
@@ -121,6 +131,21 @@ export default function HomePage() {
     setFilteredAds(result)
   }, [searchQuery, selectedCategory, ads])
 
+  // 3. Uppdatera URL-parametrar när sökning/kategori ändras
+  useEffect(() => {
+    const params = new URLSearchParams()
+    if (searchQuery) {
+      params.set('q', searchQuery)
+    }
+    if (selectedCategory && selectedCategory !== 'Alla') {
+      params.set('category', selectedCategory)
+    }
+    
+    const newUrl = params.toString() ? `/?${params.toString()}` : '/'
+    // Använd replaceState för att inte skapa ny historik-post
+    window.history.replaceState({}, '', newUrl)
+  }, [searchQuery, selectedCategory])
+
   // Hantera sökning (för EAA - explicit submit)
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -211,7 +236,7 @@ export default function HomePage() {
                 placeholder={t.landing.search.placeholder}
                 value={searchQuery}
                 onChange={handleSearchInputChange}
-                className="w-full pl-11 pr-20 py-2.5 rounded-full border border-gray-300 text-sm md:text-base bg-white focus:outline-none focus:ring-2 focus:ring-brand-green focus:border-brand-green"
+                className="w-full pl-11 pr-20 py-2.5 rounded-full border border-gray-300 text-sm md:text-base bg-white focus:outline-none focus:ring-2 focus:ring-brand-green focus:border-brand-green placeholder:text-brand-text/50"
               />
               {searchQuery && (
                 <button
@@ -334,7 +359,7 @@ export default function HomePage() {
                 placeholder={t.landing.search.placeholder}
                 value={searchQuery}
                 onChange={handleSearchInputChange}
-                className="w-full pl-12 pr-20 py-3 rounded-full bg-white text-base focus:outline-none focus:ring-2 focus:ring-brand-green shadow-md"
+                className="w-full pl-12 pr-20 py-3 rounded-full bg-white text-base focus:outline-none focus:ring-2 focus:ring-brand-green shadow-md placeholder:text-brand-text/50"
               />
               {searchQuery && (
                 <button
