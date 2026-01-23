@@ -238,6 +238,64 @@ Detta dokument samlar alla planerade features, tekniska förbättringar och go-l
 
 ---
 
+## 🎨 Design & UI (Sokhar Theme)
+
+### Chatt-styling
+- 📋 **Uppdatera meddelandevyn** (`/dashboard/messages`) för att följa designsystemet
+  - **Bakgrund**: `bg-brand-beige` (redan implementerat ✅)
+  - **Egna bubblor**: `bg-brand-green text-white` (redan implementerat ✅)
+  - **Motpartens bubblor**: `bg-white` med `shadow-sm` (behöver justeras - har nu `border border-gray-200`)
+  
+  **Relaterade filer:**
+  - `app/dashboard/messages/page.tsx` - Uppdatera styling för motpartens meddelanden (rad ~260)
+
+### Footer
+- ✅ **Footer-komponent** - Redan implementerad i `app/components/organisms/Footer.tsx`
+  - Innehåll: Logga, länkar (Om oss, Kundservice, Villkor), Copyright
+  - Stil: `bg-brand-green` med `border-t`, används i `app/layout.tsx`
+
+### UserMenu
+- ✅ **UserMenu Polish** - Redan implementerad med `rounded-xl` och matchar temat
+  - Dropdown-menyn har `rounded-xl` (rad 114 i `app/components/UserMenu.tsx`)
+  - Matchar brand-färger och designsystem
+
+---
+
+## ⚙️ Branding & SEO
+
+### Favicon
+- 📋 **Favicon** - Lägg in `public/hero-logo.png` (eller förenklad version) som sajtens favicon
+  - **Nuvarande**: `app/favicon.ico` finns men kanske inte matchar brand
+  - **Åtgärd**: Skapa/uppdatera favicon baserat på hero-logo
+  
+  **Relaterade filer:**
+  - `app/favicon.ico` - Uppdatera eller ersätt
+  - `app/layout.tsx` - Verifiera att favicon laddas korrekt
+
+### Metadata
+- 📋 **SEO Metadata** - Sätt upp korrekta `title` och `description` för SEO
+  - **Nuvarande**: `title: 'Min Marknadsplats'`, `description: 'Köp och sälj enkelt och tryggt'`
+  - **Föreslaget**: `title: 'Sokhar - Sveriges tryggaste marknadsplats'`, `description: 'Köp och sälj enkelt och tryggt på Sveriges tryggaste marknadsplats'`
+  
+  **Relaterade filer:**
+  - `app/layout.tsx` - Uppdatera `metadata`-objektet (rad ~23-26)
+
+---
+
+## 📖 Innehållssidor
+
+### Om oss-sida
+- 📋 **Skapa 'Om oss'-sida** - En enkel informationssida (`/about`) som beskriver konceptet
+  - **Innehåll**: Beskrivning av Sokhar, vision, värderingar
+  - **Stil**: Följer designsystemet (bg-brand-beige, brand-green accent)
+  
+  **Relaterade filer:**
+  - Ny fil: `app/about/page.tsx` - Skapa ny sida
+  - `app/lib/content.ts` - Lägg till texter för Om oss-sidan
+  - `app/components/organisms/Footer.tsx` - Uppdatera "Om oss"-länk (rad ~26) för att peka på `/about`
+
+---
+
 ## 🔧 Tekniska Förbättringar
 
 ### Next.js & TypeScript
@@ -264,10 +322,18 @@ Detta dokument samlar alla planerade features, tekniska förbättringar och go-l
 
 ## 📊 Status-sammanfattning
 
-**Klart (✅):** 15+ features  
+**Klart (✅):** 18+ features  
 **Pågående (🚧):** 0 features  
-**Planerat (📋):** 8 features  
+**Planerat (📋):** 12 features  
 **Varning (⚠️):** 1 teknisk skuld (middleware → proxy)
+
+### Design & UI
+- ✅ Footer implementerad
+- ✅ UserMenu matchar designsystemet
+- 📋 Chatt-styling (justera motpartens bubblor)
+- 📋 Favicon uppdatering
+- 📋 SEO Metadata
+- 📋 Om oss-sida
 
 ---
 
@@ -276,16 +342,40 @@ Detta dokument samlar alla planerade features, tekniska förbättringar och go-l
 ### Fase 1: Kritiskt (Innan Publik Lansering)
 1. ⚠️ Migrera `middleware.ts` → `proxy.ts` (Next.js 16-kompatibilitet)
 2. 📋 Email-notifikationer för nya meddelanden + inställningar
+3. 📋 SEO Metadata (title, description)
+4. 📋 Favicon uppdatering
+5. 📋 Chatt-styling (justera motpartens bubblor)
 
 ### Fase 2: Viktigt (Efter Initial Lansering)
-3. 📋 Server-side search med Full-Text Search
-4. 📋 Filter på pris/plats/datum
-5. 📋 Sortering
+3. 📋 Om oss-sida (`/about`)
+4. 📋 Server-side search med Full-Text Search
+5. 📋 Filter på pris/plats/datum
+6. 📋 Sortering
 
 ### Fase 3: Nice to Have
 6. 📋 Push-notifikationer (PWA)
 7. 📋 Server-side bildkomprimering
 8. 📋 Analytics-integration
+
+---
+
+---
+
+## 📋 Design & UI Backlog (Sokhar Theme)
+
+Detta är en sammanfattning av alla design- och UI-uppgifter som diskuterats:
+
+### ✅ Redan implementerat
+- Footer-komponent med brand-färger och länkar
+- UserMenu med `rounded-xl` och matchande designsystem
+- Chatt-bakgrund med `bg-brand-beige`
+- Egna meddelanden med `bg-brand-green text-white`
+
+### 📋 Återstående uppgifter
+1. **Chatt-styling**: Justera motpartens bubblor (ta bort `border`, behåll `shadow-sm`)
+2. **Favicon**: Uppdatera baserat på `hero-logo.png`
+3. **SEO Metadata**: Uppdatera title och description i `app/layout.tsx`
+4. **Om oss-sida**: Skapa `/about` med konceptbeskrivning
 
 ---
 

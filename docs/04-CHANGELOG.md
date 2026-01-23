@@ -149,6 +149,15 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 - [ ] Bildkomprimering på servern
 - [ ] Analytics-integration (med GDPR-samtycke)
 
+### 📚 Dokumentation
+- **Roadmap & Go-Live Checklist** (`docs/05-ROADMAP.md`): Ny roadmap-fil som samlar alla planerade features, tekniska förbättringar och go-live-krav
+  - Go-Live Checklist med status för varje område
+  - Planerade features prioriterade (Hög/Medel/Låg)
+  - Design & UI backlog (Chatt-styling, Footer, UserMenu, Favicon, SEO Metadata, Om oss-sida)
+  - Tekniska förbättringar och rekommenderad prioritering
+  - Status-sammanfattning med antal klara/planerade features
+- **Start-guide uppdaterad** (`docs/00-START_HERE.md`): Länk till roadmap-filen tillagd i dokumentationsindexet
+
 ### Pågående
 - Dokumentationsstruktur skapad
 - Systemarkitektur dokumenterad
