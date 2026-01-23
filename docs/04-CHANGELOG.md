@@ -6,6 +6,12 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ## [Unreleased] (Local Development)
 
+_Inga nya ändringar ännu._
+
+---
+
+## [1.1.0] - 2025-01-17
+
 ### ✨ Tillagt
 
 #### User Menu & Navigation
@@ -158,9 +164,13 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
   - Status-sammanfattning med antal klara/planerade features
 - **Start-guide uppdaterad** (`docs/00-START_HERE.md`): Länk till roadmap-filen tillagd i dokumentationsindexet
 
-### Pågående
-- Dokumentationsstruktur skapad
-- Systemarkitektur dokumenterad
+### 🔧 Ändrat
+
+#### Dokumentation
+- **Roadmap-fil**: Skapad `docs/05-ROADMAP.md` med komplett roadmap och go-live checklist
+- **Start-guide**: Uppdaterad med länkar till roadmap-filen
+
+---
 
 ## [1.0.0] - 2025-01-16
 
