@@ -8,6 +8,22 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ### ✨ Tillagt
 
+#### Footer-komponent
+- **Footer-komponent**: Ny footer-komponent med responsiv design
+  - Mobil: Enkel kolumn, centrerad text med Logotyp, Om Kolla här!, Kundservice, Instagram och Copyright
+  - Desktop: 4 kolumner med länkar (Marknadsplatsen, Kundservice, Följ oss)
+  - Bakgrund: `bg-brand-green` med vit text för hög kontrast
+  - Hover-effekter: `hover:text-brand-beige` och `hover:underline` på desktop
+  - Copyright uppdaterat till 2026
+  - Integrerad i `app/layout.tsx` med flex-layout för att alltid hamna längst ner
+  - Använder `lucide-react` för Instagram-ikon
+
+#### Hero-sektion mobil optimering
+- **Hero-text dold på mobil**: Hero-rubriken "Hitta fynd eller sälj det du inte behöver" döljs på mobil
+  - Använder `hidden md:block` för att visa endast på desktop (768px+)
+  - Sökfältet lyfts automatiskt upp på mobil för bättre UX
+  - Mer fokus på sökfunktionen på små skärmar
+
 #### Dashboard mobil UX/UI-förbättringar
 - **Edit/Delete-knappar**: Flyttade från absolut position till flex-layout i höjd med "Aktiv"-taggen
   - Förhindrar att knappar och rubriker krockar på mobil

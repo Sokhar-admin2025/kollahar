@@ -207,7 +207,7 @@ function HomePageContent() {
             className="hidden md:block h-24 md:h-32 mx-auto mb-3 object-contain"
           />
 
-          <h2 className="text-2xl md:text-4xl font-display font-extrabold mb-2 tracking-tight text-brand-green drop-shadow-sm">
+          <h2 className="hidden md:block text-2xl md:text-4xl font-display font-extrabold mb-2 tracking-tight text-brand-green drop-shadow-sm">
             {t.landing.hero.title}
           </h2>
           

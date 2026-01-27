@@ -1,10 +1,6 @@
 import './globals.css'
 import type { Metadata } from 'next'
 import { Knewave, DM_Sans } from 'next/font/google'
-
-// Importera din nya Footer
-// OBS: Kontrollera att sökvägen stämmer. 
-// Om du lade filen i 'components/organisms/Footer.tsx' så är detta rätt.
 import Footer from './components/organisms/Footer' 
 
 const knewave = Knewave({ 
