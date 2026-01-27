@@ -8,6 +8,46 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ### ✨ Tillagt
 
+#### Login & Registrering - Komplett ombyggnad
+- **Tabs för Login/Registrering**: Ny tab-baserad design för bättre UX
+  - Tabs: "Logga in" / "Skapa konto" med URL-state (`?tab=signup`)
+  - Samma formulär, olika knappar baserat på vald tab
+  - URL-state bevaras vid siduppdatering
+- **6-siffrig OTP-verifiering**: Ny verifieringssida (`/login/verify`)
+  - 6 separata input-fält med auto-focus
+  - Auto-verifiering när alla 6 siffror är ifyllda
+  - Auto-forward vid korrekt kod
+  - Countdown-timer (15 minuter)
+  - Försöksräknare (5 försök med vänliga meddelanden)
+  - "Skicka ny kod"-funktion
+  - Paste-stöd för 6-siffrig kod
+  - Rensa fält vid fel kod
+- **Välkomst-popup**: Ny popup för nya och befintliga användare
+  - Modal med overlay
+  - 3 knappar: Bläddra annonser, Lägg upp annons, Gå till min profil
+  - Checkbox för "Visa inte detta igen" (permanent stängning)
+  - Databas-spårning för UX-analys (`welcome_popup_view_count`, `welcome_popup_last_shown`, `welcome_popup_dismissed`)
+  - Visas efter inloggning/verifiering (om inte stängd permanent)
+- **Förbättrad felhantering**: Användarvänliga felmeddelanden
+  - Översättning av Supabase-fel till svenska
+  - Tydliga meddelanden för alla fel-scenarier
+- **Keyboard navigation**: Enter-tangent submitar formulär
+- **Visa/dölj lösenord**: Öga-ikon för att visa/dölja lösenord
+- **Email-validering**: Realtidsvalidering med visuell feedback
+- **Accessibility (EAA)**: ARIA-labels, focus-hantering, screen reader support
+
+#### Databas-migration för popup-spårning
+- **Migration**: `supabase/migrations/20260117000000_add_welcome_popup_tracking.sql`
+  - `welcome_popup_dismissed` (boolean)
+  - `welcome_popup_last_shown` (timestamptz)
+  - `welcome_popup_view_count` (integer)
+
+#### Dokumentation
+- **Email-template guide**: `docs/EMAIL_TEMPLATE_OTP.md` - Innehåll och konfiguration
+- **Supabase email setup**: `docs/SUPABASE_EMAIL_SETUP.md` - Steg-för-steg guide
+- **QA-checklista**: `docs/QA_CHECKLIST_LOGIN_UPGRADE.md` - Komplett testlista
+- **QA-testrapport**: `docs/QA_TEST_REPORT.md` - Testresultat och kvarstående uppgifter
+
 #### Footer-komponent
 - **Footer-komponent**: Ny footer-komponent med responsiv design
   - Mobil: Enkel kolumn, centrerad text med Logotyp, Om Kolla här!, Kundservice, Instagram och Copyright
@@ -123,7 +163,35 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
   - Text: "← Tillbaka till annonserna"
   - Navigerar alltid till startsidan (`/`) istället för `router.back()`
 
+### 🔄 Ändrat
+
+#### Navigation & Logout
+- **Logout-redirect**: Logout redirectar nu till startsidan (`/`) istället för `/login`
+  - Fixat i `app/dashboard/page.tsx`
+  - `UserMenu.tsx` redirectar redan korrekt
+- **Header på login-sidan**: Lagt till Header-komponent på login-sidan
+  - Logotypen "Kollahär!" länkar till startsidan
+  - Konsistent navigation på alla sidor
+- **"Tillbaka till annonserna"-knapp**: Förbättrad event-hantering
+  - Använder `router.replace()` istället för `router.push()`
+  - `e.preventDefault()` och `e.stopPropagation()` för att förhindra konflikter
+  - Fixar problem med att knappen krävde flera klick
+
+#### Verifieringssida
+- **Dubbel pil fixad**: Tog bort `ArrowLeft`-ikon och "←" från text
+  - Nu visas endast texten "← Tillbaka" (från content.ts)
+  - Tydligare och enklare design
+
 ### 🐛 Fixat
+
+#### Login & Registrering
+- **Auto-verify useEffect**: Fixat dependency-problem med `useCallback`
+  - Förhindrar oändliga loopar
+  - Korrekt dependency-hantering
+- **Saknad invalidEmail**: Lagt till `invalidEmail` i login errors (content.ts)
+- **Email-felhantering**: Förbättrad felhantering för email-utskick
+  - Tydligare meddelanden om Supabase-konfiguration saknas
+  - Bättre feedback till användare
 
 #### Text-kontrast förbättringar (Dashboard & Formulär)
 - **Dashboard alla flikar**: Förbättrad text-synlighet på mobil (iPhone Chrome)

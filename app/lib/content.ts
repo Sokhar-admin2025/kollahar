@@ -202,4 +202,66 @@ export const DASHBOARD_TEXTS = {
       success: "Din profil har uppdaterats!"
     }
   },
+
+  // --- LOGIN & REGISTRERING ---
+  auth: {
+    login: {
+      title: "Logga in",
+      email: "E-post",
+      password: "Lösenord",
+      submit: "Logga in",
+      forgotPassword: "Glömt lösenord?",
+      loading: "Loggar in...",
+      errors: {
+        invalidCredentials: "Fel e-post eller lösenord. Försök igen.",
+        networkError: "Nätverksfel. Kontrollera din anslutning.",
+        invalidEmail: "Ogiltig e-postadress.",
+        generic: "Ett fel uppstod. Försök igen."
+      }
+    },
+    signup: {
+      title: "Skapa konto",
+      email: "E-post",
+      password: "Lösenord",
+      submit: "Skapa konto",
+      loading: "Skapar konto...",
+      passwordMinLength: (min: number) => `Lösenordet måste vara minst ${min} tecken långt.`,
+      errors: {
+        emailExists: "Detta e-post är redan registrerat. Logga in istället.",
+        weakPassword: "Lösenordet är för svagt. Använd minst 8 tecken.",
+        invalidEmail: "Ogiltig e-postadress.",
+        generic: "Kunde inte skapa konto. Försök igen."
+      },
+      success: "Konto skapat! Kontrollera din e-post för verifieringskod."
+    },
+    verify: {
+      title: "Bekräfta din e-post",
+      subtitle: "Vi har skickat en 6-siffrig kod till",
+      codeLabel: "Verifieringskod",
+      codePlaceholder: "000000",
+      submit: "Verifiera",
+      resend: "Skicka ny kod",
+      back: "← Tillbaka",
+      loading: "Verifierar...",
+      resending: "Skickar ny kod...",
+      countdown: (seconds: number) => `Koden är giltig i ${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`,
+      attemptsLeft: (attempts: number) => `Du har ${attempts} försök kvar.`,
+      errors: {
+        invalidCode: "Fel kod. Försök igen.",
+        expiredCode: "Koden har gått ut. Skicka en ny kod.",
+        tooManyAttempts: "För många felaktiga försök. Skicka en ny kod.",
+        generic: "Ett fel uppstod. Försök igen."
+      },
+      success: "E-post verifierad! Loggar in..."
+    },
+    welcome: {
+      title: "Välkommen till Kollahär!",
+      subtitle: "Vad vill du göra idag?",
+      browseAds: "Bläddra annonser",
+      createAd: "Lägg upp en annons",
+      goToProfile: "Gå till min profil",
+      dontShowAgain: "Visa inte detta igen",
+      close: "Stäng"
+    }
+  },
 } // <-- Filens slut

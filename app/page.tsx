@@ -11,6 +11,7 @@ import { DASHBOARD_TEXTS } from './lib/content'
 import ListingCard from './components/ListingCard'
 import Header from './components/organisms/Header'
 import ScrollToSearch from './components/ScrollToSearch'
+import WelcomePopup from './components/WelcomePopup'
 import type { Listing } from './types'
 
 // Initiera Supabase
@@ -33,11 +34,14 @@ function HomePageContent() {
   const [loading, setLoading] = useState(true)
   const [favoriteIds, setFavoriteIds] = useState<string[]>([])
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  const [showWelcomePopup, setShowWelcomePopup] = useState(false)
+  const [popupDismissed, setPopupDismissed] = useState(false)
 
   // Läs från URL-parametrar vid första laddningen
   const [searchQuery, setSearchQuery] = useState(() => searchParams.get('q') || '')
   const [selectedCategory, setSelectedCategory] = useState(() => searchParams.get('category') || 'Alla')
   const [searchSubmitted, setSearchSubmitted] = useState(false)
+  const shouldShowWelcome = searchParams.get('showWelcome') === 'true'
 
   const t = DASHBOARD_TEXTS
 
@@ -111,6 +115,47 @@ function HomePageContent() {
       subscription.unsubscribe()
     }
   }, [])
+
+  // Kolla om välkomst-popup ska visas
+  useEffect(() => {
+    const checkWelcomePopup = async () => {
+      if (!shouldShowWelcome || !currentUserId) {
+        setShowWelcomePopup(false)
+        return
+      }
+
+      try {
+        // Hämta användarens profil för att se om popupen är stängd permanent
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('welcome_popup_dismissed, welcome_popup_last_shown')
+          .eq('id', currentUserId)
+          .single()
+
+        if (profile) {
+          // Visa popupen om den inte är stängd permanent
+          if (!profile.welcome_popup_dismissed) {
+            setShowWelcomePopup(true)
+            setPopupDismissed(false)
+          } else {
+            setShowWelcomePopup(false)
+            setPopupDismissed(true)
+          }
+        } else {
+          // Ingen profil = ny användare, visa popupen
+          setShowWelcomePopup(true)
+          setPopupDismissed(false)
+        }
+      } catch (error) {
+        console.error('Kunde inte hämta popup-status:', error)
+        // Vid fel, visa popupen ändå (bättre UX)
+        setShowWelcomePopup(true)
+        setPopupDismissed(false)
+      }
+    }
+
+    checkWelcomePopup()
+  }, [shouldShowWelcome, currentUserId])
 
   // 2. Filtrera listan (real-time filtering)
   useEffect(() => {
@@ -331,6 +376,21 @@ function HomePageContent() {
 
       {/* Scroll to Search-knapp */}
       <ScrollToSearch />
+
+      {/* Welcome Popup */}
+      {showWelcomePopup && currentUserId && (
+        <WelcomePopup
+          userId={currentUserId}
+          onClose={() => {
+            setShowWelcomePopup(false)
+            // Ta bort showWelcome från URL
+            const params = new URLSearchParams(searchParams.toString())
+            params.delete('showWelcome')
+            const newUrl = params.toString() ? `/?${params.toString()}` : '/'
+            router.replace(newUrl)
+          }}
+        />
+      )}
     </div>
   )
 }
