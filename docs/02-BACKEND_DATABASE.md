@@ -526,6 +526,34 @@ Utöver migrations finns även manuella setup-skript:
 supabase migration new migration_name
 ```
 
+## 🔐 Admin-åtkomst & Service Role (SUPABASE_SERVICE_ROLE_KEY)
+
+Vissa operationer kräver **admin-nivå** behörighet mot Supabase (t.ex. att radera ett konto helt, inklusive raden i `auth.users`).
+
+### Service Role-nyckeln
+
+- `SUPABASE_SERVICE_ROLE_KEY` är **endast konfigurerad i server-miljöer**:
+  - Lokalt i `.env.local` (utan `NEXT_PUBLIC_`-prefix)
+  - I Vercel Environment Variables (Production / ev. Preview)
+- Den får **aldrig** användas i klientkod.
+
+### Var den används
+
+- `lib/supabase/admin.ts`
+  - Skapar en admin-klient (`supabaseAdmin`) **endast på serversidan**.
+  - Har skydd mot användning i browser (`if (typeof window !== 'undefined') throw ...`).
+- `app/api/delete-account/route.ts`
+  - Använder `supabaseAdmin?.auth.admin.deleteUser(user.id)` för att:
+    - Ta bort användaren från `auth.users`
+    - Låta `ON DELETE CASCADE` i `profiles` och `listings` rensa relaterad data
+  - Faller tillbaka till RLS-skyddad radering (favorites/listings/profiles) om service role saknas.
+
+### Säkerhetsprinciper
+
+1. **Ingen klientåtkomst**: Inga `NEXT_PUBLIC_`-prefix på service-role-nyckeln.
+2. **Minsta möjliga yta**: Endast `delete-account`-flödet använder admin-klienten.
+3. **RLS som backup**: Fallback-logik använder alltid `auth.uid()` + RLS vid radering av publika tabeller.
+
 ---
 
 **Nästa steg**: Läs [Frontend & UI](./03-FRONTEND_UI.md) för att förstå komponentstrukturen och designsystemet.
