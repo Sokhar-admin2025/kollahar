@@ -161,6 +161,8 @@ export default function LocationInput({
         <input
           ref={inputRef}
           type="text"
+          name="location"               // Hjälp browsern förstå att detta är en plats, inte e-post
+          autoComplete="address-level2" // Hint till Chrome: detta är en ort/kommun, inte användarnamn
           value={displayValue}
           onChange={handleInputChange}
           onFocus={handleInputFocus}
