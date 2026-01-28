@@ -160,56 +160,61 @@ export default function LoginPage() {
     setLoading(true)
     setMessage(null)
     const cleanEmail = email.trim()
-    
-    // För registrering med OTP: Skicka OTP först, skapa konto efter verifiering
-    // Vi sparar lösenordet temporärt i sessionStorage för att sätta det efter verifiering
-    sessionStorage.setItem('pendingPassword', password)
-    
-    const { error, data } = await supabase.auth.signInWithOtp({
+
+    // 1. Försök skapa användare först (signUp)
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email: cleanEmail,
+      password,
       options: {
-        shouldCreateUser: true, // Skapa användare vid första verifiering
-      }
+        // Vi använder OTP för första inloggningen, så vi behöver inte skicka en separat bekräftelselänk
+        emailRedirectTo: undefined,
+      },
     })
 
-    if (error) {
-      // Om användaren redan finns, försök logga in istället
-      if (error.message.includes('already registered') || error.message.includes('user exists')) {
+    if (signUpError) {
+      const msg = String(signUpError.message || '').toLowerCase()
+
+      // Om användaren redan finns → visa tydligt meddelande och byt till login-fliken
+      if (msg.includes('already registered') || msg.includes('user already registered')) {
         setMessage({ 
-          text: getErrorMessage(error, 'signup'), 
+          text: DASHBOARD_TEXTS.auth.signup.errors.emailExists, 
           type: 'error' 
         })
-        setLoading(false)
-        sessionStorage.removeItem('pendingPassword')
+        setActiveTab('login')
+      } else if (msg.includes('password')) {
+        setMessage({ text: DASHBOARD_TEXTS.auth.signup.errors.weakPassword, type: 'error' })
+      } else if (msg.includes('email')) {
+        setMessage({ text: DASHBOARD_TEXTS.auth.signup.errors.invalidEmail, type: 'error' })
       } else {
-        // Förbättrad felhantering för email-problem
-        let errorMessage = 'Kunde inte skicka verifieringskod. '
-        if (error.message.includes('email') || error.message.includes('rate limit')) {
-          errorMessage += 'Kontrollera att email-templates är konfigurerade i Supabase Dashboard.'
-        } else {
-          errorMessage += error.message || 'Försök igen.'
-        }
-        setMessage({ 
-          text: errorMessage, 
-          type: 'error' 
-        })
-        setLoading(false)
-        sessionStorage.removeItem('pendingPassword')
+        setMessage({ text: DASHBOARD_TEXTS.auth.signup.errors.generic, type: 'error' })
       }
-    } else {
-      // Kontrollera om email faktiskt skickades
-      if (data) {
-        // Redirect till verifieringssidan
-        router.push(`/login/verify?email=${encodeURIComponent(cleanEmail)}&type=signup`)
-      } else {
-        // Fallback om data saknas
-        setMessage({ 
-          text: 'Kontrollera din e-post för verifieringskod. Om du inte får något email, kontrollera att email-templates är konfigurerade i Supabase.', 
-          type: 'error' 
-        })
-        setLoading(false)
-      }
+
+      setLoading(false)
+      return
     }
+
+    // 2. Skicka 6-siffrig OTP till den nya (eller existerande) användaren, utan att skapa nytt konto
+    const { error: otpError } = await supabase.auth.signInWithOtp({
+      email: cleanEmail,
+      options: {
+        shouldCreateUser: false,
+      },
+    })
+
+    if (otpError) {
+      let errorMessage = 'Kunde inte skicka verifieringskod. '
+      if (otpError.message.includes('email') || otpError.message.includes('rate limit')) {
+        errorMessage += 'Kontakta support om problemet kvarstår.'
+      } else {
+        errorMessage += otpError.message || 'Försök igen.'
+      }
+      setMessage({ text: errorMessage, type: 'error' })
+      setLoading(false)
+      return
+    }
+
+    // 3. Redirect till verifieringssidan
+    router.push(`/login/verify?email=${encodeURIComponent(cleanEmail)}&type=signup`)
   }
 
   // Keyboard navigation - Enter-tangent
@@ -350,9 +355,50 @@ export default function LoginPage() {
               <div className="text-right">
                 <button
                   type="button"
-                  onClick={() => {
-                    // TODO: Implementera glömt lösenord
-                    setMessage({ text: 'Funktionen kommer snart!', type: 'error' })
+                  onClick={async () => {
+                    // Glömt lösenord-flöde: skicka återställningslänk till angiven e-post
+                    const cleanEmail = email.trim()
+                    if (!cleanEmail || !isValidEmail(cleanEmail)) {
+                      setMessage({
+                        text: DASHBOARD_TEXTS.auth.login.errors.invalidEmail,
+                        type: 'error',
+                      })
+                      return
+                    }
+
+                    setLoading(true)
+                    setMessage(null)
+                    try {
+                      const redirectTo =
+                        typeof window !== 'undefined'
+                          ? `${window.location.origin}/reset-password`
+                          : undefined
+
+                      const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
+                        redirectTo,
+                      })
+
+                      if (error) {
+                        console.error('Fel vid resetPasswordForEmail:', error)
+                        setMessage({
+                          text: 'Kunde inte skicka återställningslänk. Försök igen eller kontakta support.',
+                          type: 'error',
+                        })
+                      } else {
+                        setMessage({
+                          text: 'Vi har skickat en länk för att byta lösenord till din e-post.',
+                          type: 'success',
+                        })
+                      }
+                    } catch (err) {
+                      console.error('Ovntat fel vid glömt lösenord:', err)
+                      setMessage({
+                        text: 'Ett oväntat fel uppstod. Försök igen.',
+                        type: 'error',
+                      })
+                    } finally {
+                      setLoading(false)
+                    }
                   }}
                   className="text-sm text-brand-green hover:underline focus:outline-none focus:ring-2 focus:ring-brand-green rounded"
                 >

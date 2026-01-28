@@ -41,7 +41,8 @@ function HomePageContent() {
   const [searchQuery, setSearchQuery] = useState(() => searchParams.get('q') || '')
   const [selectedCategory, setSelectedCategory] = useState(() => searchParams.get('category') || 'Alla')
   const [searchSubmitted, setSearchSubmitted] = useState(false)
-  const shouldShowWelcome = searchParams.get('showWelcome') === 'true'
+  // Spara initialt showWelcome-värde en gång, så att URL-uppdateringar inte slår ut flaggan
+  const [shouldShowWelcome, setShouldShowWelcome] = useState(() => searchParams.get('showWelcome') === 'true')
 
   const t = DASHBOARD_TEXTS
 
@@ -119,7 +120,11 @@ function HomePageContent() {
   // Kolla om välkomst-popup ska visas
   useEffect(() => {
     const checkWelcomePopup = async () => {
-      if (!shouldShowWelcome || !currentUserId) {
+      // Vänta tills vi vet vem användaren är
+      if (!currentUserId) return
+
+      // Om URL/state inte säger att vi ska visa, stäng popupen
+      if (!shouldShowWelcome) {
         setShowWelcomePopup(false)
         return
       }

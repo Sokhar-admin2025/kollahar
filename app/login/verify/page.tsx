@@ -74,10 +74,12 @@ export default function VerifyPage() {
     setMessage(null)
 
     try {
+      // Verifiera OTP-koden. För email-OTP som skickas via signInWithOtp
+      // ska type vara 'magiclink' enligt Supabase-dokumentationen.
       const { error } = await supabase.auth.verifyOtp({
         email,
         token: fullCode,
-        type: type === 'signup' ? 'signup' : 'email',
+        type: 'magiclink',        
       })
 
       if (error) {
@@ -110,28 +112,9 @@ export default function VerifyPage() {
         }
         setLoading(false)
       } else {
-        // Lyckad verifiering
+        // Lyckad verifiering: användaren är nu inloggad, redirecta till startsidan med välkomst-popup
         setMessage({ text: DASHBOARD_TEXTS.auth.verify.success, type: 'success' })
-        
-        // Om det är en ny registrering, sätt lösenordet
-        if (type === 'signup') {
-          const pendingPassword = sessionStorage.getItem('pendingPassword')
-          if (pendingPassword) {
-            const { data: { user } } = await supabase.auth.getUser()
-            if (user) {
-              // Uppdatera lösenordet
-              const { error: updateError } = await supabase.auth.updateUser({
-                password: pendingPassword
-              })
-              if (updateError) {
-                console.error('Kunde inte sätta lösenord:', updateError)
-                // Fortsätt ändå - användaren kan sätta lösenord senare
-              }
-              sessionStorage.removeItem('pendingPassword')
-            }
-          }
-        }
-        
+
         // Auto-login och redirect
         setTimeout(() => {
           router.push('/?showWelcome=true')
@@ -294,27 +277,29 @@ export default function VerifyPage() {
             </label>
             <div className="flex justify-center gap-2">
               {code.map((digit, index) => (
-                <input
-                  key={index}
-                  id={`code-${index}`}
-                  ref={(el) => (inputRefs.current[index] = el)}
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={1}
-                  value={digit}
-                  onChange={(e) => handleCodeChange(index, e.target.value)}
-                  onKeyDown={(e) => handleKeyDown(index, e)}
-                  onPaste={index === 0 ? handlePaste : undefined}
-                  className={`w-12 h-14 text-center text-2xl font-bold rounded-lg border-2 focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition-colors ${
-                    codeExpired || attemptsLeft === 0
-                      ? 'border-red-300 bg-red-50'
-                      : message?.type === 'error'
-                      ? 'border-red-300'
-                      : 'border-gray-300'
-                  }`}
-                  disabled={loading || codeExpired || attemptsLeft === 0}
-                  aria-label={`Siffra ${index + 1} av 6`}
-                />
+              <input
+                key={index}
+                id={`code-${index}`}
+                ref={(el) => {
+                  inputRefs.current[index] = el
+                }}
+                type="text"
+                inputMode="numeric"
+                maxLength={1}
+                value={digit}
+                onChange={(e) => handleCodeChange(index, e.target.value)}
+                onKeyDown={(e) => handleKeyDown(index, e)}
+                onPaste={index === 0 ? handlePaste : undefined}
+                className={`w-12 h-14 text-center text-2xl font-bold rounded-lg border-2 focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition-colors ${
+                  codeExpired || attemptsLeft === 0
+                    ? 'border-red-50 border-red-300'
+                    : message?.type === 'error'
+                    ? 'border-red-300'
+                    : 'border-gray-300'
+                }`}
+                disabled={loading || codeExpired || attemptsLeft === 0}
+                aria-label={`Siffra ${index + 1} av 6`}
+              />
               ))}
             </div>
           </div>

@@ -185,7 +185,8 @@ export const DASHBOARD_TEXTS = {
     back: "← Tillbaka till Dashboard",
     sections: {
       profile: "Min Profil",
-      privacy: "Integritet & Samtycke (GDPR)"
+      privacy: "Integritet & Samtycke (GDPR)",
+      password: "Byt lösenord"
     },
     form: {
       name: { label: "Namn / Företagsnamn", placeholder: "Ditt namn eller företag" },
@@ -200,6 +201,24 @@ export const DASHBOARD_TEXTS = {
       btn: "Spara ändringar",
       loading: "Sparar...",
       success: "Din profil har uppdaterats!"
+    },
+    password: {
+      title: "Byt lösenord",
+      description: "Av säkerhetsskäl behöver du bekräfta ditt nuvarande lösenord innan du väljer ett nytt.",
+      currentLabel: "Nuvarande lösenord",
+      newLabel: "Nytt lösenord",
+      confirmLabel: "Bekräfta nytt lösenord",
+      submit: "Uppdatera lösenord",
+      loading: "Uppdaterar...",
+      errors: {
+        required: "Fyll i alla fält.",
+        minLength: (min: number) => `Lösenordet måste vara minst ${min} tecken långt.`,
+        mismatch: "Lösenorden matchar inte.",
+        sameAsOld: "Det nya lösenordet måste vara annorlunda än det nuvarande.",
+        currentInvalid: "Nuvarande lösenord är fel. Försök igen.",
+        generic: "Kunde inte uppdatera lösenordet. Försök igen."
+      },
+      success: "Ditt lösenord har uppdaterats."
     }
   },
 
@@ -227,7 +246,7 @@ export const DASHBOARD_TEXTS = {
       loading: "Skapar konto...",
       passwordMinLength: (min: number) => `Lösenordet måste vara minst ${min} tecken långt.`,
       errors: {
-        emailExists: "Detta e-post är redan registrerat. Logga in istället.",
+        emailExists: "Användare med samma adress finns redan, registrera med ett nytt eller kör \"Glömt lösenord\".",
         weakPassword: "Lösenordet är för svagt. Använd minst 8 tecken.",
         invalidEmail: "Ogiltig e-postadress.",
         generic: "Kunde inte skapa konto. Försök igen."

@@ -30,6 +30,24 @@ export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
   const isProtected = pathname.startsWith('/dashboard') || pathname.startsWith('/fav')
 
+  // Om användaren är inloggad, kontrollera om de är flaggade för tvingat lösenordsbyte
+  if (user) {
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id, force_password_change')
+        .eq('id', user.id)
+        .maybeSingle()
+
+      if (profile?.force_password_change && pathname !== '/reset-password') {
+        const url = new URL('/reset-password', request.url)
+        return NextResponse.redirect(url)
+      }
+    } catch (e) {
+      console.error('Kunde inte läsa force_password_change från profil:', e)
+    }
+  }
+
   if (error && isProtected) {
     return NextResponse.redirect(new URL('/login', request.url))
   }

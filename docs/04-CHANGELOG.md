@@ -192,6 +192,13 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 - **Email-felhantering**: Förbättrad felhantering för email-utskick
   - Tydligare meddelanden om Supabase-konfiguration saknas
   - Bättre feedback till användare
+- **Signup med befintlig e-post**: Förhindrar dubbelregistrering
+  - Om e-post redan finns: visar tydligt felmeddelande och växlar till Login-fliken
+  - Uppmanar användaren att använda \"Glömt lösenord\" istället
+- **OTP-verifiering**: Korrigerad `verifyOtp`-typ för email-OTP (`magiclink`)
+  - Säkerställer att 6-siffrig kod fungerar för både nya och befintliga användare
+- **Reset password**: Ignorerar ofarlig Supabase-varning om nytt lösenord = gammalt
+  - Loggar som varning istället för error
 
 #### Text-kontrast förbättringar (Dashboard & Formulär)
 - **Dashboard alla flikar**: Förbättrad text-synlighet på mobil (iPhone Chrome)
