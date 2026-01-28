@@ -213,10 +213,18 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 - **Signup-flöde härdat**: Efter lyckad `signUp` loggas användaren alltid ut innan OTP-steget
   - Förhindrar att man kan hoppa in i dashboard/header innan e-post är verifierad
 - **Välkomst-popup på startsidan borttagen**: Ersatt av tydliga toasts för inloggning och utloggning
-  - `/?logged_in=true` → grön "Du är inloggad. Välkommen tillbaka!"-toast
+  - `/?logged_in=new` → grön "Hurra! Välkommen till Kollahär!"-toast (nyregistrerad användare)
+  - `/?logged_in=returning` → grön "Välkommen tillbaka {profilnamn}!"-toast (befintlig användare)
   - `/?logged_out=true|deleted` → "Du har loggats ut." / "Ditt konto har raderats!"
 
 #### Text-kontrast förbättringar (Dashboard & Formulär)
+
+#### Platsfält & LocationInput
+- **Hemvist-fältet**: Placeholder uppdaterad till "Fyll i din närmaste kommun" och e-postliknande värden filtreras bort visuellt.
+- **LocationInput UX**: Förbättrat så att:
+  - Autocomplete visas först när användaren börjar skriva (inte vid förifyllnad).
+  - Val av kommun stänger listan direkt (ingen dubbelklick-bugg).
+  - Förifylld plats i "Skapa annons" öppnar inte dropdown automatiskt.
 - **Dashboard alla flikar**: Förbättrad text-synlighet på mobil (iPhone Chrome)
   - Alla `text-brand-text/60`, `/70`, `/50` ändrade till `text-brand-text`
   - Lagt till `antialiased` på text för bättre skärpa

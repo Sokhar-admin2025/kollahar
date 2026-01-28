@@ -25,22 +25,24 @@ export default function LocationInput({
   const [showDropdown, setShowDropdown] = useState(false)
   const [selectedLan, setSelectedLan] = useState<string>('')
   const [availableKommuner, setAvailableKommuner] = useState<string[]>([])
+  const [isUserTyping, setIsUserTyping] = useState(false)
   
   const inputRef = useRef<HTMLInputElement>(null)
   const suggestionsRef = useRef<HTMLDivElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
-  // Sök med autocomplete
+  // Sök med autocomplete – endast när användaren faktiskt skriver
   useEffect(() => {
-    if (searchQuery.trim()) {
-      const results = searchKommuner(searchQuery)
-      setSuggestions(results)
-      setShowSuggestions(true)
-    } else {
+    if (!isUserTyping || !searchQuery.trim()) {
       setSuggestions([])
       setShowSuggestions(false)
+      return
     }
-  }, [searchQuery])
+
+    const results = searchKommuner(searchQuery)
+    setSuggestions(results)
+    setShowSuggestions(results.length > 0)
+  }, [searchQuery, isUserTyping])
 
   // Uppdatera tillgängliga kommuner när län väljs
   useEffect(() => {
@@ -80,6 +82,7 @@ export default function LocationInput({
     onChange(formatted)
     // Visa kommunnamnet i fältet istället för att rensa det
     setSearchQuery(location.kommun)
+    setIsUserTyping(false)
     setShowSuggestions(false)
     if (inputRef.current) {
       inputRef.current.blur()
@@ -92,6 +95,7 @@ export default function LocationInput({
       onChange(formatted)
       // Visa kommunnamnet i fältet
       setSearchQuery(kommun)
+      setIsUserTyping(false)
       setSelectedLan('')
       setAvailableKommuner([])
       setShowDropdown(false)
@@ -131,6 +135,7 @@ export default function LocationInput({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value
     setSearchQuery(newValue)
+    setIsUserTyping(true)
     
     // Om användaren rensar, rensa också value
     if (!newValue.trim()) {
@@ -139,9 +144,7 @@ export default function LocationInput({
   }
 
   const handleInputFocus = () => {
-    if (searchQuery.trim()) {
-      setShowSuggestions(true)
-    }
+    // Visa inte suggestions automatiskt här; de visas först när användaren börjar skriva
     setShowDropdown(false) // Stäng dropdown när input får fokus
   }
 
