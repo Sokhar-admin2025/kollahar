@@ -205,6 +205,8 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
   - Säkerställer att 6-siffrig kod fungerar för både nya och befintliga användare
 - **Reset password**: Ignorerar ofarlig Supabase-varning om nytt lösenord = gammalt
   - Loggar som varning istället för error
+- **Välkomst-popup på startsidan**: Knapparna i välkomst-popupen fungerar nu som förväntat i produktion
+  - `/?showWelcome=true` triggar popupen korrekt och navigationen till startsidan, skapa annons och dashboard fungerar
 
 #### Text-kontrast förbättringar (Dashboard & Formulär)
 - **Dashboard alla flikar**: Förbättrad text-synlighet på mobil (iPhone Chrome)
