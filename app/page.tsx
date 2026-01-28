@@ -120,12 +120,17 @@ function HomePageContent() {
   // Kolla om välkomst-popup ska visas
   useEffect(() => {
     const checkWelcomePopup = async () => {
-      // Vänta tills vi vet vem användaren är
-      if (!currentUserId) return
-
       // Om URL/state inte säger att vi ska visa, stäng popupen
       if (!shouldShowWelcome) {
         setShowWelcomePopup(false)
+        return
+      }
+
+      // Om ingen inloggad användare men ?showWelcome=true finns,
+      // visa en generisk popup utan att läsa/skriva i profilen.
+      if (!currentUserId) {
+        setShowWelcomePopup(true)
+        setPopupDismissed(false)
         return
       }
 
@@ -383,7 +388,7 @@ function HomePageContent() {
       <ScrollToSearch />
 
       {/* Welcome Popup */}
-      {showWelcomePopup && currentUserId && (
+      {showWelcomePopup && (
         <WelcomePopup
           userId={currentUserId}
           onClose={() => {
