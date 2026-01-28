@@ -185,6 +185,9 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 ### 🐛 Fixat
 
 #### Login & Registrering
+- **Login-sida Suspense-wrap**: `/login` är nu en lätt serverkomponent som wrapper den klientbaserade login-logiken i `Suspense`
+  - Fixar Next.js 16-varningen/felet: `useSearchParams() should be wrapped in a suspense boundary at page "/login"`
+  - Förhindrar build-fel på Vercel vid prerendering av login-sidan
 - **Auto-verify useEffect**: Fixat dependency-problem med `useCallback`
   - Förhindrar oändliga loopar
   - Korrekt dependency-hantering
