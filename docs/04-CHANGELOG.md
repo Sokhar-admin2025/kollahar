@@ -243,6 +243,15 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 - **Messages-sidan**: Förbättrad text-kontrast
   - Alla gråa texter (`text-gray-400`, `text-gray-500`) ändrade till `text-brand-text`
   - Tidsstämplar och meddelanden är nu tydligt läsbara
+  - Input-fält och konversationsrubriker använder nu `text-brand-text antialiased` för bättre läsbarhet på mobil
+- **Settings-sidan**: Förbättrad text-kontrast för mobil
+  - Alla labels ändrade från `text-gray-700` till `text-brand-text antialiased`
+  - Alla input-fält (namn, lösenord, bekräftelse, radera konto) använder nu `text-brand-text antialiased`
+  - Sektionsrubriker uppdaterade till `text-brand-text antialiased`
+- **LocationInput-komponent**: Förbättrad text-kontrast
+  - Input-fält använder nu `text-brand-text antialiased`
+  - Dropdown-labels och select-fält uppdaterade för konsistent textkontrast
+  - Matchar nu samma värden som CreateListingForm för enhetlig UX
 
 #### Tillgänglighet och kontrast (iPhone Chrome)
 - **Placeholder-text i sökfält**: Ökat kontrast för bättre synlighet på iPhone Chrome
