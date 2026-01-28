@@ -63,6 +63,8 @@ export default function LoginPageContent() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{ text: string; type: 'error' | 'success' } | null>(null)
+  const [needsOtpVerification, setNeedsOtpVerification] = useState(false)
+  const [sendingOtp, setSendingOtp] = useState(false)
 
   // Uppdatera URL när tab ändras (endast när activeTab faktiskt ändras)
   useEffect(() => {
@@ -108,23 +110,82 @@ export default function LoginPageContent() {
 
     const cleanEmail = email.trim()
 
-    const { error } = await supabase.auth.signInWithPassword({
+    // Säkerställ att ingen session finns innan vi försöker logga in
+    // (för att förhindra att headern visar profilikonen innan vi kontrollerar otp_verified)
+    try {
+      await supabase.auth.signOut()
+      await new Promise(resolve => setTimeout(resolve, 50))
+    } catch (err) {
+      // Ignorera fel vid signOut
+    }
+
+    const { data, error } = await supabase.auth.signInWithPassword({
       email: cleanEmail,
       password,
     })
 
-    if (error) {
+    if (error || !data?.user) {
       setMessage({
         text: getErrorMessage(error, 'login'),
         type: 'error',
       })
       setLoading(false)
     } else {
-      setMessage({ text: 'Inloggad! Skickar vidare...', type: 'success' })
-      setTimeout(() => {
-        router.push('/?logged_in=true')
-        router.refresh()
-      }, 1000)
+      try {
+        // 1. Hämta profil och kontrollera om kontot är OTP-verifierat
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('otp_verified')
+          .eq('id', data.user.id)
+          .single()
+
+        const otpVerified =
+          !profileError && profile && typeof profile.otp_verified === 'boolean'
+            ? profile.otp_verified
+            : true // fallback: lås inte ute gamla/anonyma användare
+
+        if (!otpVerified) {
+          // Användaren har inte slutfört 6-siffrig verifiering → blockera login
+          // Gör signOut och vänta på att det är klart för att säkerställa att headern inte visar profilikonen
+          try {
+            const { error: signOutError } = await supabase.auth.signOut()
+            if (signOutError) {
+              // Om signOut misslyckas, försök igen
+              await supabase.auth.signOut()
+            }
+            // Vänta en kort stund för att säkerställa att signOut är helt klart
+            await new Promise(resolve => setTimeout(resolve, 100))
+          } catch (err) {
+            console.warn('Kunde inte signa ut efter otp-verifieringskontroll:', err)
+          }
+
+          setNeedsOtpVerification(true)
+          setMessage({
+            text:
+              'Du måste först verifiera din e-post med den 6-siffriga koden vi skickade innan du kan logga in.',
+            type: 'error',
+          })
+          setLoading(false)
+          return
+        }
+
+        // Reset needsOtpVerification om login lyckas
+        setNeedsOtpVerification(false)
+
+        // 2. Allt OK → släpp in användaren
+        setMessage({ text: 'Inloggning lyckades. Skickar dig vidare...', type: 'success' })
+        setTimeout(() => {
+          router.push('/?logged_in=returning')
+          router.refresh()
+        }, 1000)
+      } catch (err) {
+        console.error('Kunde inte verifiera OTP-status vid login:', err)
+        setMessage({
+          text: 'Ett oväntat fel uppstod vid inloggning. Försök igen.',
+          type: 'error',
+        })
+        setLoading(false)
+      }
     }
   }
 
@@ -160,6 +221,15 @@ export default function LoginPageContent() {
     setMessage(null)
     const cleanEmail = email.trim()
 
+    // Säkerställ att ingen session finns innan vi försöker registrera
+    // (för att förhindra att headern visar profilikonen innan vi gör signOut)
+    try {
+      await supabase.auth.signOut()
+      await new Promise(resolve => setTimeout(resolve, 50))
+    } catch (err) {
+      // Ignorera fel vid signOut
+    }
+
     // 1. Försök skapa användare först (signUp)
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email: cleanEmail,
@@ -173,31 +243,99 @@ export default function LoginPageContent() {
     if (signUpError) {
       const msg = String(signUpError.message || '').toLowerCase()
 
-      // Om användaren redan finns → visa tydligt meddelande och byt till login-fliken
+      // Om användaren redan finns → kontrollera om kontot är verifierat
       if (msg.includes('already registered') || msg.includes('user already registered')) {
-        setMessage({
-          text: DASHBOARD_TEXTS.auth.signup.errors.emailExists,
-          type: 'error',
-        })
-        setActiveTab('login')
+        // Kontrollera om kontot är verifierat genom att försöka logga in och kolla otp_verified
+        try {
+          const { data: testLogin, error: testError } = await supabase.auth.signInWithPassword({
+            email: cleanEmail,
+            password,
+          })
+
+          if (!testError && testLogin?.user) {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('otp_verified')
+              .eq('id', testLogin.user.id)
+              .single()
+
+            await supabase.auth.signOut()
+
+            // Om kontot inte är verifierat → visa knapp för att skicka ny OTP-kod
+            if (profile && profile.otp_verified === false) {
+              setNeedsOtpVerification(true)
+              setMessage({
+                text: 'Det finns redan ett konto med denna e-postadress, men det är inte verifierat än. Skicka en ny verifieringskod för att slutföra registreringen.',
+                type: 'error',
+              })
+              setLoading(false)
+              return
+            } else {
+              // Kontot är verifierat → visa standardmeddelande och byt till login-fliken
+              setMessage({
+                text: DASHBOARD_TEXTS.auth.signup.errors.emailExists,
+                type: 'error',
+              })
+              setActiveTab('login')
+              setLoading(false)
+              return
+            }
+          } else {
+            // Kunde inte logga in → kontot finns men lösenordet är fel eller något annat
+            // Vi kan inte veta om kontot är verifierat eller inte, så visa standardmeddelande
+            setMessage({
+              text: DASHBOARD_TEXTS.auth.signup.errors.emailExists,
+              type: 'error',
+            })
+            setActiveTab('login')
+            setLoading(false)
+            return
+          }
+        } catch (checkErr) {
+          // Om vi inte kan kontrollera → visa standardmeddelande
+          setMessage({
+            text: DASHBOARD_TEXTS.auth.signup.errors.emailExists,
+            type: 'error',
+          })
+          setActiveTab('login')
+          setLoading(false)
+          return
+        }
       } else if (msg.includes('password')) {
         setMessage({ text: DASHBOARD_TEXTS.auth.signup.errors.weakPassword, type: 'error' })
+        setLoading(false)
+        return
       } else if (msg.includes('email')) {
         setMessage({ text: DASHBOARD_TEXTS.auth.signup.errors.invalidEmail, type: 'error' })
+        setLoading(false)
+        return
       } else {
         setMessage({ text: DASHBOARD_TEXTS.auth.signup.errors.generic, type: 'error' })
+        setLoading(false)
+        return
       }
-
-      setLoading(false)
-      return
     }
 
     // 2. Säkerställ att användaren INTE är inloggad förrän OTP är verifierad
     //    (för att förhindra att man kan kringgå verifieringen via headern/dashboard)
+    //    VIKTIGT: Vi gör signOut INNAN vi fortsätter, så att headern inte hinner reagera på sessionen
     try {
-      await supabase.auth.signOut()
+      const { error: signOutError } = await supabase.auth.signOut()
+      if (signOutError) {
+        console.warn('Kunde inte signa ut efter signUp:', signOutError)
+        // Om signOut misslyckas, försök igen en gång för att säkerställa att sessionen är borta
+        await supabase.auth.signOut()
+      }
+      // Vänta en kort stund för att säkerställa att signOut är helt klart innan vi fortsätter
+      await new Promise(resolve => setTimeout(resolve, 100))
     } catch (err) {
       console.warn('Kunde inte signa ut efter signUp (ignoreras, fortsätter med OTP-flödet):', err)
+      // Försök igen en sista gång
+      try {
+        await supabase.auth.signOut()
+      } catch (retryErr) {
+        console.warn('SignOut-retry misslyckades också:', retryErr)
+      }
     }
 
     // 3. Skicka 6-siffrig OTP till den nya (eller befintliga) användaren, utan att skapa nytt konto
@@ -224,9 +362,69 @@ export default function LoginPageContent() {
     router.push(`/login/verify?email=${encodeURIComponent(cleanEmail)}&type=signup`)
   }
 
+  // Skicka ny OTP-kod för konton som inte är verifierade
+  const handleResendOtpForUnverifiedAccount = async () => {
+    if (!email.trim()) {
+      setMessage({
+        text: 'Fyll i din e-postadress för att skicka ny verifieringskod.',
+        type: 'error',
+      })
+      return
+    }
+
+    if (!isValidEmail(email)) {
+      setMessage({
+        text: DASHBOARD_TEXTS.auth.login.errors.invalidEmail || 'Ogiltig e-postadress.',
+        type: 'error',
+      })
+      return
+    }
+
+    setSendingOtp(true)
+    setMessage(null)
+    const cleanEmail = email.trim()
+
+    try {
+      const { error: otpError } = await supabase.auth.signInWithOtp({
+        email: cleanEmail,
+        options: {
+          shouldCreateUser: false,
+        },
+      })
+
+      if (otpError) {
+        let errorMessage = 'Kunde inte skicka verifieringskod. '
+        if (otpError.message.includes('email') || otpError.message.includes('rate limit')) {
+          errorMessage += 'Kontakta support om du inte får något mail.'
+        } else {
+          errorMessage += otpError.message || 'Försök igen.'
+        }
+        setMessage({ text: errorMessage, type: 'error' })
+        setSendingOtp(false)
+        return
+      }
+
+      // Lyckat → redirect till verify-sidan
+      setMessage({
+        text: 'Ny verifieringskod skickad! Kontrollera din e-post.',
+        type: 'success',
+      })
+      setTimeout(() => {
+        router.push(`/login/verify?email=${encodeURIComponent(cleanEmail)}&type=signup`)
+      }, 1000)
+    } catch (err) {
+      console.error('Fel vid skickande av OTP:', err)
+      setMessage({
+        text: 'Ett oväntat fel uppstod. Försök igen.',
+        type: 'error',
+      })
+      setSendingOtp(false)
+    }
+  }
+
   // Keyboard navigation - Enter-tangent
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !loading) {
+    if (e.key === 'Enter' && !loading && !sendingOtp) {
       if (activeTab === 'login') {
         handleSignIn()
       } else {
@@ -265,6 +463,7 @@ export default function LoginPageContent() {
               onClick={() => {
                 setActiveTab('login')
                 setMessage(null)
+                setNeedsOtpVerification(false)
               }}
               className={`flex-1 pb-3 text-center font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand-green rounded-t ${
                 activeTab === 'login'
@@ -280,6 +479,7 @@ export default function LoginPageContent() {
               onClick={() => {
                 setActiveTab('signup')
                 setMessage(null)
+                setNeedsOtpVerification(false)
               }}
               className={`flex-1 pb-3 text-center font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand-green rounded-t ${
                 activeTab === 'signup'
@@ -312,6 +512,7 @@ export default function LoginPageContent() {
                 onChange={(e) => {
                   setEmail(e.target.value)
                   setMessage(null)
+                  setNeedsOtpVerification(false)
                 }}
                 aria-label={t.login.email}
                 aria-required="true"
@@ -434,6 +635,23 @@ export default function LoginPageContent() {
                 aria-live="polite"
               >
                 {message.text}
+              </div>
+            )}
+
+            {/* Knapp för att skicka ny OTP-kod när kontot inte är verifierat */}
+            {needsOtpVerification && (
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={handleResendOtpForUnverifiedAccount}
+                  disabled={sendingOtp || loading}
+                  className="w-full rounded-xl border-2 border-brand-green p-3 text-brand-green font-medium hover:bg-brand-green/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-brand-green focus:ring-offset-2"
+                >
+                  {sendingOtp ? 'Skickar ny kod...' : 'Skicka ny verifieringskod'}
+                </button>
+                <p className="text-xs text-center text-gray-600">
+                  Vi skickar en ny 6-siffrig kod till din e-post så att du kan slutföra registreringen.
+                </p>
               </div>
             )}
             

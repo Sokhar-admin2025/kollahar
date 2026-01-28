@@ -98,16 +98,33 @@ export default function LocationInput({
     }
   }
 
-  // Synka searchQuery med value när value ändras externt (endast om det är en nytt värde)
+  // Synka searchQuery med value när value ändras externt (endast om det är ett nytt värde)
   useEffect(() => {
-    if (value && value !== searchQuery) {
+    if (!value) {
+      // Inget värde → rensa visningen om något står kvar
+      if (searchQuery) {
+        setSearchQuery('')
+      }
+      return
+    }
+
+    // Skydd: om value råkar vara en e-postadress (t.ex. gammal data), rensa fältet helt
+    const looksLikeEmail = /\S+@\S+\.\S+/.test(value)
+    if (looksLikeEmail) {
+      if (searchQuery) {
+        setSearchQuery('')
+      }
+      // Nolla även värdet uppåt så det inte sparas tillbaka som plats
+      onChange('')
+      return
+    }
+
+    if (value !== searchQuery) {
       // Om value är satt men inte matchar searchQuery, visa bara kommunnamnet
       const kommunName = value.split(',')[0].trim()
       if (kommunName !== searchQuery) {
         setSearchQuery(kommunName)
       }
-    } else if (!value && searchQuery) {
-      setSearchQuery('')
     }
   }, [value]) // Inte searchQuery i dependencies för att undvika loop
 

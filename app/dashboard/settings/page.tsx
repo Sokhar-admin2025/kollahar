@@ -60,7 +60,11 @@ export default function SettingsPage() {
 
       if (data) {
         setFullName(data.full_name || '')
-        setLocation(data.location || '')
+
+        // Om location ser ut som en e-postadress (gammal data från website) → visa tomt fält
+        const rawLocation = data.location || ''
+        const looksLikeEmail = /\S+@\S+\.\S+/.test(rawLocation)
+        setLocation(looksLikeEmail ? '' : rawLocation)
         setAvatarUrl(data.avatar_url || '')
         setConsentMarketing(data.consent_marketing || false)
         setConsentAnalytics(data.consent_analytics || false)
@@ -75,6 +79,12 @@ export default function SettingsPage() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!userId) return
+
+    // Namn är obligatoriskt
+    if (!fullName.trim()) {
+      alert('Namn är obligatoriskt. Fyll i ditt namn eller företagsnamn innan du sparar.')
+      return
+    }
 
     setSaving(true)
     

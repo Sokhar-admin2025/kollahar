@@ -32,8 +32,11 @@ function HomePageContent() {
   const [loading, setLoading] = useState(true)
   const [favoriteIds, setFavoriteIds] = useState<string[]>([])
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  const [currentUserName, setCurrentUserName] = useState<string | null>(null)
   const [showLoggedOutToast, setShowLoggedOutToast] = useState(false)
+  const [loggedOutReason, setLoggedOutReason] = useState<'logout' | 'deleted' | null>(null)
   const [showLoggedInToast, setShowLoggedInToast] = useState(false)
+  const [loginType, setLoginType] = useState<'new' | 'returning' | null>(null)
 
   // Läs från URL-parametrar vid första laddningen
   const [searchQuery, setSearchQuery] = useState(() => searchParams.get('q') || '')
@@ -69,6 +72,8 @@ function HomePageContent() {
     const loggedOutParam = searchParams.get('logged_out')
     if (!loggedOutParam) return
 
+    // Spara orsak (vanlig logout eller kontoradering) innan vi städar URL:en
+    setLoggedOutReason(loggedOutParam === 'deleted' ? 'deleted' : 'logout')
     setShowLoggedOutToast(true)
 
     // Rensa logged_out-parametern så toasten inte visas igen vid reload
@@ -80,11 +85,12 @@ function HomePageContent() {
     }
   }, [searchParams])
 
-  // Visa login-toast om logged_in=true finns i URL:en
+  // Visa login-toast om logged_in finns i URL:en
   useEffect(() => {
-    const loggedIn = searchParams.get('logged_in') === 'true'
-    if (!loggedIn) return
+    const loggedInParam = searchParams.get('logged_in')
+    if (!loggedInParam) return
 
+    setLoginType(loggedInParam === 'new' ? 'new' : 'returning')
     setShowLoggedInToast(true)
 
     // Rensa logged_in-parametern så toasten inte visas igen vid reload
@@ -120,22 +126,52 @@ function HomePageContent() {
       if (!isMounted) return
       const userId = session?.user?.id ?? null
       setCurrentUserId(userId)
+
       if (userId) {
+        // Hämta favoriter
         await fetchFavorites(userId)
+
+        // Hämta profilnamn för välkomst-toast
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', userId)
+          .single()
+
+        if (!isMounted) return
+        setCurrentUserName(profile?.full_name ?? null)
       } else {
         setFavoriteIds([])
+        setCurrentUserName(null)
       }
     }
 
     initAuth()
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       const userId = session?.user?.id ?? null
       setCurrentUserId(userId)
+
       if (userId) {
         fetchFavorites(userId)
+
+        try {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('full_name')
+            .eq('id', userId)
+            .single()
+
+          if (!isMounted) return
+          setCurrentUserName(profile?.full_name ?? null)
+        } catch (err) {
+          console.error('Fel vid hämtning av profilnamn:', err)
+          if (!isMounted) return
+          setCurrentUserName(null)
+        }
       } else {
         setFavoriteIds([])
+        setCurrentUserName(null)
       }
     })
 
@@ -373,7 +409,7 @@ function HomePageContent() {
           aria-live="polite"
         >
           <span>
-            {searchParams.get('logged_out') === 'deleted'
+            {loggedOutReason === 'deleted'
               ? 'Ditt konto har raderats!'
               : 'Du har loggats ut.'}
           </span>
@@ -394,7 +430,13 @@ function HomePageContent() {
           role="status"
           aria-live="polite"
         >
-          <span>Du är inloggad. Välkommen tillbaka!</span>
+          <span>
+            {loginType === 'new'
+              ? 'Hurra! Välkommen till Kollahär!'
+              : currentUserName
+              ? `Välkommen tillbaka ${currentUserName}!`
+              : 'Välkommen tillbaka!'}
+          </span>
           <button
             type="button"
             onClick={() => setShowLoggedInToast(false)}

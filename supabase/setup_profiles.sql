@@ -5,6 +5,7 @@ create table if not exists public.profiles (
   avatar_url text,
   consent_marketing boolean not null default false,
   consent_analytics boolean not null default false,
+  otp_verified boolean not null default false,
   updated_at timestamptz not null default now()
 );
 

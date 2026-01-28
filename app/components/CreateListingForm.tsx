@@ -66,7 +66,11 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
           .maybeSingle()
 
         if (profile?.location) {
-          setLocation(profile.location)
+          const rawLocation = profile.location as string
+          const looksLikeEmail = /\S+@\S+\.\S+/.test(rawLocation)
+          if (!looksLikeEmail) {
+            setLocation(rawLocation)
+          }
         }
       } catch (error) {
         console.error('Kunde inte förifylla plats från profil:', error)

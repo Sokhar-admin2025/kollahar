@@ -190,7 +190,7 @@ export const DASHBOARD_TEXTS = {
     },
     form: {
       name: { label: "Namn / Företagsnamn", placeholder: "Ditt namn eller företag" },
-      location: { label: "Min plats (Hemvist)", placeholder: "T.ex. Huddinge, Stockholm" },
+      location: { label: "Min plats (Hemvist)", placeholder: "Fyll i din närmaste kommun" },
       avatar: { label: "Profilbild / Logotyp", changeBtn: "Byt bild", uploading: "Laddar upp..." },
       consents: {
         marketing: "Jag godkänner att ni skickar nyhetsbrev och erbjudanden.",

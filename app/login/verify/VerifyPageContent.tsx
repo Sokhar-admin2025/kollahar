@@ -112,12 +112,31 @@ export default function VerifyPageContent() {
         }
         setLoading(false)
       } else {
-        // Lyckad verifiering: användaren är nu inloggad, redirecta till startsidan
+        // Lyckad verifiering: användaren är nu inloggad
         setMessage({ text: DASHBOARD_TEXTS.auth.verify.success, type: 'success' })
 
-        // Auto-login och redirect
+        try {
+          // Markera kontot som OTP-verifierat i profiles-tabellen
+          const {
+            data: { user },
+          } = await supabase.auth.getUser()
+
+          if (user?.id) {
+            await supabase
+              .from('profiles')
+              .update({ otp_verified: true })
+              .eq('id', user.id)
+          }
+        } catch (updateErr) {
+          console.error('Kunde inte uppdatera otp_verified i profiles:', updateErr)
+          // Vi blockerar inte inloggningen här, men loggar felet för vidare analys
+        }
+
+        // Auto-redirect till startsidan
         setTimeout(() => {
-          router.push('/?logged_in=true')
+          // Vid signup: markera som ny användare i URL-parametern
+          const loginParam = type === 'signup' ? 'new' : 'returning'
+          router.push(`/?logged_in=${loginParam}`)
           router.refresh()
         }, 1000)
       }

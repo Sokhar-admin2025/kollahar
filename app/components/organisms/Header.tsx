@@ -27,18 +27,95 @@ export default function Header({
 }: HeaderProps) {
   const router = useRouter()
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  const [isVerified, setIsVerified] = useState<boolean>(true) // Default true för att inte låsa ute gamla användare
   const t = DASHBOARD_TEXTS
 
   useEffect(() => {
     const initAuth = async () => {
       const { data: { user } } = await supabase.auth.getUser()
-      setCurrentUserId(user?.id ?? null)
+      const userId = user?.id ?? null
+
+      // VIKTIGT: Kontrollera OTP-status INNAN vi sätter currentUserId
+      // Detta förhindrar att profilikonen blinkar fram när sidan laddas
+      if (userId) {
+        try {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('otp_verified')
+            .eq('id', userId)
+            .single()
+
+          const otpVerified =
+            profile && typeof profile.otp_verified === 'boolean'
+              ? profile.otp_verified
+              : true // Fallback: lås inte ute användare om vi inte kan kontrollera
+
+          setIsVerified(otpVerified)
+
+          // Om kontot inte är verifierat → logga ut omedelbart och visa INTE profilikonen
+          if (!otpVerified) {
+            await supabase.auth.signOut()
+            setCurrentUserId(null)
+            setIsVerified(true)
+            return // Avbryt här så att vi inte sätter currentUserId
+          }
+
+          // Endast om kontot är verifierat → visa profilikonen
+          setCurrentUserId(userId)
+        } catch (err) {
+          // Om vi inte kan kontrollera → lås inte ute användaren (fallback)
+          console.warn('Kunde inte kontrollera OTP-status i header:', err)
+          setIsVerified(true)
+          setCurrentUserId(userId)
+        }
+      } else {
+        setCurrentUserId(null)
+        setIsVerified(true)
+      }
     }
 
     initAuth()
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setCurrentUserId(session?.user?.id ?? null)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      const userId = session?.user?.id ?? null
+
+      // VIKTIGT: Kontrollera OTP-status INNAN vi sätter currentUserId
+      // Detta förhindrar att profilikonen blinkar fram när en session skapas
+      if (userId) {
+        try {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('otp_verified')
+            .eq('id', userId)
+            .single()
+
+          const otpVerified =
+            profile && typeof profile.otp_verified === 'boolean'
+              ? profile.otp_verified
+              : true
+
+          setIsVerified(otpVerified)
+
+          // Om kontot inte är verifierat → logga ut omedelbart och visa INTE profilikonen
+          if (!otpVerified) {
+            await supabase.auth.signOut()
+            setCurrentUserId(null)
+            setIsVerified(true)
+            return // Avbryt här så att vi inte sätter currentUserId
+          }
+
+          // Endast om kontot är verifierat → visa profilikonen
+          setCurrentUserId(userId)
+        } catch (err) {
+          console.warn('Kunde inte kontrollera OTP-status vid auth state change:', err)
+          // Fallback: lås inte ute användaren om vi inte kan kontrollera
+          setIsVerified(true)
+          setCurrentUserId(userId)
+        }
+      } else {
+        setCurrentUserId(null)
+        setIsVerified(true)
+      }
     })
 
     return () => {
@@ -49,7 +126,30 @@ export default function Header({
   const handleSellClick = async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
-      router.push('/dashboard/create')
+      // Kontrollera OTP-status innan navigation
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('otp_verified')
+          .eq('id', user.id)
+          .single()
+
+        const otpVerified =
+          profile && typeof profile.otp_verified === 'boolean'
+            ? profile.otp_verified
+            : true
+
+        if (otpVerified) {
+          router.push('/dashboard/create')
+        } else {
+          // Kontot inte verifierat → redirect till login
+          await supabase.auth.signOut()
+          router.push('/login')
+        }
+      } catch (err) {
+        // Fallback: lås inte ute användaren om vi inte kan kontrollera
+        router.push('/dashboard/create')
+      }
     } else {
       router.push('/login')
     }
@@ -57,8 +157,34 @@ export default function Header({
 
   const handleDashboardClick = async () => {
     const { data: { user } } = await supabase.auth.getUser()
-    if (user) router.push('/dashboard')
-    else router.push('/login')
+    if (user) {
+      // Kontrollera OTP-status innan navigation
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('otp_verified')
+          .eq('id', user.id)
+          .single()
+
+        const otpVerified =
+          profile && typeof profile.otp_verified === 'boolean'
+            ? profile.otp_verified
+            : true
+
+        if (otpVerified) {
+          router.push('/dashboard')
+        } else {
+          // Kontot inte verifierat → redirect till login
+          await supabase.auth.signOut()
+          router.push('/login')
+        }
+      } catch (err) {
+        // Fallback: lås inte ute användaren om vi inte kan kontrollera
+        router.push('/dashboard')
+      }
+    } else {
+      router.push('/login')
+    }
   }
 
   return (
@@ -113,8 +239,8 @@ export default function Header({
 
         {/* Navigation / Actions */}
         <div className="flex items-center gap-2">
-          {/* Desktop: UserMenu för inloggad, annars Logga in + Sälj-knapp */}
-          {currentUserId ? (
+          {/* Desktop: UserMenu för inloggad OCH verifierad, annars Logga in + Sälj-knapp */}
+          {currentUserId && isVerified ? (
             <div className="hidden md:flex items-center gap-3">
               <Button onClick={handleSellClick}>
                 {t.navigation.sellBtn}
@@ -141,7 +267,7 @@ export default function Header({
             type="button"
             onClick={handleDashboardClick}
             className="inline-flex md:hidden items-center justify-center h-10 w-10 rounded-full border border-brand-green/30 text-brand-green hover:bg-brand-green/10 focus:outline-none focus:ring-2 focus:ring-brand-green focus:ring-offset-2 focus:ring-offset-white"
-            aria-label={currentUserId ? 'Öppna Min Dashboard' : 'Logga in'}
+            aria-label={currentUserId && isVerified ? 'Öppna Min Dashboard' : 'Logga in'}
           >
             <Menu size={20} aria-hidden="true" />
           </button>
