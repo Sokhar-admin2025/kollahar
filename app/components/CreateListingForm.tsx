@@ -50,6 +50,33 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
     }
   }, [initialData])
 
+  // Förifyll plats med användarens profil-location när man skapar ny annons
+  useEffect(() => {
+    const prefillLocationFromProfile = async () => {
+      if (isEditMode || location) return
+
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return
+
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('location')
+          .eq('id', user.id)
+          .maybeSingle()
+
+        if (profile?.location) {
+          setLocation(profile.location)
+        }
+      } catch (error) {
+        console.error('Kunde inte förifylla plats från profil:', error)
+      }
+    }
+
+    prefillLocationFromProfile()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditMode])
+
   // Cleanup: Rensa preview URLs när komponenten unmountas
   useEffect(() => {
     return () => {

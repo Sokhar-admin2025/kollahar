@@ -1,7 +1,7 @@
 create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   full_name text,
-  website text,
+  location text,
   avatar_url text,
   consent_marketing boolean not null default false,
   consent_analytics boolean not null default false,

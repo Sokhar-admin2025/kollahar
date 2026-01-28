@@ -99,7 +99,7 @@ function Dashboard() {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
-    router.push('/')
+    router.push('/?logged_out=true')
     router.refresh()
   }
 

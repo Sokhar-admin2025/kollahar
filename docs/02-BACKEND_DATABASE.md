@@ -133,7 +133,7 @@ Användarprofiler med GDPR-samtycken.
 CREATE TABLE public.profiles (
   id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   full_name text,
-  website text,
+  location text,
   avatar_url text,
   consent_marketing boolean DEFAULT false,
   consent_analytics boolean DEFAULT false,
@@ -144,7 +144,7 @@ CREATE TABLE public.profiles (
 **Kolumner:**
 - `id`: Kopplad till `auth.users.id`
 - `full_name`: Visningsnamn eller företagsnamn
-- `website`: Valfri hemsida
+- `location`: Valfri hemvist / plats (t.ex. "Huddinge, Stockholm")
 - `avatar_url`: URL till profilbild (från `avatars` bucket)
 - `consent_marketing`: GDPR-samtycke för marknadsföring
 - `consent_analytics`: GDPR-samtycke för analytics

@@ -112,12 +112,12 @@ export default function VerifyPageContent() {
         }
         setLoading(false)
       } else {
-        // Lyckad verifiering: användaren är nu inloggad, redirecta till startsidan med välkomst-popup
+        // Lyckad verifiering: användaren är nu inloggad, redirecta till startsidan
         setMessage({ text: DASHBOARD_TEXTS.auth.verify.success, type: 'success' })
 
         // Auto-login och redirect
         setTimeout(() => {
-          router.push('/?showWelcome=true')
+          router.push('/?logged_in=true')
           router.refresh()
         }, 1000)
       }

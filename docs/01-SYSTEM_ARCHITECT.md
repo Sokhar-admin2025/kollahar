@@ -166,7 +166,7 @@ erDiagram
     PROFILES {
         uuid id PK
         string full_name
-        string website
+        string location
         string avatar_url
         boolean consent_marketing
         boolean consent_analytics

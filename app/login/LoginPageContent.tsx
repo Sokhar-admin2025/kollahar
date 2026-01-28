@@ -120,10 +120,9 @@ export default function LoginPageContent() {
       })
       setLoading(false)
     } else {
-      // Lyckad inloggning - kolla om välkomst-popup ska visas
       setMessage({ text: 'Inloggad! Skickar vidare...', type: 'success' })
       setTimeout(() => {
-        router.push('/?showWelcome=true')
+        router.push('/?logged_in=true')
         router.refresh()
       }, 1000)
     }
@@ -193,7 +192,15 @@ export default function LoginPageContent() {
       return
     }
 
-    // 2. Skicka 6-siffrig OTP till den nya (eller befintliga) användaren, utan att skapa nytt konto
+    // 2. Säkerställ att användaren INTE är inloggad förrän OTP är verifierad
+    //    (för att förhindra att man kan kringgå verifieringen via headern/dashboard)
+    try {
+      await supabase.auth.signOut()
+    } catch (err) {
+      console.warn('Kunde inte signa ut efter signUp (ignoreras, fortsätter med OTP-flödet):', err)
+    }
+
+    // 3. Skicka 6-siffrig OTP till den nya (eller befintliga) användaren, utan att skapa nytt konto
     const { error: otpError } = await supabase.auth.signInWithOtp({
       email: cleanEmail,
       options: {
@@ -213,7 +220,7 @@ export default function LoginPageContent() {
       return
     }
 
-    // 3. Redirect till verifieringssidan
+    // 4. Redirect till verifieringssidan
     router.push(`/login/verify?email=${encodeURIComponent(cleanEmail)}&type=signup`)
   }
 

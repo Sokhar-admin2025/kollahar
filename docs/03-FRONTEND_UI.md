@@ -370,7 +370,7 @@ interface CreateListingFormProps {
 **Säljarkort:**
 - Avatar (från `profiles.avatar_url`)
 - Namn (från `profiles.full_name`)
-- Hemsida (från `profiles.website`)
+- Plats / Hemvist (från `profiles.location`)
 - Visas bara om profil finns
 
 **Kontaktknapp:**

@@ -36,11 +36,16 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 - **Email-validering**: Realtidsvalidering med visuell feedback
 - **Accessibility (EAA)**: ARIA-labels, focus-hantering, screen reader support
 
-#### Databas-migration för popup-spårning
+#### Databas-migrationer & profilfält
 - **Migration**: `supabase/migrations/20260117000000_add_welcome_popup_tracking.sql`
   - `welcome_popup_dismissed` (boolean)
   - `welcome_popup_last_shown` (timestamptz)
   - `welcome_popup_view_count` (integer)
+- **Migration**: `supabase/migrations/20260128090000_replace_website_with_location.sql`
+  - Ersätter `profiles.website` med `profiles.location`
+  - Användarens hemvist/ort används nu i både Settings och säljar-kort
+- **Migration**: `supabase/migrations/20260128091000_setup_cascade_delete.sql`
+  - Säkerställer `ON DELETE CASCADE` från `auth.users` till `profiles` och `listings`
 
 #### Dokumentation
 - **Email-template guide**: `docs/EMAIL_TEMPLATE_OTP.md` - Innehåll och konfiguration
@@ -205,8 +210,11 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
   - Säkerställer att 6-siffrig kod fungerar för både nya och befintliga användare
 - **Reset password**: Ignorerar ofarlig Supabase-varning om nytt lösenord = gammalt
   - Loggar som varning istället för error
-- **Välkomst-popup på startsidan**: Knapparna i välkomst-popupen fungerar nu som förväntat i produktion
-  - `/?showWelcome=true` triggar popupen korrekt och navigationen till startsidan, skapa annons och dashboard fungerar
+- **Signup-flöde härdat**: Efter lyckad `signUp` loggas användaren alltid ut innan OTP-steget
+  - Förhindrar att man kan hoppa in i dashboard/header innan e-post är verifierad
+- **Välkomst-popup på startsidan borttagen**: Ersatt av tydliga toasts för inloggning och utloggning
+  - `/?logged_in=true` → grön "Du är inloggad. Välkommen tillbaka!"-toast
+  - `/?logged_out=true|deleted` → "Du har loggats ut." / "Ditt konto har raderats!"
 
 #### Text-kontrast förbättringar (Dashboard & Formulär)
 - **Dashboard alla flikar**: Förbättrad text-synlighet på mobil (iPhone Chrome)

@@ -11,6 +11,7 @@ import FavoriteButton from '@/app/components/FavoriteButton'
 import Header from '@/app/components/organisms/Header'
 import { createClient } from '@/lib/supabase/client'
 import type { Listing } from '@/app/types'
+import { MapPin } from 'lucide-react'
 
 const supabase = createClient()
 
@@ -25,7 +26,7 @@ export default function ListingDetailsPage() {
 interface SellerProfile {
   id: string
   full_name: string | null
-  website: string | null
+  location: string | null
   avatar_url: string | null
   consent_marketing: boolean
   consent_analytics: boolean
@@ -283,17 +284,18 @@ function ListingDetails() {
                       )}
                     </div>
                     
-                    {/* Säljarens Namn */}
+                    {/* Säljarens Namn + Plats */}
                     <div className="flex-1 min-w-0">
                       <h4 className="font-bold text-brand-text truncate">
                         {sellerProfile?.full_name || 'Anonym säljare'}
                       </h4>
-                      {sellerProfile?.website && (
-                         <a href={sellerProfile.website} target="_blank" rel="noopener noreferrer" className="text-xs text-brand-green hover:underline truncate block">
-                           {sellerProfile.website.replace(/^https?:\/\//, '')}
-                         </a>
+                      {sellerProfile?.location && (
+                        <p className="mt-0.5 flex items-center gap-1 text-xs text-brand-text/80 truncate">
+                          <MapPin className="w-3.5 h-3.5 text-brand-green flex-shrink-0" strokeWidth={2.5} />
+                          <span>{sellerProfile.location}</span>
+                        </p>
                       )}
-                      {!sellerProfile?.website && (
+                      {!sellerProfile?.location && (
                         <p className="text-xs text-brand-text/60">Medlem på Kollahär!</p>
                       )}
                     </div>

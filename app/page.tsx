@@ -1,7 +1,6 @@
 'use client'
 
 import { Suspense, useEffect, useMemo, useState } from 'react'
-import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Search, X } from 'lucide-react'
@@ -11,7 +10,6 @@ import { DASHBOARD_TEXTS } from './lib/content'
 import ListingCard from './components/ListingCard'
 import Header from './components/organisms/Header'
 import ScrollToSearch from './components/ScrollToSearch'
-import WelcomePopup from './components/WelcomePopup'
 import type { Listing } from './types'
 
 // Initiera Supabase
@@ -34,15 +32,13 @@ function HomePageContent() {
   const [loading, setLoading] = useState(true)
   const [favoriteIds, setFavoriteIds] = useState<string[]>([])
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
-  const [showWelcomePopup, setShowWelcomePopup] = useState(false)
-  const [popupDismissed, setPopupDismissed] = useState(false)
+  const [showLoggedOutToast, setShowLoggedOutToast] = useState(false)
+  const [showLoggedInToast, setShowLoggedInToast] = useState(false)
 
   // Läs från URL-parametrar vid första laddningen
   const [searchQuery, setSearchQuery] = useState(() => searchParams.get('q') || '')
   const [selectedCategory, setSelectedCategory] = useState(() => searchParams.get('category') || 'Alla')
   const [searchSubmitted, setSearchSubmitted] = useState(false)
-  // Spara initialt showWelcome-värde en gång, så att URL-uppdateringar inte slår ut flaggan
-  const [shouldShowWelcome, setShouldShowWelcome] = useState(() => searchParams.get('showWelcome') === 'true')
 
   const t = DASHBOARD_TEXTS
 
@@ -67,6 +63,38 @@ function HomePageContent() {
 
     fetchAds()
   }, [])
+
+  // Visa logout-toast om logged_out finns i URL:en
+  useEffect(() => {
+    const loggedOutParam = searchParams.get('logged_out')
+    if (!loggedOutParam) return
+
+    setShowLoggedOutToast(true)
+
+    // Rensa logged_out-parametern så toasten inte visas igen vid reload
+    const params = new URLSearchParams(searchParams.toString())
+    params.delete('logged_out')
+    const newUrl = params.toString() ? `/?${params.toString()}` : '/'
+    if (typeof window !== 'undefined') {
+      window.history.replaceState({}, '', newUrl)
+    }
+  }, [searchParams])
+
+  // Visa login-toast om logged_in=true finns i URL:en
+  useEffect(() => {
+    const loggedIn = searchParams.get('logged_in') === 'true'
+    if (!loggedIn) return
+
+    setShowLoggedInToast(true)
+
+    // Rensa logged_in-parametern så toasten inte visas igen vid reload
+    const params = new URLSearchParams(searchParams.toString())
+    params.delete('logged_in')
+    const newUrl = params.toString() ? `/?${params.toString()}` : '/'
+    if (typeof window !== 'undefined') {
+      window.history.replaceState({}, '', newUrl)
+    }
+  }, [searchParams])
 
   useEffect(() => {
     let isMounted = true
@@ -116,56 +144,6 @@ function HomePageContent() {
       subscription.unsubscribe()
     }
   }, [])
-
-  // Kolla om välkomst-popup ska visas
-  useEffect(() => {
-    const checkWelcomePopup = async () => {
-      // Om URL/state inte säger att vi ska visa, stäng popupen
-      if (!shouldShowWelcome) {
-        setShowWelcomePopup(false)
-        return
-      }
-
-      // Om ingen inloggad användare men ?showWelcome=true finns,
-      // visa en generisk popup utan att läsa/skriva i profilen.
-      if (!currentUserId) {
-        setShowWelcomePopup(true)
-        setPopupDismissed(false)
-        return
-      }
-
-      try {
-        // Hämta användarens profil för att se om popupen är stängd permanent
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('welcome_popup_dismissed, welcome_popup_last_shown')
-          .eq('id', currentUserId)
-          .single()
-
-        if (profile) {
-          // Visa popupen om den inte är stängd permanent
-          if (!profile.welcome_popup_dismissed) {
-            setShowWelcomePopup(true)
-            setPopupDismissed(false)
-          } else {
-            setShowWelcomePopup(false)
-            setPopupDismissed(true)
-          }
-        } else {
-          // Ingen profil = ny användare, visa popupen
-          setShowWelcomePopup(true)
-          setPopupDismissed(false)
-        }
-      } catch (error) {
-        console.error('Kunde inte hämta popup-status:', error)
-        // Vid fel, visa popupen ändå (bättre UX)
-        setShowWelcomePopup(true)
-        setPopupDismissed(false)
-      }
-    }
-
-    checkWelcomePopup()
-  }, [shouldShowWelcome, currentUserId])
 
   // 2. Filtrera listan (real-time filtering)
   useEffect(() => {
@@ -387,19 +365,44 @@ function HomePageContent() {
       {/* Scroll to Search-knapp */}
       <ScrollToSearch />
 
-      {/* Welcome Popup */}
-      {showWelcomePopup && (
-        <WelcomePopup
-          userId={currentUserId}
-          onClose={() => {
-            setShowWelcomePopup(false)
-            // Ta bort showWelcome från URL
-            const params = new URLSearchParams(searchParams.toString())
-            params.delete('showWelcome')
-            const newUrl = params.toString() ? `/?${params.toString()}` : '/'
-            router.replace(newUrl)
-          }}
-        />
+      {/* Logout / konto-raderat toast */}
+      {showLoggedOutToast && (
+        <div
+          className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-green-600 text-white text-sm px-4 py-2 rounded-full shadow-lg flex items-center gap-2"
+          role="status"
+          aria-live="polite"
+        >
+          <span>
+            {searchParams.get('logged_out') === 'deleted'
+              ? 'Ditt konto har raderats!'
+              : 'Du har loggats ut.'}
+          </span>
+          <button
+            type="button"
+            onClick={() => setShowLoggedOutToast(false)}
+            className="text-white/80 hover:text-white underline text-xs"
+          >
+            Stäng
+          </button>
+        </div>
+      )}
+
+      {/* Login-toast */}
+      {showLoggedInToast && (
+        <div
+          className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-green-600 text-white text-sm px-4 py-2 rounded-full shadow-lg flex items-center gap-2"
+          role="status"
+          aria-live="polite"
+        >
+          <span>Du är inloggad. Välkommen tillbaka!</span>
+          <button
+            type="button"
+            onClick={() => setShowLoggedInToast(false)}
+            className="text-white/80 hover:text-white underline text-xs"
+          >
+            Stäng
+          </button>
+        </div>
       )}
     </div>
   )

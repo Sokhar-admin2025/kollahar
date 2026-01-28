@@ -8,6 +8,7 @@ import { DASHBOARD_TEXTS } from '@/app/lib/content'
 import { AUTH_CONFIG } from '@/lib/constants'
 import Button from '@/app/components/atoms/Button'
 import Header from '@/app/components/organisms/Header'
+import LocationInput from '@/app/components/LocationInput'
 import { createClient } from '@/lib/supabase/client'
 
 // Supabase-klient via delad SSR-kompatibel wrapper
@@ -24,12 +25,18 @@ export default function SettingsPage() {
 
   // Formulär-data
   const [fullName, setFullName] = useState('')
-  const [website, setWebsite] = useState('')
+  const [location, setLocation] = useState('')
   const [avatarUrl, setAvatarUrl] = useState('')
   
   // Consent / GDPR
   const [consentMarketing, setConsentMarketing] = useState(false)
   const [consentAnalytics, setConsentAnalytics] = useState(false)
+
+  // Danger zone: radera konto
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleteConfirmText, setDeleteConfirmText] = useState('')
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   // 1. Hämta profil när sidan laddas
   useEffect(() => {
@@ -53,7 +60,7 @@ export default function SettingsPage() {
 
       if (data) {
         setFullName(data.full_name || '')
-        setWebsite(data.website || '')
+        setLocation(data.location || '')
         setAvatarUrl(data.avatar_url || '')
         setConsentMarketing(data.consent_marketing || false)
         setConsentAnalytics(data.consent_analytics || false)
@@ -78,7 +85,7 @@ export default function SettingsPage() {
       .upsert({
         id: userId, // <--- VIKTIGT: Vi måste skicka med ID vid upsert
         full_name: fullName,
-        website,
+        location,
         avatar_url: avatarUrl,
         consent_marketing: consentMarketing,
         consent_analytics: consentAnalytics,
@@ -256,15 +263,17 @@ export default function SettingsPage() {
                     />
                 </div>
 
-                {/* Hemsida-fält */}
+                {/* Plats / Hemvist (valfritt) */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t.form.website.label}</label>
-                    <input 
-                        type="url" 
-                        value={website}
-                        onChange={(e) => setWebsite(e.target.value)}
-                        placeholder={t.form.website.placeholder}
-                        className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none"
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      {t.form.location.label}{' '}
+                      <span className="text-xs text-brand-text/60">(Valfritt)</span>
+                    </label>
+                    <LocationInput
+                      value={location}
+                      onChange={setLocation}
+                      placeholder={t.form.location.placeholder}
+                      className="mt-1"
                     />
                 </div>
             </div>
@@ -384,8 +393,119 @@ export default function SettingsPage() {
             <Button type="submit" disabled={saving} className="w-full py-3 text-lg font-bold">
                 {saving ? t.save.loading : t.save.btn}
             </Button>
+
+            {/* DANGER ZONE: Radera konto */}
+            <div className="mt-8 border border-red-200 bg-red-50 rounded-xl p-4 space-y-3">
+              <h2 className="text-base font-semibold text-red-700">
+                Radera konto
+              </h2>
+              <p className="text-sm text-red-700/80">
+                Detta går inte att ångra. Alla dina annonser, favoriter och meddelanden tas bort permanent från Kollahär.
+              </p>
+              <Button
+                type="button"
+                variant="danger"
+                className="w-full"
+                onClick={() => {
+                  setDeleteConfirmText('')
+                  setDeleteError(null)
+                  setShowDeleteModal(true)
+                }}
+              >
+                Radera mitt konto
+              </Button>
+            </div>
         </form>
       </div>
+
+      {/* Modal för kontoradering */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 space-y-4">
+            <h2 className="text-xl font-display text-red-700">
+              Radera konto permanent
+            </h2>
+            <p className="text-sm text-brand-text">
+              Detta går inte att ångra. Alla dina annonser, favoriter och meddelanden försvinner permanent från Kollahär.
+            </p>
+            <p className="text-sm text-brand-text font-medium">
+              Skriv <span className="font-mono bg-red-50 px-1 rounded">RADERA</span> för att bekräfta.
+            </p>
+            <input
+              type="text"
+              value={deleteConfirmText}
+              onChange={(e) => {
+                setDeleteConfirmText(e.target.value)
+                setDeleteError(null)
+              }}
+              className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-600 focus:border-red-600 outline-none"
+              placeholder="RADERA"
+            />
+            {deleteError && (
+              <div
+                className="p-2 rounded text-sm text-center bg-red-100 text-red-700"
+                role="alert"
+                aria-live="polite"
+              >
+                {deleteError}
+              </div>
+            )}
+            <div className="flex gap-3 pt-2">
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full"
+                onClick={() => {
+                  setShowDeleteModal(false)
+                  setDeleteConfirmText('')
+                  setDeleteError(null)
+                }}
+                disabled={deleting}
+              >
+                Avbryt
+              </Button>
+              <Button
+                type="button"
+                variant="danger"
+                className="w-full"
+                disabled={deleting || deleteConfirmText !== 'RADERA'}
+                onClick={async () => {
+                  if (deleteConfirmText !== 'RADERA') {
+                    setDeleteError('Du måste skriva RADERA för att bekräfta.')
+                    return
+                  }
+
+                  setDeleting(true)
+                  setDeleteError(null)
+
+                  try {
+                    const res = await fetch('/api/delete-account', {
+                      method: 'POST',
+                    })
+
+                    if (!res.ok) {
+                      const data = await res.json().catch(() => null)
+                      setDeleteError(data?.error || 'Kunde inte radera ditt konto just nu. Försök igen.')
+                      setDeleting(false)
+                      return
+                    }
+
+                    // Redirecta till startsidan med specifik account-deleted-toast
+                    router.push('/?logged_out=deleted')
+                    router.refresh()
+                  } catch (err) {
+                    console.error('Kunde inte radera konto:', err)
+                    setDeleteError('Kunde inte radera ditt konto just nu. Försök igen.')
+                    setDeleting(false)
+                  }
+                }}
+              >
+                {deleting ? 'Raderar konto...' : 'Ja, radera mitt konto'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
