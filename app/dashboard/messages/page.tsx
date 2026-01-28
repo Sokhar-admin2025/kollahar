@@ -226,21 +226,43 @@ export default function InboxPage() {
                 // Om chatt ÄR vald
                 <>
                   {/* Chatt-header */}
-                  <div className="p-4 border-b bg-brand-beige flex justify-between items-center">
-                    <div>
-                      <span className="text-xs text-brand-text uppercase tracking-wide antialiased">Angående:</span>
-                      <h3 className="font-bold text-brand-text">
-                        <Link href={`/annons/${selectedConversation.listing_id}`} className="hover:text-brand-green transition">
-                          {selectedConversation.listing?.title}
-                        </Link>
-                      </h3>
+                  <div className="p-4 border-b bg-brand-beige flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3 min-w-0">
+                      {/* Liten bild på annonsen */}
+                      <div className="w-12 h-12 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
+                        {selectedConversation.listing?.images?.[0] && (
+                          <img
+                            src={selectedConversation.listing.images[0]}
+                            alt={selectedConversation.listing.title || 'Annonsbild'}
+                            className="w-full h-full object-cover"
+                          />
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <span className="text-xs text-brand-text uppercase tracking-wide antialiased">
+                          Angående
+                        </span>
+                        <h3 className="font-display font-semibold text-brand-green text-sm truncate">
+                          <Link
+                            href={`/annons/${selectedConversation.listing_id}`}
+                            className="hover:text-brand-green/80 transition"
+                          >
+                            {selectedConversation.listing?.title || 'Okänd annons'}
+                          </Link>
+                        </h3>
+                        {selectedConversation.listing?.price != null && (
+                          <p className="text-xs text-brand-text mt-0.5 antialiased">
+                            {selectedConversation.listing.price.toLocaleString('sv-SE')} kr
+                          </p>
+                        )}
+                      </div>
                     </div>
 
                     {/* Stäng-knapp (mobil/smal vy) */}
                     <button
                       type="button"
                       onClick={handleBackToInboxMobile}
-                      className="md:hidden inline-flex items-center justify-center rounded-full p-1 text-brand-text hover:text-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green"
+                      className="md:hidden inline-flex items-center justify-center rounded-full p-1.5 text-brand-text hover:text-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green"
                       aria-label="Stäng chatt och visa inkorg"
                     >
                       <X className="w-5 h-5" />
@@ -259,7 +281,7 @@ export default function InboxPage() {
                             <div className={`max-w-[70%] rounded-xl px-4 py-2 shadow-sm text-sm ${
                               isMe 
                                 ? 'bg-brand-green text-white rounded-br-none' 
-                                : 'bg-white text-brand-text border border-gray-200 rounded-bl-none'
+                                : 'bg-white text-brand-text border border-brand-green/10 rounded-bl-none'
                             }`}>
                               <p>{msg.content}</p>
                               <span className={`text-[10px] block mt-1 opacity-70 antialiased ${isMe ? 'text-white/80' : 'text-brand-text'}`}>

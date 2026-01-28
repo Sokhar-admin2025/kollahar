@@ -225,6 +225,14 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
   - Autocomplete visas först när användaren börjar skriva (inte vid förifyllnad).
   - Val av kommun stänger listan direkt (ingen dubbelklick-bugg).
   - Förifylld plats i "Skapa annons" öppnar inte dropdown automatiskt.
+  - `autoComplete="address-level2"` används för att undvika att browsern fyller i e-post i platsfältet.
+
+#### Meddelanden / Chatt
+- **Meddelandevyn**: Uppdaterad till att följa Kollahärs grafiska profil.
+  - Bakgrund: `bg-brand-beige` med vita kort för inkorg och chattyta.
+  - Pratbubblor: Egna meddelanden i `bg-brand-green text-white`, motparten i `bg-white text-brand-text border border-brand-green/10`.
+  - Chatt-header visar nu annonsens miniatyr, titel (med `font-display`) och pris i kr.
+  - Tom state: central "Välj en konversation"-vy på beige bakgrund med tydlig text.
 - **Dashboard alla flikar**: Förbättrad text-synlighet på mobil (iPhone Chrome)
   - Alla `text-brand-text/60`, `/70`, `/50` ändrade till `text-brand-text`
   - Lagt till `antialiased` på text för bättre skärpa
