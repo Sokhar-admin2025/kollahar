@@ -35,12 +35,12 @@ export const messageService = {
 
   // 2. Hämta alla mina konversationer (Inkorgen)
   getMyConversations: async (userId: string) => {
-    // Vi hämtar konversationen OCH infon om annonsen (title, images) i samma veva
+    // Vi hämtar konversationen OCH infon om annonsen (title, images, price) i samma veva
     const { data, error } = await supabase
       .from('conversations')
       .select(`
         *,
-        listing:listings (title, images)
+        listing:listings (title, images, price)
       `)
       .or(`buyer_id.eq.${userId},seller_id.eq.${userId}`)
       .order('updated_at', { ascending: false });

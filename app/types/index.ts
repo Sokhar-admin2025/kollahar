@@ -24,6 +24,7 @@ export interface Conversation {
   listing?: {
     title: string;
     images: string[];
+    price?: number;
   };
   hasUnread?: boolean;
 }
