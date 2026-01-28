@@ -15,32 +15,39 @@ type AuthMode = 'login' | 'signup'
 
 // Användarvänliga felmeddelanden
 const getErrorMessage = (error: any, mode: AuthMode): string => {
-  const t = DASHBOARD_TEXTS.auth[mode]
-  
-  if (!error) return t.errors.generic
-  
-  const message = error.message.toLowerCase()
-  
+  if (!error) {
+    return DASHBOARD_TEXTS.auth[mode].errors.generic
+  }
+
+  const message = String(error.message || '').toLowerCase()
+
   if (mode === 'login') {
+    const loginErrors = DASHBOARD_TEXTS.auth.login.errors
+
     if (message.includes('invalid') || message.includes('credentials')) {
-      return t.errors.invalidCredentials
+      return loginErrors.invalidCredentials
     }
     if (message.includes('network') || message.includes('fetch')) {
-      return t.errors.networkError
+      return loginErrors.networkError
     }
-  } else {
-    if (message.includes('already registered') || message.includes('user exists')) {
-      return t.errors.emailExists
-    }
-    if (message.includes('password')) {
-      return t.errors.weakPassword
-    }
-    if (message.includes('email')) {
-      return t.errors.invalidEmail
-    }
+
+    return loginErrors.generic
   }
-  
-  return t.errors.generic
+
+  // mode === 'signup'
+  const signupErrors = DASHBOARD_TEXTS.auth.signup.errors
+
+  if (message.includes('already registered') || message.includes('user exists')) {
+    return signupErrors.emailExists
+  }
+  if (message.includes('password')) {
+    return signupErrors.weakPassword
+  }
+  if (message.includes('email')) {
+    return signupErrors.invalidEmail
+  }
+
+  return signupErrors.generic
 }
 
 export default function LoginPage() {

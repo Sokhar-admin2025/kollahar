@@ -23,11 +23,12 @@ Detta är en checklista för att slutföra login- och registreringsfunktionalite
 **Prioritet: HÖG**  
 **Tidsåtgång: 10-15 minuter**
 
-- [ ] **Gå till Supabase Dashboard** → **Project Settings** → **Auth**
-- [ ] **Scrolla till "Email Auth"**
-- [ ] **Välj email-provider:**
+- [x] **Gå till Supabase Dashboard** → **Project Settings** → **Auth**
+- [x] **Scrolla till "Email Auth"**
+- [x] **Välj email-provider:**
 
   **Alternativ A: Supabase's inbyggda (för utveckling)**
+  ### Vi väljer detta och lämnar alternativ B som go live to do!
   - [ ] Lämna SMTP-fält tomma
   - [ ] Använd Supabase's default sender
   - [ ] **OBS:** Fungerar endast för utveckling, begränsade rate limits
