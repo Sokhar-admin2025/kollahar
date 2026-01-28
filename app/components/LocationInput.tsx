@@ -168,7 +168,7 @@ export default function LocationInput({
           onFocus={handleInputFocus}
           placeholder={placeholder}
           required={required}
-          className="w-full pl-11 pr-10 p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition"
+          className="w-full pl-11 pr-10 p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-brand-text antialiased"
         />
         <button
           type="button"
@@ -217,13 +217,13 @@ export default function LocationInput({
           <div className="space-y-4">
             {/* Län-dropdown */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-brand-text mb-2 antialiased">
                 Välj län
               </label>
               <select
                 value={selectedLan}
                 onChange={(e) => setSelectedLan(e.target.value)}
-                className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none"
+                className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition bg-white text-brand-text antialiased"
               >
                 <option value="">-- Välj län --</option>
                 {SWEDISH_LAN.map((lan) => (
@@ -237,7 +237,7 @@ export default function LocationInput({
             {/* Kommun-dropdown (visas bara när län är valt) */}
             {selectedLan && availableKommuner.length > 0 && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-brand-text mb-2 antialiased">
                   Välj kommun
                 </label>
                 <select
@@ -247,7 +247,7 @@ export default function LocationInput({
                       handleSelectKommun(e.target.value)
                     }
                   }}
-                  className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none"
+                  className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition bg-white text-brand-text antialiased"
                 >
                   <option value="">-- Välj kommun --</option>
                   {availableKommuner.map((kommun) => (

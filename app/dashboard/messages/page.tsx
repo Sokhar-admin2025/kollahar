@@ -187,7 +187,7 @@ export default function InboxPage() {
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-bold text-sm text-gray-900 truncate">
+                          <h4 className="font-bold text-sm text-brand-text truncate antialiased">
                             {conv.listing?.title || 'Okänd annons'}
                           </h4>
                           <p className="text-xs text-brand-text flex items-center gap-2 antialiased">
@@ -302,7 +302,7 @@ export default function InboxPage() {
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
                         placeholder={t.chat.placeholder}
-                        className="flex-1 p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none"
+                        className="flex-1 p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-brand-text antialiased"
                         disabled={sending}
                       />
                       <Button type="submit" disabled={sending || !newMessage.trim()}>

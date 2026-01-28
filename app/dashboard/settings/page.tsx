@@ -241,7 +241,7 @@ export default function SettingsPage() {
             
             {/* SEKTION: PROFIL */}
             <div>
-                <h2 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">{t.sections.profile}</h2>
+                <h2 className="text-lg font-semibold text-brand-text mb-4 border-b pb-2 antialiased">{t.sections.profile}</h2>
                 
                 {/* Avatar-uppladdning */}
                 <div className="flex items-center gap-6 mb-6">
@@ -263,19 +263,19 @@ export default function SettingsPage() {
 
                 {/* Namn-fält */}
                 <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t.form.name.label}</label>
+                    <label className="block text-sm font-medium text-brand-text mb-1 antialiased">{t.form.name.label}</label>
                     <input 
                         type="text" 
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
                         placeholder={t.form.name.placeholder}
-                        className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none"
+                        className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-brand-text antialiased"
                     />
                 </div>
 
                 {/* Plats / Hemvist (valfritt) */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-brand-text mb-1 antialiased">
                       {t.form.location.label}{' '}
                       <span className="text-xs text-brand-text/60">(Valfritt)</span>
                     </label>
@@ -290,7 +290,7 @@ export default function SettingsPage() {
 
             {/* SEKTION: CONSENT / GDPR */}
             <div>
-                <h2 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2 flex items-center gap-2">
+                <h2 className="text-lg font-semibold text-brand-text mb-4 border-b pb-2 flex items-center gap-2 antialiased">
                     {t.sections.privacy} 
                     <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded">Viktigt</span>
                 </h2>
@@ -322,7 +322,7 @@ export default function SettingsPage() {
 
             {/* SEKTION: BYT LÖSENORD */}
             <div>
-                <h2 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2 flex items-center gap-2">
+                <h2 className="text-lg font-semibold text-brand-text mb-4 border-b pb-2 flex items-center gap-2 antialiased">
                     {t.sections.password}
                     <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">Säkerhet</span>
                 </h2>
@@ -332,40 +332,40 @@ export default function SettingsPage() {
 
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-brand-text mb-1 antialiased">
                             {t.password.currentLabel}
                         </label>
                         <input
                             type="password"
                             value={currentPassword}
                             onChange={(e) => setCurrentPassword(e.target.value)}
-                            className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none"
+                            className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-brand-text antialiased"
                             autoComplete="current-password"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-brand-text mb-1 antialiased">
                             {t.password.newLabel}
                         </label>
                         <input
                             type="password"
                             value={newPassword}
                             onChange={(e) => setNewPassword(e.target.value)}
-                            className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none"
+                            className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-brand-text antialiased"
                             autoComplete="new-password"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-brand-text mb-1 antialiased">
                             {t.password.confirmLabel}
                         </label>
                         <input
                             type="password"
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
-                            className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none"
+                            className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-brand-text antialiased"
                             autoComplete="new-password"
                         />
                     </div>
@@ -448,7 +448,7 @@ export default function SettingsPage() {
                 setDeleteConfirmText(e.target.value)
                 setDeleteError(null)
               }}
-              className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-600 focus:border-red-600 outline-none"
+              className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-600 focus:border-red-600 outline-none transition text-brand-text antialiased"
               placeholder="RADERA"
             />
             {deleteError && (
