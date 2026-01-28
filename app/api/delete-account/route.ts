@@ -17,7 +17,7 @@ export async function POST() {
 
     const userId = user.id
 
-    if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    if (process.env.SUPABASE_SERVICE_ROLE_KEY && supabaseAdmin) {
       const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId)
       if (deleteError) {
         console.error('Kunde inte radera konto via admin.deleteUser:', deleteError)

@@ -13,10 +13,14 @@ if (!url || !serviceRoleKey) {
   console.warn('[supabase-admin] SUPABASE_SERVICE_ROLE_KEY eller URL saknas. deleteAccount kommer inte fungera fullt ut.')
 }
 
-export const supabaseAdmin = createClient(url, serviceRoleKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false,
-  },
-})
+// Skapa endast klient om vi faktiskt har en service-role-nyckel
+export const supabaseAdmin = url && serviceRoleKey
+  ? createClient(url, serviceRoleKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    })
+  : null
+
 
