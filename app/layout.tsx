@@ -1,7 +1,8 @@
 import './globals.css'
 import type { Metadata } from 'next'
 import { Knewave, DM_Sans } from 'next/font/google'
-import Footer from './components/organisms/Footer' 
+import Footer from './components/organisms/Footer'
+import CookieConsent from './components/layout/CookieConsent' 
 
 const knewave = Knewave({ 
   subsets: ['latin'],
@@ -55,6 +56,9 @@ export default function RootLayout({
 
         {/* Footern hamnar alltid längst ner */}
         <Footer />
+        
+        {/* Cookie Consent Banner */}
+        <CookieConsent />
         
       </body>
     </html>
