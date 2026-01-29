@@ -78,8 +78,8 @@ export const DASHBOARD_TEXTS = {
     },
     // NY FOOTER-STRUKTUR
     footer: {
-      brand: "Kollahär!",
-      copyright: "© 2026 Kollahär! Alla rättigheter reserverade.",
+      brand: "Kolla här!",
+      copyright: "© 2026 Kolla här! Alla rättigheter reserverade.",
       columns: [
         {
           title: "Marknadsplatsen",
@@ -274,7 +274,7 @@ export const DASHBOARD_TEXTS = {
       success: "E-post verifierad! Loggar in..."
     },
     welcome: {
-      title: "Välkommen till Kollahär!",
+      title: "Välkommen till Kolla här!",
       subtitle: "Vad vill du göra idag?",
       browseAds: "Bläddra annonser",
       createAd: "Lägg upp en annons",

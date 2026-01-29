@@ -296,7 +296,7 @@ function ListingDetails() {
                         </p>
                       )}
                       {!sellerProfile?.location && (
-                        <p className="text-xs text-brand-text/60">Medlem på Kollahär!</p>
+                        <p className="text-xs text-brand-text/60">Medlem på Kolla här!</p>
                       )}
                     </div>
                   </div>
@@ -318,7 +318,7 @@ function ListingDetails() {
                 )}
                 
                 <p className="text-xs text-center text-gray-400 mt-4">
-                  🔒 Handla tryggt. All kommunikation sker via Kollahär!.
+                  🔒 Handla tryggt. All kommunikation sker via Kolla här!.
                 </p>
               </div>
 

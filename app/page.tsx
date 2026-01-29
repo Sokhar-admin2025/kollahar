@@ -432,7 +432,7 @@ function HomePageContent() {
         >
           <span>
             {loginType === 'new'
-              ? 'Hurra! Välkommen till Kollahär!'
+              ? 'Hurra! Välkommen till Kolla här!'
               : currentUserName
               ? `Välkommen tillbaka ${currentUserName}!`
               : 'Välkommen tillbaka!'}
