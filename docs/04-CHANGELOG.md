@@ -8,6 +8,25 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ### ✨ Tillagt
 
+#### Footer-uppdatering och nya sidor
+- **Rensad Footer**: Tog bort alla döda länkar, behåller endast 4 essentiella länkar
+  - Om oss → `/about`
+  - Villkor & Säkerhet → `/terms`
+  - Cookies → `/cookies`
+  - Kontakt → `/contact`
+  - Förenklad layout: 2 kolumner på desktop, enkel kolumn på mobil
+- **Cookies-sida** (`/cookies`): Ny sida med information om cookie-användning
+  - Kort text om nödvändiga cookies för inloggning och funktionalitet
+  - "Vi spårar dig inte i onödan" i brand-green
+- **Kontakt-sida** (`/contact`): Ny sida för användarfeedback
+  - Rubrik: "Hör av dig!"
+  - Uppmaning om feedback, buggar och förslag
+  - "Eftersom vi är i Beta är din feedback guld värd"
+  - "Kontaktformulär kommer snart!" (TODO för framtida implementering)
+- **Brandnamn-konsistens**: Fixat inkonsistens mellan "Kolla här!" och "Kollahär!"
+  - Alla förekomster uppdaterade till "Kolla här!" för konsistens
+  - Ändrat i: `content.ts`, `page.tsx`, `annons/[id]/page.tsx`
+
 #### Klient-sidig bildkomprimering
 - **Bildkomprimering för uppladdningar**: Automatisk komprimering av bilder innan uppladdning till Supabase
   - Använder `browser-image-compression` för att säkerställa att bilder håller sig under 2MB-gränsen
@@ -26,6 +45,19 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
   - Keywords: `['marknadsplats', 'loppis', 'köp och sälj', 'begagnat', 'community', 'hållbart', 'sverige']`
   - Open Graph: Konfigurerad för sociala medier med svensk locale (`sv_SE`)
   - Icons: Konfigurerad att använda `/icon.png` för favicon och Apple touch icons
+
+### 🔧 Ändrat
+
+#### UX-förbättringar för About, Terms och Footer
+- **Textrendering**: Lagt till `antialiased` på alla text-element för bättre läsbarhet
+  - Tillämpat på: `app/about/page.tsx`, `app/terms/page.tsx`, `app/components/organisms/Footer.tsx`
+- **Tillgänglighet (EAA)**: Förbättrad semantisk HTML och ARIA-labels
+  - Använder `<section>`, `<article>`, `<nav>` för bättre strukturerad innehåll
+  - ARIA-labels: `aria-label="Kundservice"`, `aria-label="Footer navigation"`
+- **Konsistent design**: Alla sidor följer samma designmönster
+  - Centrerad vit container med `rounded-xl shadow-sm`
+  - Brand-beige bakgrund
+  - Konsekvent whitespace och typografi
 
 ### 🚀 Prestanda & UX-förbättringar
 
