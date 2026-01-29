@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -17,14 +17,6 @@ import { messageService } from '../services/messageService'
 const supabase = createClient()
 
 export default function DashboardPage() {
-  return (
-    <Suspense fallback={<div className="flex min-h-screen items-center justify-center">Laddar...</div>}>
-      <Dashboard />
-    </Suspense>
-  )
-}
-
-function Dashboard() {
   const router = useRouter()
   const [user, setUser] = useState<any>(null)
   
@@ -32,7 +24,10 @@ function Dashboard() {
   const [soldAds, setSoldAds] = useState<any[]>([])
   const [favoriteAds, setFavoriteAds] = useState<Listing[]>([])
   
-  const [loading, setLoading] = useState(true)
+  const [isAuthChecking, setIsAuthChecking] = useState(true)
+  const [isAdsLoading, setIsAdsLoading] = useState(true)
+  const [isFavoritesLoading, setIsFavoritesLoading] = useState(true)
+  const [isUnreadLoading, setIsUnreadLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'active' | 'favorites' | 'history'>('active')
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
@@ -45,49 +40,78 @@ function Dashboard() {
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false)
 
   useEffect(() => {
+    let isMounted = true
+
     const getData = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
         router.push('/login')
         return
       }
+      if (!isMounted) return
+
       setUser(user)
+      setIsAuthChecking(false)
 
-      const { data: userAds } = await supabase
-        .from('listings')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
+      ;(async () => {
+        try {
+          const { data: userAds } = await supabase
+            .from('listings')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false })
 
-      if (userAds) {
-        setActiveAds(userAds.filter(ad => ad.status === 'active'))
-        setSoldAds(userAds.filter(ad => ad.status === 'sold'))
-      }
+          if (!isMounted) return
 
-      const { data: favorites } = await supabase
-        .from('favorites')
-        .select('*, listing:listings(*)')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
+          if (userAds) {
+            setActiveAds(userAds.filter(ad => ad.status === 'active'))
+            setSoldAds(userAds.filter(ad => ad.status === 'sold'))
+          }
+        } finally {
+          if (isMounted) setIsAdsLoading(false)
+        }
+      })()
 
-      const favoriteListings = (favorites as { listing: Listing | null }[] | null)
-        ?.map((favorite) => favorite.listing)
-        .filter((listing): listing is Listing => Boolean(listing)) ?? []
+      ;(async () => {
+        try {
+          const { data: favorites } = await supabase
+            .from('favorites')
+            .select('*, listing:listings(*)')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false })
 
-      setFavoriteAds(favoriteListings)
+          if (!isMounted) return
 
-      // Kolla om användaren har olästa meddelanden
-      try {
-        const unreadSet = await messageService.getUnreadConversationIds(user.id)
-        setHasUnreadMessages(unreadSet.size > 0)
-      } catch (err) {
-        console.error('Kunde inte hämta olästa meddelanden:', err)
-        setHasUnreadMessages(false)
-      }
+          const favoriteListings = (favorites as { listing: Listing | null }[] | null)
+            ?.map((favorite) => favorite.listing)
+            .filter((listing): listing is Listing => Boolean(listing)) ?? []
 
-      setLoading(false)
+          setFavoriteAds(favoriteListings)
+        } finally {
+          if (isMounted) setIsFavoritesLoading(false)
+        }
+      })()
+
+      ;(async () => {
+        try {
+          const unreadSet = await messageService.getUnreadConversationIds(user.id)
+          if (!isMounted) return
+          setHasUnreadMessages(unreadSet.size > 0)
+        } catch (err) {
+          console.error('Kunde inte hämta olästa meddelanden:', err)
+          if (!isMounted) return
+          setHasUnreadMessages(false)
+        } finally {
+          if (isMounted) setIsUnreadLoading(false)
+        }
+      })()
     }
+
     getData()
+
+    return () => {
+      isMounted = false
+    }
   }, [router])
 
   useEffect(() => {
@@ -150,8 +174,14 @@ function Dashboard() {
       setIsDeleting(false)
     }
   }
-
-  if (loading) return <div className="flex min-h-screen items-center justify-center">Laddar...</div>
+  
+  if (isAuthChecking) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-brand-beige">
+        <span className="text-brand-text">Laddar din dashboard...</span>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-brand-beige flex flex-col">
@@ -160,7 +190,12 @@ function Dashboard() {
       <div className="p-6 relative flex-grow">
         <div id="dashboard-header" className="mx-auto max-w-4xl mb-8">
           <h1 className="text-3xl font-display text-brand-green mb-2">{t.header.title}</h1>
-          <p className="text-brand-text antialiased">{t.header.welcome} <span className="font-semibold">{user?.email}</span></p>
+          <p className="text-brand-text antialiased">
+            {t.header.welcome}{' '}
+            <span className="font-semibold">
+              {user?.email ?? '...'}
+            </span>
+          </p>
         </div>
         
         <div className="mx-auto max-w-4xl mb-6 flex items-center gap-4 justify-end">
@@ -168,7 +203,7 @@ function Dashboard() {
           <Link href="/dashboard/messages" title="Mina meddelanden" className="relative">
             <div className="p-2 text-brand-text hover:text-brand-green hover:bg-brand-green/10 rounded-full transition cursor-pointer">
               <MessageSquare size={24} />
-              {hasUnreadMessages && (
+              {!isUnreadLoading && hasUnreadMessages && (
                 <span
                   className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-brand-green"
                   aria-hidden="true"
@@ -244,7 +279,22 @@ function Dashboard() {
         {/* AKTIVA ANNONSER */}
         {activeTab === 'active' && (
           <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200">
-            {activeAds.length === 0 ? (
+            {isAdsLoading ? (
+              <div className="space-y-4">
+                {Array.from({ length: 3 }).map((_, idx) => (
+                  <div
+                    key={idx}
+                    className="animate-pulse flex gap-4 p-4 border rounded-xl"
+                  >
+                    <div className="h-20 w-20 flex-shrink-0 bg-gray-200 rounded" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 bg-gray-200 rounded w-3/4" />
+                      <div className="h-4 bg-gray-100 rounded w-1/3" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : activeAds.length === 0 ? (
               <div className="text-center py-10 text-brand-text bg-brand-beige rounded-xl border border-dashed border-gray-300">
                 <p className="antialiased">{t.emptyStates.active}</p>
               </div>
@@ -302,10 +352,17 @@ function Dashboard() {
           </div>
         )}
 
-        {/* HISTORIK (UPPDATERAD TABELL - Status borttagen, datum tillagt) */}
+        {/* HISTORIK */}
         {activeTab === 'history' && (
           <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
-            {soldAds.length === 0 ? (
+            {isAdsLoading ? (
+              <div className="p-6 space-y-3 animate-pulse">
+                <div className="h-4 bg-gray-200 rounded w-1/3" />
+                <div className="h-4 bg-gray-100 rounded w-full" />
+                <div className="h-4 bg-gray-100 rounded w-full" />
+                <div className="h-4 bg-gray-100 rounded w-2/3" />
+              </div>
+            ) : soldAds.length === 0 ? (
               <div className="p-10 text-center text-brand-text">
                 <p className="antialiased">{t.emptyStates.history}</p>
               </div>
@@ -356,7 +413,13 @@ function Dashboard() {
         {/* FAVORITER */}
         {activeTab === 'favorites' && (
           <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200">
-            {favoriteAds.length === 0 ? (
+            {isFavoritesLoading ? (
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 animate-pulse">
+                {Array.from({ length: 4 }).map((_, idx) => (
+                  <div key={idx} className="h-40 bg-gray-200 rounded-xl" />
+                ))}
+              </div>
+            ) : favoriteAds.length === 0 ? (
               <div className="text-center py-10 text-brand-text bg-brand-beige rounded-xl border border-dashed border-gray-300">
                 <p>Du har inte sparat några annonser än.</p>
                 <Link href="/" className="text-brand-green underline mt-2 inline-block hover:text-brand-green/80">

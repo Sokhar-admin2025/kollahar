@@ -6,6 +6,22 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ## [Unreleased] (Local Development)
 
+### 🚀 Prestanda & UX-förbättringar
+
+#### Dashboard loading-optimering
+- **Skeleton loader för Dashboard**: Ny `app/dashboard/loading.tsx` som eliminerar "vit skärm"-problemet
+  - Matchar exakt dashboard-layouten (Header, CTA-kort, flikar, annonslista)
+  - Använder pulserande grå rutor (`animate-pulse bg-gray-200`) för visuell feedback
+  - Visas omedelbart vid navigering till `/dashboard` för bättre perceived performance
+- **Parallell datahämtning**: Dashboard hämtar nu listings, favorites och unread-meddelanden parallellt
+  - Separata loading-states för varje datatyp (`isAdsLoading`, `isFavoritesLoading`, `isUnreadLoading`)
+  - UI renderas direkt efter auth-check istället för att vänta på all data
+  - Skeleton-loaders per sektion istället för fullskärms-"Laddar..."-text
+- **Förbättrad auth-loading**: Separerad auth-check från datahämtning
+  - Kortare blocking-tid för initial render
+  - Dashboard-shell visas direkt efter auth-verifiering
+  - Data streamas in progressivt med visuella skeletons
+
 ### ✨ Tillagt
 
 #### Login & Registrering - Komplett ombyggnad
