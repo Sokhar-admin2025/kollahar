@@ -3,9 +3,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { Loader2 } from 'lucide-react'
 import { DASHBOARD_TEXTS } from '@/app/lib/content'
 
 const supabase = createClient()
+
+const VERIFY_TIMEOUT_MS = 15000 // 15 sekunder
 
 const MAX_ATTEMPTS = 5
 const CODE_EXPIRY_SECONDS = 15 * 60 // 15 minuter
@@ -21,9 +24,11 @@ export default function VerifyPageContent() {
   const [loading, setLoading] = useState(false)
   const [resending, setResending] = useState(false)
   const [message, setMessage] = useState<{ text: string; type: 'error' | 'success' } | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [attemptsLeft, setAttemptsLeft] = useState(MAX_ATTEMPTS)
   const [timeLeft, setTimeLeft] = useState(CODE_EXPIRY_SECONDS)
   const [codeExpired, setCodeExpired] = useState(false)
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
 
@@ -72,6 +77,22 @@ export default function VerifyPageContent() {
 
     setLoading(true)
     setMessage(null)
+    setSuccessMessage(null)
+
+    // Rensa tidigare timeout om den finns
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+    }
+
+    // Sätt timeout för verifieringen
+    timeoutRef.current = setTimeout(() => {
+      setLoading(false)
+      setMessage({ 
+        text: 'Det tar längre tid än vanligt. Försök igen eller ladda om sidan.', 
+        type: 'error' 
+      })
+      timeoutRef.current = null
+    }, VERIFY_TIMEOUT_MS)
 
     try {
       // Verifiera OTP-koden. För email-OTP som skickas via signInWithOtp
@@ -81,6 +102,12 @@ export default function VerifyPageContent() {
         token: fullCode,
         type: 'magiclink',        
       })
+
+      // Rensa timeout om vi fick svar
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+        timeoutRef.current = null
+      }
 
       if (error) {
         const newAttempts = attemptsLeft - 1
@@ -113,6 +140,7 @@ export default function VerifyPageContent() {
         setLoading(false)
       } else {
         // Lyckad verifiering: användaren är nu inloggad
+        setSuccessMessage('Koden godkänd! Loggar in...')
         setMessage({ text: DASHBOARD_TEXTS.auth.verify.success, type: 'success' })
 
         try {
@@ -132,22 +160,25 @@ export default function VerifyPageContent() {
           // Vi blockerar inte inloggningen här, men loggar felet för vidare analys
         }
 
-        // Auto-redirect till startsidan
-        setTimeout(() => {
-          // Vid signup: markera som ny användare i URL-parametern
-          const loginParam = type === 'signup' ? 'new' : 'returning'
-          router.push(`/?logged_in=${loginParam}`)
-          router.refresh()
-        }, 1000)
+        // Hard navigation för omedelbar feedback
+        // Vid signup: markera som ny användare i URL-parametern
+        const loginParam = type === 'signup' ? 'new' : 'returning'
+        // Använd window.location.href för hard navigation istället för router.push
+        window.location.href = `/?logged_in=${loginParam}`
       }
     } catch (err) {
+      // Rensa timeout vid fel
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+        timeoutRef.current = null
+      }
       setMessage({ 
         text: DASHBOARD_TEXTS.auth.verify.errors.generic, 
         type: 'error' 
       })
       setLoading(false)
     }
-  }, [code, codeExpired, attemptsLeft, email, type, router])
+  }, [code, codeExpired, attemptsLeft, email, type])
 
   // Auto-verify när alla 6 siffror är ifyllda
   useEffect(() => {
@@ -156,6 +187,15 @@ export default function VerifyPageContent() {
       handleVerify()
     }
   }, [code, loading, handleVerify])
+
+  // Cleanup timeout vid unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+    }
+  }, [])
 
   const handleCodeChange = (index: number, value: string) => {
     // Endast siffror
@@ -379,8 +419,16 @@ export default function VerifyPageContent() {
           )}
 
           {loading && (
-            <div className="text-center text-sm text-gray-600">
-              {t.loading}
+            <div className="text-center text-sm text-gray-600 flex items-center justify-center gap-2">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>{t.loading}</span>
+            </div>
+          )}
+
+          {successMessage && (
+            <div className="text-center text-sm text-brand-green font-medium flex items-center justify-center gap-2">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>{successMessage}</span>
             </div>
           )}
         </div>

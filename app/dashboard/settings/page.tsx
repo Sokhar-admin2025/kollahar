@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import imageCompression from 'browser-image-compression'
+import { Loader2 } from 'lucide-react'
 
 import { DASHBOARD_TEXTS } from '@/app/lib/content'
 import { AUTH_CONFIG } from '@/lib/constants'
@@ -254,7 +255,16 @@ export default function SettingsPage() {
     }
   }
 
-  if (loading) return <div className="p-10 text-center">Laddar inställningar...</div>
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-brand-beige flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 animate-spin text-brand-green" />
+          <p className="text-brand-text antialiased">Laddar inställningar...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-brand-beige flex flex-col">

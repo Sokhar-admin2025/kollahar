@@ -11,7 +11,7 @@ import FavoriteButton from '@/app/components/FavoriteButton'
 import Header from '@/app/components/organisms/Header'
 import { createClient } from '@/lib/supabase/client'
 import type { Listing } from '@/app/types'
-import { MapPin } from 'lucide-react'
+import { MapPin, Loader2 } from 'lucide-react'
 
 const supabase = createClient()
 
@@ -189,7 +189,16 @@ function ListingDetails() {
     }
   }
 
-  if (loading) return <div className="p-10 text-center">{t.loading}</div>
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-brand-beige flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 animate-spin text-brand-green" />
+          <p className="text-brand-text antialiased">{t.loading}</p>
+        </div>
+      </div>
+    )
+  }
   
   if (!ad) return (
     <div className="p-10 text-center bg-brand-beige min-h-screen">
