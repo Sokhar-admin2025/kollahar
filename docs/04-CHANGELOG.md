@@ -6,6 +6,17 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ## [Unreleased] (Local Development)
 
+### ✨ Tillagt
+
+#### Sajtens identitet och metadata
+- **Metadata-uppdatering**: Ny identitet och vision för Kolla här!
+  - Title: `'Kolla här! – En gladare marknadsplats, gjord för alla'` med template `'%s | Kolla här!'`
+  - Description: `'En ny sorts marknadsplats skapad för användarna. Köp och sälj prylar enkelt, i en skön miljö helt utan krångel.'`
+  - Authors & Creator: `'Kolla här! Crew'`
+  - Keywords: `['marknadsplats', 'loppis', 'köp och sälj', 'begagnat', 'community', 'hållbart', 'sverige']`
+  - Open Graph: Konfigurerad för sociala medier med svensk locale (`sv_SE`)
+  - Icons: Konfigurerad att använda `/icon.png` för favicon och Apple touch icons
+
 ### 🚀 Prestanda & UX-förbättringar
 
 #### Dashboard loading-optimering
