@@ -8,6 +8,16 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ### ✨ Tillagt
 
+#### Klient-sidig bildkomprimering
+- **Bildkomprimering för uppladdningar**: Automatisk komprimering av bilder innan uppladdning till Supabase
+  - Använder `browser-image-compression` för att säkerställa att bilder håller sig under 2MB-gränsen
+  - Konfiguration: `maxSizeMB: 1.0`, `maxWidthOrHeight: 1920`, `initialQuality: 0.8`
+  - Web Worker för att undvika att frysa gränssnittet under komprimering
+  - Visuell feedback: "Bearbetar bild..."-indikator under komprimering
+  - Fallback till originalfil om komprimering misslyckas
+  - Tillämpas på både annonsbilder (`CreateListingForm`) och profilbilder (`Settings`)
+  - Förbättrar användarupplevelsen genom att automatiskt optimera bilder utan att användaren behöver göra något
+
 #### Sajtens identitet och metadata
 - **Metadata-uppdatering**: Ny identitet och vision för Kolla här!
   - Title: `'Kolla här! – En gladare marknadsplats, gjord för alla'` med template `'%s | Kolla här!'`
