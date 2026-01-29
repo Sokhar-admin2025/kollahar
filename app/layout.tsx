@@ -17,8 +17,26 @@ const dmSans = DM_Sans({
 })
 
 export const metadata: Metadata = {
-  title: 'Kollahär! - En marknadsplats för trygg handel',
-  description: 'Köp och sälj enkelt i en trygg marknadsplats. Var med och bygg framtiden tillsammans!',
+  title: {
+    default: 'Kolla här! – En gladare marknadsplats, gjord för alla',
+    template: '%s | Kolla här!',
+  },
+  description: 'En ny sorts marknadsplats skapad för användarna. Köp och sälj prylar enkelt, i en skön miljö helt utan krångel.',
+  authors: [{ name: 'Kolla här! Crew' }],
+  creator: 'Kolla här! Crew',
+  keywords: ['marknadsplats', 'loppis', 'köp och sälj', 'begagnat', 'community', 'hållbart', 'sverige'],
+  openGraph: {
+    title: 'Kolla här! – En gladare marknadsplats',
+    description: 'Gjord för alla. Köp, sälj och häng med i vårt community.',
+    locale: 'sv_SE',
+    type: 'website',
+    siteName: 'Kolla här!',
+  },
+  icons: {
+    icon: '/icon.png',
+    shortcut: '/icon.png',
+    apple: '/icon.png',
+  },
 }
 
 export default function RootLayout({
