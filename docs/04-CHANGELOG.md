@@ -8,6 +8,36 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ### ✨ Tillagt
 
+#### Cookie Consent Banner
+- **CookieConsent-komponent** (`app/components/layout/CookieConsent.tsx`): Ny global cookie consent-banner
+  - Visas endast för användare utan `cookie_consent` i localStorage
+  - Mörkgrön bakgrund (#1a2e26), vit text, grön OK-knapp
+  - Responsiv design: kolumn på mobil, rad på desktop
+  - "Läs mer"-länk till `/cookies`-sidan
+  - EAA-kompatibel med ARIA-labels och focus states
+  - Integrerad globalt i `app/layout.tsx`
+  - Banner försvinner permanent efter att användaren klickat "OK"
+
+#### RLS Säkerhetsaudit och Setup-filer
+- **RLS Audit Rapport** (`docs/RLS_AUDIT_REPORT.md`): Komplett säkerhetsgranskning av alla tabeller
+  - Identifierade kritiska säkerhetsproblem: `listings` och `deletion_logs` saknade RLS
+  - Identifierade saknad RLS på `listing-images` storage bucket
+  - Granskning av alla befintliga RLS-policies
+  - Prioriterade åtgärder dokumenterade
+- **setup_listings.sql**: Ny setup-fil för listings-tabellen med RLS
+  - Public read: Endast aktiva annonser (`status = 'active'`)
+  - Insert: Endast autentiserade användare (måste vara ägare)
+  - Update/Delete: Endast ägare kan ändra/radera sina annonser
+- **setup_deletion_logs.sql**: Ny setup-fil för deletion_logs-tabellen med RLS
+  - Select/Insert: Endast ägare kan läsa/skapa sina egna loggar
+  - Update/Delete: Inga policies (immutable logs)
+- **setup_listing_images.sql**: Ny setup-fil för listing-images storage bucket med RLS
+  - Select: Publikt läsning (public bucket)
+  - Insert: Endast autentiserade användare
+  - Delete: Endast ägare (baserat på path som innehåller user_id)
+
+### ✨ Tillagt
+
 #### Footer-uppdatering och nya sidor
 - **Rensad Footer**: Tog bort alla döda länkar, behåller endast 4 essentiella länkar
   - Om oss → `/about`

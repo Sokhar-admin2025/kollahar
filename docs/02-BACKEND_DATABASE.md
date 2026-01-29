@@ -516,8 +516,11 @@ Migrations ligger i `supabase/migrations/`:
 Utöver migrations finns även manuella setup-skript:
 
 - `supabase/setup_profiles.sql`: Skapar `public.profiles` + trigger från `auth.users` + RLS
+- `supabase/setup_listings.sql`: Skapar `public.listings` + RLS policies
+- `supabase/setup_deletion_logs.sql`: Skapar `public.deletion_logs` + RLS policies
 - `supabase/setup_conversations_messages.sql`: Skapar `public.conversations` och `public.messages` + RLS
 - `supabase/setup_avatars.sql`: Skapar `avatars`-bucket i Storage + RLS-policys
+- `supabase/setup_listing_images.sql`: Skapar `listing-images`-bucket i Storage + RLS-policys
 
 ### Skapa Ny Migration
 

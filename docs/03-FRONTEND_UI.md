@@ -66,6 +66,8 @@ Komponenter är organiserade enligt Atomic Design:
 app/components/
 ├── atoms/              # Små, återanvändbara komponenter
 │   └── Button.tsx
+├── layout/             # Layout-komponenter
+│   └── CookieConsent.tsx
 ├── FavoriteButton.tsx  # Molecule (atom + logik)
 ├── ListingCard.tsx     # Molecule (flera atoms)
 └── organisms/          # Större komponenter
@@ -175,6 +177,37 @@ interface ListingCardProps {
 **Accessibility:**
 - `aria-label="Spara som favorit"`
 - `preventDefault()` för att stoppa navigation
+
+### CookieConsent Component
+
+**Plats:** `app/components/layout/CookieConsent.tsx`
+
+**Syfte:** Global cookie consent-banner som visas för användare utan samtycke.
+
+**Funktionalitet:**
+- Kontrollerar `localStorage.getItem('cookie_consent')` vid mount
+- Visar bannern endast om consent saknas
+- Vid "OK"-klick: Sparar `'true'` i localStorage och döljer bannern
+- Komponenten renderar `null` om consent redan finns (visas inte igen)
+
+**Design:**
+- Fixed bottom med `z-50` (ligger ovanpå allt innehåll)
+- Mörkgrön bakgrund (`#1a2e26`)
+- Vit text, responsiv layout
+- Desktop: flex-row (text vänster, knappar höger)
+- Mobil: flex-column (text överst, knappar under)
+- OK-knapp: Grön bakgrund (`bg-brand-green`), vit text
+- "Läs mer": Understruken länk till `/cookies`
+
+**Accessibility:**
+- `role="banner"` och `aria-label="Cookie consent"`
+- Focus states på knappen för tangentbordsnavigation
+- Hover-effekter för bättre UX
+
+**Integration:**
+- Integrerad globalt i `app/layout.tsx`
+- Visas på alla sidor för nya besökare
+- Försvinner permanent efter att användaren klickat "OK"
 
 ## 📄 Sidstruktur
 
