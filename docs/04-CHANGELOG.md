@@ -61,6 +61,19 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ### 🚀 Prestanda & UX-förbättringar
 
+#### OTP-verifiering prestandaoptimering
+- **Hard navigation**: Använder `window.location.href` istället för `router.push` för omedelbar feedback
+  - Förhindrar att Next.js "fryser" i transition-state vid långsamma nätverk
+  - Ger användaren omedelbar feedback i webbläsarens laddningsbar
+- **Timeout-hantering**: 15 sekunders timeout på OTP-verifiering
+  - Visar meddelande: "Det tar längre tid än vanligt. Försök igen eller ladda om sidan."
+  - Förhindrar hängande requests och eviga spinners
+- **Success feedback**: Visar "Koden godkänd! Loggar in..." med spinner
+  - Tydlig visuell feedback innan redirect
+- **Loading states**: Ersatt "Loading..." text med riktiga spinners (`Loader2` från lucide-react)
+  - Tillämpat på: `app/annons/[id]/page.tsx`, `app/dashboard/settings/page.tsx`
+  - Bättre visuell feedback även vid långsamma laddningar
+
 #### Dashboard loading-optimering
 - **Skeleton loader för Dashboard**: Ny `app/dashboard/loading.tsx` som eliminerar "vit skärm"-problemet
   - Matchar exakt dashboard-layouten (Header, CTA-kort, flikar, annonslista)
