@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import imageCompression from 'browser-image-compression'
 
 import { DASHBOARD_TEXTS } from '../lib/content'
 import Button from './atoms/Button'
@@ -31,6 +32,7 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
   
   const [uploading, setUploading] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [compressing, setCompressing] = useState(false)
 
   // Ref för att hålla koll på preview URLs för cleanup
   const previewUrlsRef = useRef<string[]>([])
@@ -102,16 +104,39 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
 
       const file = e.target.files[0]
 
-      if (file.size > 2 * 1024 * 1024) {
+      // Komprimera bilden innan vi sparar den
+      setCompressing(true)
+      let compressedFile: File
+
+      try {
+        const options = {
+          maxSizeMB: 1.0,
+          maxWidthOrHeight: 1920,
+          useWebWorker: true,
+          initialQuality: 0.8,
+        }
+
+        compressedFile = await imageCompression(file, options)
+      } catch (compressionError) {
+        console.warn('Bildkomprimering misslyckades, försöker med originalfil:', compressionError)
+        // Om komprimering misslyckas, försök med originalfilen
+        compressedFile = file
+      } finally {
+        setCompressing(false)
+      }
+
+      // Kontrollera storlek efter komprimering
+      if (compressedFile.size > 2 * 1024 * 1024) {
         alert(t.form.image.errorTooBig)
         return 
       }
 
-      const previewUrl = URL.createObjectURL(file)
-      setImageFiles([...imageFiles, file])
+      const previewUrl = URL.createObjectURL(compressedFile)
+      setImageFiles([...imageFiles, compressedFile])
       setImagePreviews([...imagePreviews, previewUrl])
     } catch (error: any) {
       alert('Fel vid uppladdning: ' + error.message)
+      setCompressing(false)
     }
   }
 
@@ -363,18 +388,19 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
           
           {/* Ladda upp ny bild */}
           {totalImages < 5 && (
-            <label className={`w-24 h-24 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:bg-brand-beige hover:border-brand-green transition ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
+            <label className={`w-24 h-24 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:bg-brand-beige hover:border-brand-green transition ${uploading || compressing ? 'opacity-50 cursor-not-allowed' : ''}`}>
               <span className="text-2xl text-brand-text">+</span>
               <input 
                 type="file" 
                 accept="image/*" 
                 onChange={handleImageUpload} 
-                disabled={uploading}
+                disabled={uploading || compressing}
                 className="hidden" 
               />
             </label>
           )}
         </div>
+        {compressing && <p className="text-sm text-brand-green animate-pulse">Bearbetar bild...</p>}
         {uploading && <p className="text-sm text-brand-green animate-pulse">{t.form.image.uploading}</p>}
       </div>
 

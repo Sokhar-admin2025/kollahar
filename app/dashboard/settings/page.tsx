@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import imageCompression from 'browser-image-compression'
 
 import { DASHBOARD_TEXTS } from '@/app/lib/content'
 import { AUTH_CONFIG } from '@/lib/constants'
@@ -20,6 +21,7 @@ export default function SettingsPage() {
   
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [compressingAvatar, setCompressingAvatar] = useState(false)
   const [userId, setUserId] = useState<string | null>(null)
   const [email, setEmail] = useState<string | null>(null)
 
@@ -197,15 +199,43 @@ export default function SettingsPage() {
       if (!event.target.files || event.target.files.length === 0) return
 
       const file = event.target.files[0]
+
+      // Komprimera bilden innan uppladdning
+      setCompressingAvatar(true)
+      let compressedFile: File
+
+      try {
+        const options = {
+          maxSizeMB: 1.0,
+          maxWidthOrHeight: 1920,
+          useWebWorker: true,
+          initialQuality: 0.8,
+        }
+
+        compressedFile = await imageCompression(file, options)
+      } catch (compressionError) {
+        console.warn('Bildkomprimering misslyckades, försöker med originalfil:', compressionError)
+        // Om komprimering misslyckas, försök med originalfilen
+        compressedFile = file
+      } finally {
+        setCompressingAvatar(false)
+      }
+
+      // Kontrollera storlek efter komprimering
+      if (compressedFile.size > 2 * 1024 * 1024) {
+        alert('Bilden är för stor. Maximal storlek är 2MB.')
+        return
+      }
+
       // Skapa ett unikt filnamn
-      const fileExt = file.name.split('.').pop()
+      const fileExt = compressedFile.name.split('.').pop()
       const fileName = `${Math.random()}.${fileExt}`
       const filePath = `${fileName}`
 
       // Ladda upp till 'avatars' hinken
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(filePath, file)
+        .upload(filePath, compressedFile)
 
       if (uploadError) throw uploadError
 
@@ -220,6 +250,7 @@ export default function SettingsPage() {
     } catch (error) {
       alert('Fel vid uppladdning av bild.')
       console.error(error)
+      setCompressingAvatar(false)
     }
   }
 
@@ -253,10 +284,10 @@ export default function SettingsPage() {
                         )}
                     </div>
                     <div>
-                        <label className="cursor-pointer bg-white border border-gray-300 text-brand-text px-4 py-2 rounded-xl text-sm font-medium hover:bg-brand-beige transition shadow-sm">
-                            {t.form.avatar.changeBtn}
+                        <label className={`cursor-pointer bg-white border border-gray-300 text-brand-text px-4 py-2 rounded-xl text-sm font-medium hover:bg-brand-beige transition shadow-sm ${compressingAvatar ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                            {compressingAvatar ? 'Bearbetar bild...' : t.form.avatar.changeBtn}
                             {/* Dolt fil-input fält */}
-                            <input type="file" className="hidden" accept="image/*" onChange={uploadAvatar} />
+                            <input type="file" className="hidden" accept="image/*" onChange={uploadAvatar} disabled={compressingAvatar} />
                         </label>
                     </div>
                 </div>
