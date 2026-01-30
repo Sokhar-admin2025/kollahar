@@ -8,6 +8,24 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ### ✨ Tillagt
 
+#### Kategori-system med migration och defensiv kodning
+- **Kategori-struktur** (`lib/categories.ts`): Hierarkisk kategori-struktur med parent/child-relationer
+  - Huvudkategorier: Fordon, Hem & Inredning, Elektronik, Kläder & Accessoarer, Fritid & Hobby, Övrigt
+  - Underkategorier med ID:n (t.ex. `'cars'`, `'boats'`, `'furniture'`) och svenska labels (t.ex. `'Bilar'`, `'Båtar'`, `'Möbler'`)
+  - Helper-funktioner: `getCategoryLabel()` och `getCategoryGroupLabel()` för att hämta svenska etiketter
+- **Defensiv kodning för bakåtkompatibilitet**: `getCategoryLabel()` och `getCategoryGroupLabel()` hanterar både nya ID:n och gamla textvärden
+  - Mapping från gamla textvärden (`'Bilar'`, `'Fordon'`) till nya ID:n (`'cars'`)
+  - Fallback till ursprungstext om inget matchar (förhindrar krasch och konstiga värden)
+  - Säkerställer att PROD visar svenska etiketter även under övergångsperioden
+- **Datamigrering** (`supabase/migrations/20260130130000_migrate_category_text_to_ids.sql`): SQL-script för att konvertera alla befintliga annonser
+  - Uppdaterar alla rader från gamla textvärden till nya ID:n
+  - Mappar alla huvudkategorier och underkategorier korrekt
+  - Inkluderar loggning för att visa antal uppdaterade rader
+  - Idempotent (kan köras flera gånger utan problem)
+- **Attributes-kolumn** (`supabase/migrations/20260130120000_add_attributes_to_listings.sql`): JSONB-kolumn för kategorispecifik data
+  - Stöd för att spara specifika attribut per kategori (t.ex. bil-specifika fält)
+  - Default-värde: `'{}'` (tom JSON-objekt)
+
 #### Cookie Consent Banner
 - **CookieConsent-komponent** (`app/components/layout/CookieConsent.tsx`): Ny global cookie consent-banner
   - Visas endast för användare utan `cookie_consent` i localStorage
@@ -690,4 +708,4 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ---
 
-**Senast uppdaterad**: 2025-01-17 (Designsystem implementerat)
+**Senast uppdaterad**: 2025-01-30 (Kategori-migration och defensiv kodning)
