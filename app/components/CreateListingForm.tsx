@@ -69,16 +69,17 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
       setCategory(initialData.category || '')
       setExistingImageUrls(initialData.images || [])
       const attributes = initialData.attributes || {}
-      setCondition(attributes.condition || '')
-      setRegNr(attributes.reg_nr || '')
-      setMake(attributes.make || '')
-      setModel(attributes.model || '')
-      setFuel(attributes.fuel || '')
-      setGearbox(attributes.gearbox || '')
+      // Type-safe access to attributes with fallback to empty string
+      setCondition(typeof attributes.condition === 'string' ? attributes.condition : '')
+      setRegNr(typeof attributes.reg_nr === 'string' ? attributes.reg_nr : '')
+      setMake(typeof attributes.make === 'string' ? attributes.make : '')
+      setModel(typeof attributes.model === 'string' ? attributes.model : '')
+      setFuel(typeof attributes.fuel === 'string' ? attributes.fuel : '')
+      setGearbox(typeof attributes.gearbox === 'string' ? attributes.gearbox : '')
       setYear(attributes.year ? String(attributes.year) : '')
       setMileage(attributes.mileage ? String(attributes.mileage) : '')
-      setBodyType(attributes.body_type || '')
-      setColor(attributes.color || '')
+      setBodyType(typeof attributes.body_type === 'string' ? attributes.body_type : '')
+      setColor(typeof attributes.color === 'string' ? attributes.color : '')
     }
   }, [initialData])
 

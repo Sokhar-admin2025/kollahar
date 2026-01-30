@@ -10,6 +10,7 @@ export interface Listing {
   images: string[];
   user_id: string;
   status: 'active' | 'sold' | 'deleted';
+  deleted_at?: string | null;
   seller_type?: 'private' | 'company';
   company_name?: string;
   external_url?: string;

@@ -81,8 +81,7 @@ export default function LocationInput({
       onChange(formatted)
       // Visa kommunnamnet i fältet
       setIsUserTyping(false)
-      setSelectedLan('')
-      setAvailableKommuner([])
+      setSelectedLan('') // availableKommuner beräknas automatiskt från selectedLan
       setShowDropdown(false)
     }
   }

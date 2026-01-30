@@ -158,7 +158,11 @@ export default function DashboardPage() {
 
         if (error) throw error
 
-        const updatedAd = { ...adToDelete, status: 'sold', deleted_at: new Date().toISOString() }
+        const updatedAd: Listing = { 
+          ...adToDelete, 
+          status: 'sold' as const, 
+          deleted_at: new Date().toISOString() 
+        }
         setActiveAds(activeAds.filter(a => a.id !== adToDelete.id))
         setSoldAds([updatedAd, ...soldAds])
 
@@ -461,7 +465,7 @@ export default function DashboardPage() {
                 <span className="text-3xl">💔</span>
               </div>
               <h3 className="text-2xl font-display text-brand-green">{t.deleteModal.title}</h3>
-              <p className="text-brand-text mt-2 antialiased" dangerouslySetInnerHTML={{ __html: t.deleteModal.description(adToDelete?.title).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }}></p>
+              <p className="text-brand-text mt-2 antialiased" dangerouslySetInnerHTML={{ __html: t.deleteModal.description(adToDelete?.title || '').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }}></p>
             </div>
 
             <div className="bg-brand-beige p-4 rounded-xl mb-6 text-left">
