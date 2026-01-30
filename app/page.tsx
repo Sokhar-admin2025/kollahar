@@ -3,7 +3,8 @@
 import { Suspense, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Search, X, SlidersHorizontal } from 'lucide-react'
+import { Search, X, SlidersHorizontal, ChevronDown, ChevronUp } from 'lucide-react'
+import DualRangeSlider from './components/DualRangeSlider'
 
 // Vi importerar texter och knappar som vanligt
 import { DASHBOARD_TEXTS } from './lib/content'
@@ -60,6 +61,15 @@ function HomePageContent() {
   const [bodyTypeFilter, setBodyTypeFilter] = useState('')
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [isDesktopFilterOpen, setIsDesktopFilterOpen] = useState(false)
+  const [showMoreFilters, setShowMoreFilters] = useState(false)
+  
+  // Dual range slider values (convert from string to number)
+  const priceMinNum = parseInt(priceMin) || 0
+  const priceMaxNum = parseInt(priceMax) || 1000000
+  const yearMinNum = parseInt(yearMin) || 1960
+  const yearMaxNum = parseInt(yearMax) || new Date().getFullYear() + 1
+  const mileageMinNum = parseInt(mileageMin) || 0
+  const mileageMaxNum = parseInt(mileageMax) || 500000
 
   const t = DASHBOARD_TEXTS
   const isCarsCategory = selectedCategory === 'cars'
@@ -287,12 +297,17 @@ function HomePageContent() {
     resetCarFilters()
   }
 
+  const fuelOptions = ['Bensin', 'Diesel', 'El', 'Gas', 'Hybrid'].sort()
+  const gearboxOptions = ['Manuell', 'Automat']
+  const bodyTypeOptions = ['Cab', 'Coupé', 'Halvkombi', 'Kombi', 'Minibuss', 'Sedan', 'Skåpbil', 'SUV'].sort()
+
   const filterFields = (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      {/* Kategori */}
       <div>
-        <label className="block text-sm font-medium text-brand-text mb-1">Kategori</label>
+        <label className="block text-sm font-medium text-brand-text mb-2 antialiased">Kategori</label>
         <select
-          className="w-full p-3 border border-gray-300 rounded-xl bg-white text-brand-text"
+          className="w-full p-3 border border-gray-300 rounded-xl bg-white text-brand-text antialiased"
           value={selectedCategory}
           onChange={(e) => handleCategoryChange(e.target.value)}
         >
@@ -307,131 +322,150 @@ function HomePageContent() {
         </select>
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-brand-text mb-1">Pris</label>
-        <div className="grid grid-cols-2 gap-3">
-          <input
-            type="number"
-            placeholder="Min"
-            className="w-full p-3 border border-gray-300 rounded-xl text-brand-text"
-            value={priceMin}
-            onChange={(e) => setPriceMin(e.target.value)}
-          />
-          <input
-            type="number"
-            placeholder="Max"
-            className="w-full p-3 border border-gray-300 rounded-xl text-brand-text"
-            value={priceMax}
-            onChange={(e) => setPriceMax(e.target.value)}
-          />
-        </div>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-brand-text mb-1">Plats</label>
-        <input
-          type="text"
-          placeholder="Hela Sverige"
-          className="w-full p-3 border border-gray-300 rounded-xl text-brand-text placeholder:text-gray-400"
-          value={locationFilter}
-          onChange={(e) => setLocationFilter(e.target.value)}
+      {/* Obligatoriska filter överst */}
+      <div className="space-y-6">
+        <h3 className="text-sm font-semibold text-brand-text uppercase tracking-wider">Obligatoriska filter</h3>
+        
+        {/* Pris - Dual Range Slider */}
+        <DualRangeSlider
+          min={0}
+          max={1000000}
+          minValue={priceMinNum}
+          maxValue={priceMaxNum}
+          onMinChange={(val) => setPriceMin(val.toString())}
+          onMaxChange={(val) => setPriceMax(val.toString())}
+          step={1000}
+          label="Pris"
+          unit=" kr"
         />
+
+        {/* År & Mil (endast för bilar) */}
+        {isCarsCategory && (
+          <>
+            <DualRangeSlider
+              min={1960}
+              max={new Date().getFullYear() + 1}
+              minValue={yearMinNum}
+              maxValue={yearMaxNum}
+              onMinChange={(val) => setYearMin(val.toString())}
+              onMaxChange={(val) => setYearMax(val.toString())}
+              step={1}
+              label="Modellår"
+            />
+
+            <DualRangeSlider
+              min={0}
+              max={500000}
+              minValue={mileageMinNum}
+              maxValue={mileageMaxNum}
+              onMinChange={(val) => setMileageMin(val.toString())}
+              onMaxChange={(val) => setMileageMax(val.toString())}
+              step={1000}
+              label="Miltal"
+              unit=" mil"
+            />
+          </>
+        )}
       </div>
 
-      {isCarsCategory && (
-        <div className="space-y-4 rounded-xl border border-gray-200 p-4 bg-white">
-          <p className="text-xs font-bold uppercase tracking-widest text-brand-text/60">Bilar</p>
+      {/* Fler filter (Collapsible) */}
+      <div className="border-t border-gray-200 pt-4">
+        <button
+          type="button"
+          onClick={() => setShowMoreFilters(!showMoreFilters)}
+          className="flex items-center justify-between w-full text-left text-brand-text hover:text-brand-green transition-colors"
+        >
+          <span className="text-sm font-medium antialiased">Fler filter</span>
+          {showMoreFilters ? (
+            <ChevronUp className="w-5 h-5" />
+          ) : (
+            <ChevronDown className="w-5 h-5" />
+          )}
+        </button>
 
-          <div>
-            <label className="block text-sm font-medium text-brand-text mb-1">År</label>
-            <div className="grid grid-cols-2 gap-3">
+        {showMoreFilters && (
+          <div className="mt-4 space-y-6">
+            {/* Plats */}
+            <div>
+              <label className="block text-sm font-medium text-brand-text mb-2 antialiased">Plats</label>
               <input
-                type="number"
-                placeholder="Från"
-                className="w-full p-3 border border-gray-300 rounded-xl text-brand-text"
-                value={yearMin}
-                onChange={(e) => setYearMin(e.target.value)}
-              />
-              <input
-                type="number"
-                placeholder="Till"
-                className="w-full p-3 border border-gray-300 rounded-xl text-brand-text"
-                value={yearMax}
-                onChange={(e) => setYearMax(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-brand-text mb-1">Miltal</label>
-            <div className="grid grid-cols-2 gap-3">
-              <input
-                type="number"
-                placeholder="Från"
-                className="w-full p-3 border border-gray-300 rounded-xl text-brand-text"
-                value={mileageMin}
-                onChange={(e) => setMileageMin(e.target.value)}
-              />
-              <input
-                type="number"
-                placeholder="Till"
-                className="w-full p-3 border border-gray-300 rounded-xl text-brand-text"
-                value={mileageMax}
-                onChange={(e) => setMileageMax(e.target.value)}
+                type="text"
+                placeholder="Hela Sverige"
+                className="w-full p-3 border border-gray-300 rounded-xl text-brand-text placeholder:text-gray-400 antialiased"
+                value={locationFilter}
+                onChange={(e) => setLocationFilter(e.target.value)}
               />
             </div>
-          </div>
 
-          <div>
-            <label className="block text-sm font-medium text-brand-text mb-1">Bränsle</label>
-            <select
-              className="w-full p-3 border border-gray-300 rounded-xl bg-white text-brand-text"
-              value={fuelFilter}
-              onChange={(e) => setFuelFilter(e.target.value)}
-            >
-              <option value="">Alla</option>
-              <option value="Bensin">Bensin</option>
-              <option value="Diesel">Diesel</option>
-              <option value="El">El</option>
-              <option value="Hybrid">Hybrid</option>
-            </select>
-          </div>
+            {/* Bil-specifika filter */}
+            {isCarsCategory && (
+              <>
+                {/* Drivmedel (Chips) */}
+                <div>
+                  <label className="block text-sm font-medium text-brand-text mb-2 antialiased">Drivmedel</label>
+                  <div className="flex flex-wrap gap-2">
+                    {fuelOptions.map((opt) => (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => setFuelFilter(fuelFilter === opt ? '' : opt)}
+                        className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                          fuelFilter === opt
+                            ? 'bg-brand-green text-white'
+                            : 'bg-gray-100 text-brand-text hover:bg-gray-200'
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-          <div>
-            <label className="block text-sm font-medium text-brand-text mb-1">Växellåda</label>
-            <select
-              className="w-full p-3 border border-gray-300 rounded-xl bg-white text-brand-text"
-              value={gearboxFilter}
-              onChange={(e) => setGearboxFilter(e.target.value)}
-            >
-              <option value="">Alla</option>
-              <option value="Manuell">Manuell</option>
-              <option value="Automat">Automat</option>
-            </select>
-          </div>
+                {/* Växellåda (Chips) */}
+                <div>
+                  <label className="block text-sm font-medium text-brand-text mb-2 antialiased">Växellåda</label>
+                  <div className="flex flex-wrap gap-2">
+                    {gearboxOptions.map((opt) => (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => setGearboxFilter(gearboxFilter === opt ? '' : opt)}
+                        className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                          gearboxFilter === opt
+                            ? 'bg-brand-green text-white'
+                            : 'bg-gray-100 text-brand-text hover:bg-gray-200'
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-          <div>
-            <label className="block text-sm font-medium text-brand-text mb-1">Kaross</label>
-            <select
-              className="w-full p-3 border border-gray-300 rounded-xl bg-white text-brand-text"
-              value={bodyTypeFilter}
-              onChange={(e) => setBodyTypeFilter(e.target.value)}
-            >
-              <option value="">Alla</option>
-              <option value="Kombi">Kombi</option>
-              <option value="Sedan">Sedan</option>
-              <option value="SUV">SUV</option>
-              <option value="Halvkombi">Halvkombi</option>
-              <option value="Cab">Cab</option>
-            </select>
+                {/* Kaross */}
+                <div>
+                  <label className="block text-sm font-medium text-brand-text mb-2 antialiased">Kaross</label>
+                  <select
+                    className="w-full p-3 border border-gray-300 rounded-xl bg-white text-brand-text antialiased"
+                    value={bodyTypeFilter}
+                    onChange={(e) => setBodyTypeFilter(e.target.value)}
+                  >
+                    <option value="">Alla</option>
+                    {bodyTypeOptions.map((opt) => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                </div>
+              </>
+            )}
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       <button
         type="button"
         onClick={resetFilters}
-        className="w-full text-sm text-brand-green underline hover:text-brand-green/80"
+        className="w-full py-2 text-sm text-brand-green underline hover:text-brand-green/80 antialiased"
       >
         Rensa filter
       </button>
@@ -527,7 +561,7 @@ function HomePageContent() {
             className="absolute inset-0 bg-black/40"
             onClick={() => setIsFilterOpen(false)}
           />
-          <div className="absolute right-0 top-0 h-full w-full max-w-sm bg-white p-6 overflow-y-auto shadow-xl">
+          <div className="absolute right-0 top-0 h-full w-[90%] max-w-[95%] bg-white p-6 overflow-y-auto shadow-xl">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-brand-text">Filter</h3>
               <button

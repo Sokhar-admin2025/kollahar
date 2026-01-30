@@ -10,9 +10,10 @@ import Button from './atoms/Button'
 import LocationInput from './LocationInput'
 import type { Listing } from '../types'
 import { CATEGORY_GROUPS } from '@/lib/categories'
-import CarMakeModelInput from './CarMakeModelInput'
+import CarMakeModelFields from './CarMakeModelFields'
 import YearInput from './YearInput'
 import { CAR_COLORS } from '@/lib/car-colors'
+import { ChevronDown, ChevronUp } from 'lucide-react'
 
 interface CreateListingFormProps {
   initialData?: Listing
@@ -40,6 +41,10 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
   const [mileage, setMileage] = useState('')
   const [bodyType, setBodyType] = useState('')
   const [color, setColor] = useState('')
+  const [colorCustom, setColorCustom] = useState('')
+  const [driveWheel, setDriveWheel] = useState('')
+  const [horsePower, setHorsePower] = useState('')
+  const [showMoreDetails, setShowMoreDetails] = useState(false)
   const [imageFiles, setImageFiles] = useState<File[]>([])
   const [imagePreviews, setImagePreviews] = useState<string[]>([])
   const [existingImageUrls, setExistingImageUrls] = useState<string[]>([])
@@ -54,10 +59,16 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
 
   const t = DASHBOARD_TEXTS.create
   const conditionOptions = ['Ny', 'Som ny', 'Bra', 'Använd', 'Defekt']
-  const fuelOptions = ['Bensin', 'Diesel', 'El', 'Hybrid']
+  const fuelOptions = ['Bensin', 'Diesel', 'El', 'Hybrid', 'Gas'].sort()
   const gearboxOptions = ['Manuell', 'Automat']
-  const bodyTypeOptions = ['Kombi', 'Sedan', 'SUV', 'Halvkombi', 'Cab']
+  const bodyTypeOptions = ['Cab', 'Coupé', 'Halvkombi', 'Kombi', 'Minibuss', 'Sedan', 'Skåpbil', 'SUV'].sort()
+  const driveWheelOptions = ['Fram', 'Bak', 'Fyrhjulsdrift']
   const isCarsCategory = category === 'cars'
+  
+  // Kolla om kategorin tillhör "Fordon"-gruppen (vehicles)
+  const vehiclesGroup = CATEGORY_GROUPS.find(group => group.id === 'vehicles')
+  const isVehicleCategory = vehiclesGroup?.children.some(child => child.id === category) ?? false
+  const maxImages = isVehicleCategory ? 15 : 5
 
   // Fyll i formuläret med initialData om det finns (edit mode)
   useEffect(() => {
@@ -80,6 +91,9 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
       setMileage(attributes.mileage ? String(attributes.mileage) : '')
       setBodyType(typeof attributes.body_type === 'string' ? attributes.body_type : '')
       setColor(typeof attributes.color === 'string' ? attributes.color : '')
+      setColorCustom(typeof attributes.color_custom === 'string' ? attributes.color_custom : '')
+      setDriveWheel(typeof attributes.drive_wheel === 'string' ? attributes.drive_wheel : '')
+      setHorsePower(typeof attributes.horse_power === 'string' ? String(attributes.horse_power) : (attributes.horse_power ? String(attributes.horse_power) : ''))
     }
   }, [initialData])
 
@@ -141,8 +155,8 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
       if (!e.target.files || e.target.files.length === 0) return
 
       const totalImages = existingImageUrls.length + imagePreviews.length
-      if (totalImages >= 15) {
-        alert(t.form.image.errorTooMany)
+      if (totalImages >= maxImages) {
+        alert(`Max ${maxImages} bilder tillåtna${isVehicleCategory ? ' för fordon' : ''}.`)
         return 
       }
 
@@ -218,10 +232,18 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
         return
       }
 
-      // Validera pris
-      const priceNum = parseInt(price)
+      // Validera pris (ta bort tusentalsavgränsare först)
+      const priceWithoutSpaces = price.replace(/\s/g, '')
+      const priceNum = parseInt(priceWithoutSpaces, 10)
       if (isNaN(priceNum) || priceNum < 0) {
         alert('Ogiltigt pris. Ange ett positivt heltal.')
+        setLoading(false)
+        return
+      }
+
+      // Validera obligatoriska fält
+      if (!title.trim()) {
+        alert('Rubrik är obligatorisk.')
         setLoading(false)
         return
       }
@@ -243,34 +265,41 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
       }
 
       if (isCarsCategory) {
-        // Obligatoriska: make, model, fuel
+        // Obligatoriska: make, model, fuel, year (model_year), mileage
         if (!make || !model || !fuel) {
           alert('Fyll i alla obligatoriska bilfält (Märke, Modell, Bränsle).')
           setLoading(false)
           return
         }
 
-        // Validera år om det är ifyllt
-        if (year) {
-          const yearNum = parseInt(year)
-          if (isNaN(yearNum) || yearNum < 1990 || yearNum > new Date().getFullYear() + 1) {
-            alert('Ogiltigt årsmodell.')
-            setLoading(false)
-            return
-          }
-          attributes.year = yearNum
+        // Modellår är obligatoriskt för bilar
+        if (!year) {
+          alert('Modellår är obligatoriskt för bilar.')
+          setLoading(false)
+          return
         }
+        const yearNum = parseInt(year)
+        if (isNaN(yearNum) || yearNum < 1960 || yearNum > new Date().getFullYear() + 1) {
+          alert('Ogiltigt årsmodell.')
+          setLoading(false)
+          return
+        }
+        attributes.model_year = yearNum
+        attributes.year = yearNum // Bakåtkompatibilitet
 
-        // Validera miltal om det är ifyllt
-        if (mileage) {
-          const mileageNum = parseInt(mileage)
-          if (isNaN(mileageNum) || mileageNum < 0) {
-            alert('Ogiltigt miltal.')
-            setLoading(false)
-            return
-          }
-          attributes.mileage = mileageNum
+        // Miltal är obligatoriskt för bilar
+        if (!mileage) {
+          alert('Miltal är obligatoriskt för bilar.')
+          setLoading(false)
+          return
         }
+        const mileageNum = parseInt(mileage)
+        if (isNaN(mileageNum) || mileageNum < 0) {
+          alert('Ogiltigt miltal.')
+          setLoading(false)
+          return
+        }
+        attributes.mileage = mileageNum
 
         // Spara alla fält (obligatoriska + valfria)
         if (regNr) attributes.reg_nr = regNr.trim()
@@ -280,6 +309,14 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
         if (gearbox) attributes.gearbox = gearbox
         if (bodyType) attributes.body_type = bodyType
         if (color) attributes.color = color.trim()
+        if (colorCustom) attributes.color_custom = colorCustom.trim()
+        if (driveWheel) attributes.drive_wheel = driveWheel
+        if (horsePower) {
+          const hpNum = parseInt(horsePower)
+          if (!isNaN(hpNum) && hpNum > 0) {
+            attributes.horse_power = hpNum
+          }
+        }
       }
 
       setUploading(true)
@@ -376,83 +413,55 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
     }
   }
 
+  // Formatera pris med tusentalsavgränsare (svensk format: 3 000)
+  const formatPrice = (value: string): string => {
+    const numericValue = value.replace(/\s/g, '') // Ta bort mellanslag
+    if (!numericValue) return ''
+    const num = parseInt(numericValue, 10)
+    if (isNaN(num)) return ''
+    return num.toLocaleString('sv-SE')
+  }
+
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Ta bort allt utom siffror
+    const numericOnly = e.target.value.replace(/\D/g, '')
+    setPrice(numericOnly) // Spara som ren siffra
+  }
+
+  const handlePriceBlur = () => {
+    // Formatera med tusentalsavgränsare vid blur
+    if (price) {
+      const formatted = formatPrice(price)
+      // Uppdatera input-värdet visuellt (men behåll price som ren siffra)
+    }
+  }
+
   const allImages = [...existingImageUrls, ...imagePreviews]
   const totalImages = allImages.length
 
   return (
     <form onSubmit={handleSubmit} className="bg-white p-8 rounded-xl shadow-md border border-gray-200 space-y-6">
       
-      <div>
-        <label className="block text-sm font-medium text-brand-text mb-1 antialiased">
-          {t.form.title.label}
-        </label>
-        <input
-          type="text"
-          required
-          className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-brand-text antialiased"
-          placeholder={t.form.title.placeholder}
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-        />
-      </div>
+      {/* Sektion A: Obligatoriska fält */}
+      <div className="space-y-6">
+        <h2 className="text-xl font-display text-brand-green mb-4">Obligatoriska uppgifter</h2>
 
-      <div>
-        <label className="block text-sm font-medium text-brand-text mb-1 antialiased">
-          Vad ska du sälja? <span className="text-red-500">*</span>
-        </label>
-        <select
-          className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition bg-white text-brand-text antialiased"
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          required
-        >
-          <option value="" disabled>Välj underkategori</option>
-          {CATEGORY_GROUPS.map((group) => (
-            <optgroup key={group.id} label={group.label}>
-              {group.children.map((child) => (
-                <option key={child.id} value={child.id}>{child.label}</option>
-              ))}
-            </optgroup>
-          ))}
-        </select>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-brand-text mb-1 antialiased">
-          Skick <span className="text-red-500">*</span>
-        </label>
-        <select
-          className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition bg-white text-brand-text antialiased"
-          value={condition}
-          onChange={(e) => setCondition(e.target.value)}
-          required
-        >
-          <option value="" disabled>Välj skick</option>
-          {conditionOptions.map((opt) => (
-            <option key={opt} value={opt}>{opt}</option>
-          ))}
-        </select>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Rubrik */}
         <div>
           <label className="block text-sm font-medium text-brand-text mb-1 antialiased">
-            {t.form.price.label} <span className="text-red-500">*</span>
+            {t.form.title.label} <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
             required
-            className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-brand-text antialiased [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-            placeholder={t.form.price.placeholder}
-            value={price}
-            onChange={(e) => {
-              const val = e.target.value.replace(/\D/g, '')
-              setPrice(val)
-            }}
+            className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-brand-text antialiased"
+            placeholder={t.form.title.placeholder}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
           />
         </div>
+
+        {/* Plats */}
         <div>
           <label className="block text-sm font-medium text-brand-text mb-1 antialiased">
             {t.form.location.label} <span className="text-red-500">*</span>
@@ -464,78 +473,97 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
             required
           />
         </div>
-      </div>
 
-      {isCarsCategory && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-brand-text mb-1 antialiased">
-              Regnr
-            </label>
-            <input
-              type="text"
-              className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-brand-text antialiased"
-              value={regNr}
-              onChange={(e) => setRegNr(e.target.value)}
-            />
-          </div>
-          
-          <CarMakeModelInput
+        {/* Pris */}
+        <div>
+          <label className="block text-sm font-medium text-brand-text mb-1 antialiased">
+            {t.form.price.label} <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            inputMode="numeric"
+            required
+            className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-brand-text antialiased [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            placeholder={t.form.price.placeholder}
+            value={price ? formatPrice(price) : ''}
+            onChange={handlePriceChange}
+            onBlur={handlePriceBlur}
+          />
+        </div>
+
+        {/* Kategori */}
+        <div>
+          <label className="block text-sm font-medium text-brand-text mb-1 antialiased">
+            Vad ska du sälja? <span className="text-red-500">*</span>
+          </label>
+          <select
+            className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition bg-white text-brand-text antialiased"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            required
+          >
+            <option value="" disabled>Välj underkategori</option>
+            {CATEGORY_GROUPS.map((group) => (
+              <optgroup key={group.id} label={group.label}>
+                {group.children.map((child) => (
+                  <option key={child.id} value={child.id}>{child.label}</option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
+        </div>
+
+        {/* Skick */}
+        <div>
+          <label className="block text-sm font-medium text-brand-text mb-1 antialiased">
+            Skick <span className="text-red-500">*</span>
+          </label>
+          <select
+            className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition bg-white text-brand-text antialiased"
+            value={condition}
+            onChange={(e) => setCondition(e.target.value)}
+            required
+          >
+            <option value="" disabled>Välj skick</option>
+            {conditionOptions.map((opt) => (
+              <option key={opt} value={opt}>{opt}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Märke & Modell (endast för bilar) */}
+        {isCarsCategory && (
+          <CarMakeModelFields
             make={make}
             model={model}
             onMakeChange={setMake}
             onModelChange={setModel}
-            makeRequired={true}
-            modelRequired={true}
+            required
           />
+        )}
 
+        {/* Modellår (endast för bilar, obligatoriskt) */}
+        {isCarsCategory && (
           <div>
-            <label className="block text-sm font-medium text-brand-text mb-1 antialiased">
-              Bränsle <span className="text-red-500">*</span>
-            </label>
-            <select
-              className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition bg-white text-brand-text antialiased"
-              value={fuel}
-              onChange={(e) => setFuel(e.target.value)}
-              required
-            >
-              <option value="" disabled>Välj bränsle</option>
-              {fuelOptions.map((opt) => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
-            </select>
+            <YearInput
+              value={year}
+              onChange={setYear}
+              required={true}
+            />
           </div>
+        )}
 
+        {/* Miltal (endast för bilar, obligatoriskt) */}
+        {isCarsCategory && (
           <div>
             <label className="block text-sm font-medium text-brand-text mb-1 antialiased">
-              Växellåda
-            </label>
-            <select
-              className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition bg-white text-brand-text antialiased"
-              value={gearbox}
-              onChange={(e) => setGearbox(e.target.value)}
-            >
-              <option value="">Välj växellåda</option>
-              {gearboxOptions.map((opt) => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
-            </select>
-          </div>
-
-          <YearInput
-            value={year}
-            onChange={setYear}
-            required={false}
-          />
-
-          <div>
-            <label className="block text-sm font-medium text-brand-text mb-1 antialiased">
-              Miltal
+              Miltal <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
               inputMode="numeric"
               pattern="[0-9]*"
+              required
               className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-brand-text antialiased [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               placeholder="T.ex. 50000"
               value={mileage}
@@ -545,111 +573,262 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
               }}
             />
           </div>
+        )}
 
+        {/* Drivmedel (endast för bilar) */}
+        {isCarsCategory && (
           <div>
-            <label className="block text-sm font-medium text-brand-text mb-1 antialiased">
-              Kaross
+            <label className="block text-sm font-medium text-brand-text mb-2 antialiased">
+              Drivmedel <span className="text-red-500">*</span>
             </label>
-            <select
-              className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition bg-white text-brand-text antialiased"
-              value={bodyType}
-              onChange={(e) => setBodyType(e.target.value)}
-            >
-              <option value="">Välj kaross</option>
-              {bodyTypeOptions.map((opt) => (
-                <option key={opt} value={opt}>{opt}</option>
+            <div className="flex flex-wrap gap-2">
+              {fuelOptions.map((opt) => (
+                <button
+                  key={opt}
+                  type="button"
+                  onClick={() => setFuel(opt)}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                    fuel === opt
+                      ? 'bg-brand-green text-white'
+                      : 'bg-gray-100 text-brand-text hover:bg-gray-200'
+                  }`}
+                >
+                  {opt}
+                </button>
               ))}
-            </select>
+            </div>
+          </div>
+        )}
+
+        {/* Bilder */}
+        <div>
+          <div className="flex justify-between items-center mb-2">
+            <label className="block text-sm font-medium text-brand-text antialiased">
+              {t.form.image.label} {isVehicleCategory && <span className="text-red-500">*</span>}
+            </label>
+            <span className="text-xs text-brand-text antialiased">
+              {totalImages}/{maxImages} bilder
+            </span>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-brand-text mb-1 antialiased">
-              Färg
-            </label>
-            <select
-              className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition bg-white text-brand-text antialiased"
-              value={color}
-              onChange={(e) => setColor(e.target.value)}
-            >
-              <option value="">Välj färg</option>
-              {CAR_COLORS.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 mb-3">
+            {/* Visa befintliga bilder först */}
+            {existingImageUrls.map((url, index) => (
+              <div key={`existing-${index}`} className="w-24 h-24 relative rounded-lg overflow-hidden border border-gray-200 group">
+                <img src={url} alt="Befintlig bild" className="w-full h-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => removeImage(index, true)}
+                  className="absolute top-1 right-1 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+            
+            {/* Visa nya previews */}
+            {imagePreviews.map((url, index) => (
+              <div key={`preview-${index}`} className="w-24 h-24 relative rounded-lg overflow-hidden border border-gray-200 group">
+                <img src={url} alt="Ny uppladdad" className="w-full h-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => removeImage(index, false)}
+                  className="absolute top-1 right-1 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+            
+            {/* Ladda upp ny bild */}
+            {totalImages < maxImages && (
+              <label className={`w-24 h-24 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:bg-brand-beige hover:border-brand-green transition ${uploading || compressing ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                <span className="text-2xl text-brand-text">+</span>
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={handleImageUpload} 
+                  disabled={uploading || compressing}
+                  className="hidden" 
+                />
+              </label>
+            )}
           </div>
+          {compressing && <p className="text-sm text-brand-green animate-pulse">Bearbetar bild...</p>}
+          {uploading && <p className="text-sm text-brand-green animate-pulse">{t.form.image.uploading}</p>}
+        </div>
+
+        {/* Beskrivning */}
+        <div>
+          <label className="block text-sm font-medium text-brand-text mb-1 antialiased">
+            {t.form.description.label} <span className="text-red-500">*</span>
+          </label>
+          <textarea
+            required
+            rows={4}
+            className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-brand-text antialiased"
+            placeholder={t.form.description.placeholder}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
+        </div>
+      </div>
+
+      {/* Sektion B: Fler detaljer (Collapsible) */}
+      {isCarsCategory && (
+        <div className="border-t border-gray-200 pt-6">
+          <button
+            type="button"
+            onClick={() => setShowMoreDetails(!showMoreDetails)}
+            className="flex items-center justify-between w-full text-left text-brand-text hover:text-brand-green transition-colors"
+          >
+            <span className="text-sm font-medium antialiased">
+              Tryck för fler detaljer (Valfritt)
+            </span>
+            {showMoreDetails ? (
+              <ChevronUp className="w-5 h-5" />
+            ) : (
+              <ChevronDown className="w-5 h-5" />
+            )}
+          </button>
+
+          {showMoreDetails && (
+            <div className="mt-6 space-y-6">
+
+              {/* Växellåda (Chips) */}
+              <div>
+                <label className="block text-sm font-medium text-brand-text mb-2 antialiased">
+                  Växellåda
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {gearboxOptions.map((opt) => (
+                    <button
+                      key={opt}
+                      type="button"
+                      onClick={() => setGearbox(opt)}
+                      className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                        gearbox === opt
+                          ? 'bg-brand-green text-white'
+                          : 'bg-gray-100 text-brand-text hover:bg-gray-200'
+                      }`}
+                    >
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Drivhjul (Chips) */}
+              <div>
+                <label className="block text-sm font-medium text-brand-text mb-2 antialiased">
+                  Drivhjul
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {driveWheelOptions.map((opt) => (
+                    <button
+                      key={opt}
+                      type="button"
+                      onClick={() => setDriveWheel(driveWheel === opt ? '' : opt)}
+                      className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                        driveWheel === opt
+                          ? 'bg-brand-green text-white'
+                          : 'bg-gray-100 text-brand-text hover:bg-gray-200'
+                      }`}
+                    >
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Kaross (Dropdown) */}
+              <div>
+                <label className="block text-sm font-medium text-brand-text mb-1 antialiased">
+                  Kaross
+                </label>
+                <select
+                  className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition bg-white text-brand-text antialiased"
+                  value={bodyType}
+                  onChange={(e) => setBodyType(e.target.value)}
+                >
+                  <option value="">Välj kaross</option>
+                  {bodyTypeOptions.map((opt) => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Färg (Custom Select med cirkel) */}
+              <div>
+                <label className="block text-sm font-medium text-brand-text mb-1 antialiased">
+                  Färg
+                </label>
+                <select
+                  className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition bg-white text-brand-text antialiased"
+                  value={color}
+                  onChange={(e) => {
+                    setColor(e.target.value)
+                    if (e.target.value !== 'Annan') {
+                      setColorCustom('')
+                    }
+                  }}
+                >
+                  <option value="">Välj färg</option>
+                  {CAR_COLORS.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                  <option value="Annan">Annan</option>
+                </select>
+                {color === 'Annan' && (
+                  <input
+                    type="text"
+                    className="w-full mt-2 p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-brand-text antialiased"
+                    placeholder="Ange färg"
+                    value={colorCustom}
+                    onChange={(e) => setColorCustom(e.target.value)}
+                  />
+                )}
+              </div>
+
+              {/* Regnr */}
+              <div>
+                <label className="block text-sm font-medium text-brand-text mb-1 antialiased">
+                  Regnr
+                </label>
+                <input
+                  type="text"
+                  className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-brand-text antialiased"
+                  value={regNr}
+                  onChange={(e) => setRegNr(e.target.value)}
+                />
+              </div>
+
+              {/* Effekt */}
+              <div>
+                <label className="block text-sm font-medium text-brand-text mb-1 antialiased">
+                  Effekt
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    className="w-full p-3 pr-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-brand-text antialiased [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    placeholder="T.ex. 150"
+                    value={horsePower}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, '')
+                      setHorsePower(val)
+                    }}
+                  />
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500">hk</span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
-      <div>
-        <label className="block text-sm font-medium text-brand-text mb-1 antialiased">
-          {t.form.description.label} <span className="text-red-500">*</span>
-        </label>
-        <textarea
-          required
-          rows={4}
-          className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-brand-text antialiased"
-          placeholder={t.form.description.placeholder}
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-        />
-      </div>
-
-      <div>
-        <div className="flex justify-between items-center mb-2">
-          <label className="block text-sm font-medium text-gray-700">
-            {t.form.image.label}
-          </label>
-          <span className="text-xs text-brand-text antialiased">
-            {totalImages}/15 bilder
-          </span>
-        </div>
-
-        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 mb-3">
-          {/* Visa befintliga bilder först */}
-          {existingImageUrls.map((url, index) => (
-            <div key={`existing-${index}`} className="w-24 h-24 relative rounded-lg overflow-hidden border border-gray-200 group">
-              <img src={url} alt="Befintlig bild" className="w-full h-full object-cover" />
-              <button
-                type="button"
-                onClick={() => removeImage(index, true)}
-                className="absolute top-1 right-1 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition"
-              >
-                ✕
-              </button>
-            </div>
-          ))}
-          
-          {/* Visa nya previews */}
-          {imagePreviews.map((url, index) => (
-            <div key={`preview-${index}`} className="w-24 h-24 relative rounded-lg overflow-hidden border border-gray-200 group">
-              <img src={url} alt="Ny uppladdad" className="w-full h-full object-cover" />
-              <button
-                type="button"
-                onClick={() => removeImage(index, false)}
-                className="absolute top-1 right-1 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition"
-              >
-                ✕
-              </button>
-            </div>
-          ))}
-          
-          {/* Ladda upp ny bild */}
-          {totalImages < 15 && (
-            <label className={`w-24 h-24 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:bg-brand-beige hover:border-brand-green transition ${uploading || compressing ? 'opacity-50 cursor-not-allowed' : ''}`}>
-              <span className="text-2xl text-brand-text">+</span>
-              <input 
-                type="file" 
-                accept="image/*" 
-                onChange={handleImageUpload} 
-                disabled={uploading || compressing}
-                className="hidden" 
-              />
-            </label>
-          )}
-        </div>
-        {compressing && <p className="text-sm text-brand-green animate-pulse">Bearbetar bild...</p>}
-        {uploading && <p className="text-sm text-brand-green animate-pulse">{t.form.image.uploading}</p>}
-      </div>
 
       <hr className="border-gray-100" />
 

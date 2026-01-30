@@ -12,15 +12,20 @@ export default function YearInput({ value, onChange, required = false }: YearInp
   const [query, setQuery] = useState(value || '')
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [showDropdown, setShowDropdown] = useState(false)
+  const [error, setError] = useState('')
 
   const inputRef = useRef<HTMLInputElement>(null)
   const suggestionsRef = useRef<HTMLDivElement>(null)
+  
+  const currentYear = new Date().getFullYear()
+  const minYear = 1960
+  const maxYear = currentYear + 1
 
-  // Generera år: senaste 30 åren + 1 år framåt
+  // Generera år: från 1960 till nuvarande år + 1
   const yearOptions = useMemo(() => {
     const currentYear = new Date().getFullYear()
     const years: number[] = []
-    for (let i = currentYear + 1; i >= currentYear - 30; i--) {
+    for (let i = currentYear + 1; i >= 1960; i--) {
       years.push(i)
     }
     return years
@@ -46,13 +51,29 @@ export default function YearInput({ value, onChange, required = false }: YearInp
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  // Validera 4-siffrigt årtalsformat
+  const validateYear = (yearStr: string): boolean => {
+    if (!yearStr) return true // Tomt är OK (valideras vid submit om required)
+    
+    // Måste vara exakt 4 siffror
+    if (!/^\d{4}$/.test(yearStr)) {
+      return false
+    }
+    
+    const yearNum = parseInt(yearStr, 10)
+    // Måste vara mellan 1960 och nuvarande år + 1
+    return yearNum >= minYear && yearNum <= maxYear
+  }
+
   const filteredYears = currentQuery
     ? yearOptions.filter((year) => String(year).includes(currentQuery))
     : []
 
   const handleSelect = (selectedYear: number) => {
-    setQuery(String(selectedYear))
-    onChange(String(selectedYear))
+    const yearStr = String(selectedYear)
+    setQuery(yearStr)
+    onChange(yearStr)
+    setError('')
     setShowSuggestions(false)
     setShowDropdown(false)
     if (inputRef.current) {
@@ -60,28 +81,62 @@ export default function YearInput({ value, onChange, required = false }: YearInp
     }
   }
 
+  const handleInputChange = (val: string) => {
+    // Tillåt endast siffror
+    const numericOnly = val.replace(/\D/g, '')
+    
+    // Begränsa till max 4 siffror
+    const limited = numericOnly.slice(0, 4)
+    
+    setQuery(limited)
+    onChange(limited)
+    
+    // Validera om användaren har skrivit 4 siffror
+    if (limited.length === 4) {
+      if (validateYear(limited)) {
+        setError('')
+      } else {
+        setError(`Året måste vara mellan ${minYear} och ${maxYear}`)
+      }
+    } else if (limited.length > 0) {
+      setError('') // Rensa fel medan användaren skriver
+    } else {
+      setError('')
+    }
+    
+    setShowSuggestions(limited.length > 0)
+  }
+
   return (
     <div className="relative">
       <label className="block text-sm font-medium text-brand-text mb-1 antialiased">
-        Årsmodell {required && <span className="text-red-500">*</span>}
+        Modellår {required && <span className="text-red-500">*</span>}
       </label>
       <div className="relative">
         <input
           ref={inputRef}
           type="text"
+          inputMode="numeric"
+          pattern="[0-9]{4}"
           required={required}
-          className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-brand-text antialiased"
+          maxLength={4}
+          className={`w-full p-3 border rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-brand-text antialiased [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
+            error ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-300'
+          }`}
           placeholder="T.ex. 2020"
           value={currentQuery}
-          onChange={(e) => {
-            const val = e.target.value
-            setQuery(val)
-            onChange(val)
-            setShowSuggestions(val.length > 0)
-          }}
+          onChange={(e) => handleInputChange(e.target.value)}
           onFocus={() => {
             if (currentQuery) {
               setShowSuggestions(true)
+            }
+          }}
+          onBlur={() => {
+            // Validera vid blur om fältet är ifyllt
+            if (currentQuery && currentQuery.length === 4) {
+              if (!validateYear(currentQuery)) {
+                setError(`Året måste vara mellan ${minYear} och ${maxYear}`)
+              }
             }
           }}
         />
@@ -129,6 +184,10 @@ export default function YearInput({ value, onChange, required = false }: YearInp
             </button>
           ))}
         </div>
+      )}
+
+      {error && (
+        <p className="mt-1 text-sm text-red-500 antialiased">{error}</p>
       )}
     </div>
   )
