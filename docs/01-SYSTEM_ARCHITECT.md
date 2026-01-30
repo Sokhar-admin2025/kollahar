@@ -182,6 +182,7 @@ erDiagram
         string location
         string category
         string[] images
+        jsonb attributes
         string status
         timestamp created_at
         timestamp deleted_at
@@ -245,7 +246,7 @@ app/
 │
 ├── dashboard/create/page.tsx (Create Listing)
 │   └── CreateListingForm (Återanvändbar form-komponent)
-│       └── Form (Title, Category, Price, Location, Description, Images)
+│       └── Form (Title, Location, Price, Category, Skick, Car-specific fields, Images, Description)
 │
 ├── dashboard/edit/[id]/page.tsx (Edit Listing)
 │   ├── Fetch Listing (Verifierar ägare)
@@ -255,7 +256,24 @@ app/
 ├── components/CreateListingForm.tsx (Shared Component)
 │   ├── Accepterar optional initialData prop
 │   ├── Hanterar både create och edit mode
-│   └── Bildhantering (befintliga + nya bilder)
+│   ├── Bildhantering (befintliga + nya bilder)
+│   ├── Kategorispecifika fält (bilannonser: märke, modell, år, mil, etc.)
+│   ├── Attributes (JSONB) för kategorispecifik data
+│   └── Dynamisk bildgräns (15 för fordon, 5 för övrigt)
+│
+├── components/CarMakeModelFields.tsx (Bilannonser)
+│   ├── Separata Make/Model-fält med autocomplete
+│   ├── Hierarkisk display: "Volvo, V70"
+│   └── Smart parsing av kombinerad input
+│
+├── components/YearInput.tsx (Bilannonser)
+│   ├── Dropdown med år (1960 - nuvarande år + 1)
+│   ├── Manuell input med 4-siffrig validering
+│   └── Realtidsvalidering med visuell feedback
+│
+├── components/DualRangeSlider.tsx (Filter)
+│   ├── Två handtag för min/max-värden
+│   └── Används för pris, år och mil-filter
 │
 └── annons/[id]/page.tsx (Listing Details)
     ├── Image Gallery

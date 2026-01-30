@@ -8,6 +8,33 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ### ✨ Tillagt
 
+#### Bilannons-formulär med kategorispecifika fält och filter
+- **Skick-fält**: Lagt till obligatoriskt "Skick"-fält i CreateListingForm
+  - Dropdown med alternativ: Ny, Som ny, Bra, Använd, Defekt
+  - Placerat efter "Kategori" i den obligatoriska sektionen
+  - Valideras vid publicering för alla annonser
+- **Drivhjul-fält**: Ändrat från "öron" tillbaka till "Drivhjul" med chips-UI
+  - Samma design som "Växellåda" (klickbara chips/taggar)
+  - Flyttat till position mellan "Växellåda" och "Kaross" i "Fler detaljer"-sektionen
+  - Toggle-funktionalitet: klicka igen för att avmarkera
+- **YearInput-komponent**: Label ändrat från "Årsmodell" till "Modellår"
+  - Förbättrad tydlighet och konsistens i formuläret
+- **Nya komponenter för bilannonser**:
+  - `CarMakeModelFields.tsx`: Separata Make/Model-fält med smart autocomplete
+    - Hierarkisk display: "Volvo, V70"
+    - Model-fältet är disabled tills Make är valt
+    - Indenterat med `ml-4` för visuell hierarki
+    - Clear-knappar för båda fälten
+  - `DualRangeSlider.tsx`: Återanvändbar komponent för range-selection
+    - Två handtag för min/max-värden
+    - Används för pris, år och mil-filter på startsidan
+- **Filter-UI förbättringar** (`app/page.tsx`):
+  - Dual range sliders för Pris, År och Mil (istället för min/max-inputs)
+  - Chips-UI för Drivmedel och Växellåda (klickbara knappar)
+  - Färgfilter med dot + text UI (samma som i create-formulär)
+  - Förbättrad mobil-drawer (90-95% skärmbredd)
+  - Sortering: Obligatoriska filter (Pris, År, Mil) överst, övriga i "Fler filter"-collapse
+
 #### Kategori-system med migration och defensiv kodning
 - **Kategori-struktur** (`lib/categories.ts`): Hierarkisk kategori-struktur med parent/child-relationer
   - Huvudkategorier: Fordon, Hem & Inredning, Elektronik, Kläder & Accessoarer, Fritid & Hobby, Övrigt
