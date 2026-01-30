@@ -55,7 +55,7 @@ export default function SettingsPage() {
       setEmail(user.email ?? null)
 
       // Hämta profildata från tabellen 'profiles'
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)

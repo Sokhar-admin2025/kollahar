@@ -11,7 +11,8 @@ import FavoriteButton from '@/app/components/FavoriteButton'
 import Header from '@/app/components/organisms/Header'
 import { createClient } from '@/lib/supabase/client'
 import type { Listing } from '@/app/types'
-import { MapPin, Loader2 } from 'lucide-react'
+import { MapPin, Loader2, ChevronLeft, ChevronRight } from 'lucide-react'
+import { getCategoryLabel } from '@/lib/categories'
 
 const supabase = createClient()
 
@@ -60,7 +61,7 @@ function ListingDetails() {
 
   // State för Annons
   const [ad, setAd] = useState<Listing | null>(null)
-  const [activeImage, setActiveImage] = useState<string | null>(null)
+  const [activeImageIndex, setActiveImageIndex] = useState(0)
   
   // State för Säljare (NYTT!)
   const [sellerProfile, setSellerProfile] = useState<SellerProfile | null>(null)
@@ -69,7 +70,6 @@ function ListingDetails() {
   const [loading, setLoading] = useState(true)
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null)
   const [contacting, setContacting] = useState(false)
-  const [isFavorited, setIsFavorited] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -85,7 +85,7 @@ function ListingDetails() {
       } else {
         setAd(adData)
         if (adData.images && adData.images.length > 0) {
-          setActiveImage(adData.images[0])
+          setActiveImageIndex(0)
         }
 
         // 3. Hämta säljarens profil (NYTT!)
@@ -110,34 +110,11 @@ function ListingDetails() {
   useEffect(() => {
     let isMounted = true
 
-    const fetchFavorite = async (userId: string, listing: string) => {
-      const { data: favoriteData, error: favoriteError } = await supabase
-        .from('favorites')
-        .select('listing_id')
-        .eq('user_id', userId)
-        .eq('listing_id', listing)
-        .maybeSingle()
-
-      if (!isMounted) return
-
-      if (favoriteError) {
-        console.error('Error fetching favorite:', favoriteError)
-        setIsFavorited(false)
-      } else {
-        setIsFavorited(!!favoriteData)
-      }
-    }
-
     const initAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (!isMounted) return
       const user = session?.user ? { id: session.user.id } : null
       setCurrentUser(user)
-      if (user && listingId) {
-        await fetchFavorite(user.id, listingId)
-      } else {
-        setIsFavorited(false)
-      }
     }
 
     initAuth()
@@ -145,11 +122,6 @@ function ListingDetails() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       const user = session?.user ? { id: session.user.id } : null
       setCurrentUser(user)
-      if (user && listingId) {
-        fetchFavorite(user.id, listingId)
-      } else {
-        setIsFavorited(false)
-      }
     })
 
     return () => {
@@ -175,7 +147,7 @@ function ListingDetails() {
     setContacting(true)
 
     try {
-      const conversationId = await messageService.createConversation(
+      await messageService.createConversation(
         ad.id,
         currentUser.id,
         ad.user_id
@@ -207,6 +179,19 @@ function ListingDetails() {
     </div>
   )
 
+  const images = ad.images || []
+  const activeImage = images[activeImageIndex] || null
+
+  const goToPrevious = () => {
+    if (images.length === 0) return
+    setActiveImageIndex((prev) => (prev - 1 + images.length) % images.length)
+  }
+
+  const goToNext = () => {
+    if (images.length === 0) return
+    setActiveImageIndex((prev) => (prev + 1) % images.length)
+  }
+
   return (
     <div className="min-h-screen bg-brand-beige flex flex-col">
       <Header />
@@ -228,19 +213,39 @@ function ListingDetails() {
                   {t.noImage}
                 </div>
               )}
+              {images.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={goToPrevious}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/90 text-brand-text rounded-full p-2 shadow-md hover:bg-white"
+                    aria-label="Föregående bild"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={goToNext}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/90 text-brand-text rounded-full p-2 shadow-md hover:bg-white"
+                    aria-label="Nästa bild"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </>
+              )}
               <div className="absolute top-4 left-4 bg-brand-green/95 text-white backdrop-blur px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg">
-                {ad.category}
+                {getCategoryLabel(ad.category)}
               </div>
             </div>
 
-            {ad.images && ad.images.length > 1 && (
+            {images.length > 1 && (
               <div className="flex gap-2 overflow-x-auto pb-2">
-                {ad.images.map((img: string, index: number) => (
+                {images.map((img: string, index: number) => (
                   <button 
                     key={index}
-                    onClick={() => setActiveImage(img)}
+                    onClick={() => setActiveImageIndex(index)}
                     className={`relative w-20 h-20 rounded-xl overflow-hidden border-2 flex-shrink-0 transition ${
-                      activeImage === img ? 'border-brand-green ring-2 ring-brand-green/20' : 'border-transparent opacity-70 hover:opacity-100'
+                      activeImageIndex === index ? 'border-brand-green ring-2 ring-brand-green/20' : 'border-transparent opacity-70 hover:opacity-100'
                     }`}
                   >
                     <img src={img} alt={`Bild ${index + 1}`} className="w-full h-full object-cover" />

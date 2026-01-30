@@ -123,7 +123,7 @@ export const DASHBOARD_TEXTS = {
     backLink: "← Tillbaka till dashboard",
     form: {
       title: { label: "Rubrik", placeholder: "T.ex. Röd racercykel" },
-      category: { label: "Kategori", options: ["Fordon", "Elektronik", "Kläder", "Möbler", "Övrigt"] },
+      category: { label: "Underkategori", options: ["Fordon", "Elektronik", "Kläder", "Möbler", "Övrigt"] },
       price: { label: "Pris (kr)", placeholder: "0" },
       location: { label: "Plats", placeholder: "T.ex. Stockholm, Södermalm" },
       description: { label: "Beskrivning", placeholder: "Berätta om skicket, ålder och annat viktigt..." },
@@ -131,7 +131,7 @@ export const DASHBOARD_TEXTS = {
         label: "Bilder", 
         uploadBtn: "Välj bilder", 
         uploading: "Laddar upp...",
-        errorTooMany: "Du kan max ladda upp 5 bilder. Ta bort en för att lägga till en ny.",
+        errorTooMany: "Du kan max ladda upp 15 bilder. Ta bort en för att lägga till en ny.",
         errorTooBig: "Bilden är för stor! Max 2MB tillåts."
       }
     },

@@ -17,7 +17,6 @@ interface FavoriteButtonProps {
 
 export default function FavoriteButton({ listingId, onFavoriteRemoved }: FavoriteButtonProps) {
   const [isFavorited, setIsFavorited] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
 
   // 1. Kolla om den är favorit när sidan laddas
   useEffect(() => {
@@ -34,7 +33,6 @@ export default function FavoriteButton({ listingId, onFavoriteRemoved }: Favorit
         .single();
 
       if (data) setIsFavorited(true);
-      setIsLoading(false);
     };
 
     checkStatus();

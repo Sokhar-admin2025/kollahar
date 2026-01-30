@@ -2,8 +2,9 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { MapPin, Calendar, BedDouble } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 import FavoriteButton from './FavoriteButton';
+import { getCategoryLabel } from '@/lib/categories';
 
 interface Listing {
   id: string;
@@ -61,7 +62,7 @@ export default function ListingCard({ listing, currentUserId, onFavoriteRemoved 
             </div>
           )}
           <div className="absolute top-2 left-2 md:top-3 md:left-3 bg-white/90 backdrop-blur-sm px-1.5 py-0.5 md:px-2 md:py-1 rounded-md text-[10px] md:text-xs font-medium text-gray-700">
-            {listing.category}
+            {getCategoryLabel(listing.category)}
           </div>
         </div>
 

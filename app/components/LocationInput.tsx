@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { Search, ChevronDown, MapPin } from 'lucide-react'
-import { SWEDISH_LAN, SWEDISH_KOMMUNER, getKommunerByLan, searchKommuner, formatLocation, type SwedishLocation } from '@/lib/swedish-locations'
+import { SWEDISH_LAN, getKommunerByLan, searchKommuner, type SwedishLocation } from '@/lib/swedish-locations'
 
 interface LocationInputProps {
   value: string
@@ -20,38 +20,25 @@ export default function LocationInput({
   className = ''
 }: LocationInputProps) {
   const [searchQuery, setSearchQuery] = useState('')
-  const [suggestions, setSuggestions] = useState<SwedishLocation[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [showDropdown, setShowDropdown] = useState(false)
   const [selectedLan, setSelectedLan] = useState<string>('')
-  const [availableKommuner, setAvailableKommuner] = useState<string[]>([])
   const [isUserTyping, setIsUserTyping] = useState(false)
   
   const inputRef = useRef<HTMLInputElement>(null)
   const suggestionsRef = useRef<HTMLDivElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
-  // Sök med autocomplete – endast när användaren faktiskt skriver
-  useEffect(() => {
-    if (!isUserTyping || !searchQuery.trim()) {
-      setSuggestions([])
-      setShowSuggestions(false)
-      return
+  const suggestions = useMemo(() => {
+    if (!showSuggestions || !isUserTyping || !searchQuery.trim()) {
+      return []
     }
+    return searchKommuner(searchQuery)
+  }, [searchQuery, isUserTyping, showSuggestions])
 
-    const results = searchKommuner(searchQuery)
-    setSuggestions(results)
-    setShowSuggestions(results.length > 0)
-  }, [searchQuery, isUserTyping])
-
-  // Uppdatera tillgängliga kommuner när län väljs
-  useEffect(() => {
-    if (selectedLan) {
-      const kommuner = getKommunerByLan(selectedLan)
-      setAvailableKommuner(kommuner)
-    } else {
-      setAvailableKommuner([])
-    }
+  const availableKommuner = useMemo(() => {
+    if (!selectedLan) return []
+    return getKommunerByLan(selectedLan)
   }, [selectedLan])
 
   // Stäng vid klick utanför
@@ -81,7 +68,6 @@ export default function LocationInput({
     const formatted = `${location.kommun}, ${location.län}`
     onChange(formatted)
     // Visa kommunnamnet i fältet istället för att rensa det
-    setSearchQuery(location.kommun)
     setIsUserTyping(false)
     setShowSuggestions(false)
     if (inputRef.current) {
@@ -94,7 +80,6 @@ export default function LocationInput({
       const formatted = `${kommun}, ${selectedLan}`
       onChange(formatted)
       // Visa kommunnamnet i fältet
-      setSearchQuery(kommun)
       setIsUserTyping(false)
       setSelectedLan('')
       setAvailableKommuner([])
@@ -102,40 +87,19 @@ export default function LocationInput({
     }
   }
 
-  // Synka searchQuery med value när value ändras externt (endast om det är ett nytt värde)
-  useEffect(() => {
-    if (!value) {
-      // Inget värde → rensa visningen om något står kvar
-      if (searchQuery) {
-        setSearchQuery('')
-      }
-      return
-    }
-
-    // Skydd: om value råkar vara en e-postadress (t.ex. gammal data), rensa fältet helt
+  const displayValue = useMemo(() => {
+    if (isUserTyping) return searchQuery
+    if (!value) return ''
     const looksLikeEmail = /\S+@\S+\.\S+/.test(value)
-    if (looksLikeEmail) {
-      if (searchQuery) {
-        setSearchQuery('')
-      }
-      // Nolla även värdet uppåt så det inte sparas tillbaka som plats
-      onChange('')
-      return
-    }
-
-    if (value !== searchQuery) {
-      // Om value är satt men inte matchar searchQuery, visa bara kommunnamnet
-      const kommunName = value.split(',')[0].trim()
-      if (kommunName !== searchQuery) {
-        setSearchQuery(kommunName)
-      }
-    }
-  }, [value]) // Inte searchQuery i dependencies för att undvika loop
+    if (looksLikeEmail) return ''
+    return value.split(',')[0].trim()
+  }, [isUserTyping, searchQuery, value])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value
     setSearchQuery(newValue)
     setIsUserTyping(true)
+    setShowSuggestions(true)
     
     // Om användaren rensar, rensa också value
     if (!newValue.trim()) {
@@ -147,9 +111,6 @@ export default function LocationInput({
     // Visa inte suggestions automatiskt här; de visas först när användaren börjar skriva
     setShowDropdown(false) // Stäng dropdown när input får fokus
   }
-
-  // Visa nuvarande värde i input
-  const displayValue = searchQuery
 
   return (
     <div className={`relative ${className}`}>

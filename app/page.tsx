@@ -1,9 +1,9 @@
 'use client'
 
 import { Suspense, useEffect, useMemo, useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Search, X } from 'lucide-react'
+import { Search, X, SlidersHorizontal } from 'lucide-react'
 
 // Vi importerar texter och knappar som vanligt
 import { DASHBOARD_TEXTS } from './lib/content'
@@ -11,6 +11,7 @@ import ListingCard from './components/ListingCard'
 import Header from './components/organisms/Header'
 import ScrollToSearch from './components/ScrollToSearch'
 import type { Listing } from './types'
+import { CATEGORY_GROUPS, getCategoryLabel } from '@/lib/categories'
 
 // Initiera Supabase
 const supabase = createClient()
@@ -24,26 +25,44 @@ export default function HomePage() {
 }
 
 function HomePageContent() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   
   const [ads, setAds] = useState<Listing[]>([])          
-  const [filteredAds, setFilteredAds] = useState<Listing[]>([]) 
   const [loading, setLoading] = useState(true)
-  const [favoriteIds, setFavoriteIds] = useState<string[]>([])
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [currentUserName, setCurrentUserName] = useState<string | null>(null)
-  const [showLoggedOutToast, setShowLoggedOutToast] = useState(false)
-  const [loggedOutReason, setLoggedOutReason] = useState<'logout' | 'deleted' | null>(null)
-  const [showLoggedInToast, setShowLoggedInToast] = useState(false)
-  const [loginType, setLoginType] = useState<'new' | 'returning' | null>(null)
+  const initialLoggedOut = searchParams.get('logged_out')
+  const initialLoggedIn = searchParams.get('logged_in')
+  const [showLoggedOutToast, setShowLoggedOutToast] = useState(() => Boolean(initialLoggedOut))
+  const [loggedOutReason] = useState<'logout' | 'deleted' | null>(() => {
+    if (initialLoggedOut === 'deleted') return 'deleted'
+    return initialLoggedOut ? 'logout' : null
+  })
+  const [showLoggedInToast, setShowLoggedInToast] = useState(() => Boolean(initialLoggedIn))
+  const [loginType] = useState<'new' | 'returning' | null>(() => {
+    if (!initialLoggedIn) return null
+    return initialLoggedIn === 'new' ? 'new' : 'returning'
+  })
 
   // Läs från URL-parametrar vid första laddningen
   const [searchQuery, setSearchQuery] = useState(() => searchParams.get('q') || '')
-  const [selectedCategory, setSelectedCategory] = useState(() => searchParams.get('category') || 'Alla')
+  const [selectedCategory, setSelectedCategory] = useState(() => searchParams.get('category') || 'all')
   const [searchSubmitted, setSearchSubmitted] = useState(false)
+  const [priceMin, setPriceMin] = useState('')
+  const [priceMax, setPriceMax] = useState('')
+  const [locationFilter, setLocationFilter] = useState('')
+  const [yearMin, setYearMin] = useState('')
+  const [yearMax, setYearMax] = useState('')
+  const [mileageMin, setMileageMin] = useState('')
+  const [mileageMax, setMileageMax] = useState('')
+  const [fuelFilter, setFuelFilter] = useState('')
+  const [gearboxFilter, setGearboxFilter] = useState('')
+  const [bodyTypeFilter, setBodyTypeFilter] = useState('')
+  const [isFilterOpen, setIsFilterOpen] = useState(false)
+  const [isDesktopFilterOpen, setIsDesktopFilterOpen] = useState(false)
 
   const t = DASHBOARD_TEXTS
+  const isCarsCategory = selectedCategory === 'cars'
 
   // 1. Hämta data DIREKT (Utan service-fil)
   useEffect(() => {
@@ -58,7 +77,6 @@ function HomePageContent() {
         console.error('Fel vid hämtning:', error)
       } else {
         setAds((data as Listing[]) || [])
-        setFilteredAds((data as Listing[]) || [])
       }
 
       setLoading(false)
@@ -67,59 +85,19 @@ function HomePageContent() {
     fetchAds()
   }, [])
 
-  // Visa logout-toast om logged_out finns i URL:en
   useEffect(() => {
-    const loggedOutParam = searchParams.get('logged_out')
-    if (!loggedOutParam) return
-
-    // Spara orsak (vanlig logout eller kontoradering) innan vi städar URL:en
-    setLoggedOutReason(loggedOutParam === 'deleted' ? 'deleted' : 'logout')
-    setShowLoggedOutToast(true)
-
-    // Rensa logged_out-parametern så toasten inte visas igen vid reload
+    if (!initialLoggedOut && !initialLoggedIn) return
     const params = new URLSearchParams(searchParams.toString())
-    params.delete('logged_out')
+    if (initialLoggedOut) params.delete('logged_out')
+    if (initialLoggedIn) params.delete('logged_in')
     const newUrl = params.toString() ? `/?${params.toString()}` : '/'
     if (typeof window !== 'undefined') {
       window.history.replaceState({}, '', newUrl)
     }
-  }, [searchParams])
-
-  // Visa login-toast om logged_in finns i URL:en
-  useEffect(() => {
-    const loggedInParam = searchParams.get('logged_in')
-    if (!loggedInParam) return
-
-    setLoginType(loggedInParam === 'new' ? 'new' : 'returning')
-    setShowLoggedInToast(true)
-
-    // Rensa logged_in-parametern så toasten inte visas igen vid reload
-    const params = new URLSearchParams(searchParams.toString())
-    params.delete('logged_in')
-    const newUrl = params.toString() ? `/?${params.toString()}` : '/'
-    if (typeof window !== 'undefined') {
-      window.history.replaceState({}, '', newUrl)
-    }
-  }, [searchParams])
+  }, [initialLoggedOut, initialLoggedIn, searchParams])
 
   useEffect(() => {
     let isMounted = true
-
-    const fetchFavorites = async (userId: string) => {
-      const { data: favoritesData, error: favoritesError } = await supabase
-        .from('favorites')
-        .select('listing_id')
-        .eq('user_id', userId)
-
-      if (!isMounted) return
-
-      if (favoritesError) {
-        console.error('Fel vid hämtning av favoriter:', favoritesError)
-        setFavoriteIds([])
-      } else {
-        setFavoriteIds(favoritesData?.map((favorite) => favorite.listing_id) ?? [])
-      }
-    }
 
     const initAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession()
@@ -128,9 +106,6 @@ function HomePageContent() {
       setCurrentUserId(userId)
 
       if (userId) {
-        // Hämta favoriter
-        await fetchFavorites(userId)
-
         // Hämta profilnamn för välkomst-toast
         const { data: profile } = await supabase
           .from('profiles')
@@ -141,7 +116,6 @@ function HomePageContent() {
         if (!isMounted) return
         setCurrentUserName(profile?.full_name ?? null)
       } else {
-        setFavoriteIds([])
         setCurrentUserName(null)
       }
     }
@@ -153,8 +127,6 @@ function HomePageContent() {
       setCurrentUserId(userId)
 
       if (userId) {
-        fetchFavorites(userId)
-
         try {
           const { data: profile } = await supabase
             .from('profiles')
@@ -170,7 +142,6 @@ function HomePageContent() {
           setCurrentUserName(null)
         }
       } else {
-        setFavoriteIds([])
         setCurrentUserName(null)
       }
     })
@@ -181,8 +152,7 @@ function HomePageContent() {
     }
   }, [])
 
-  // 2. Filtrera listan (real-time filtering)
-  useEffect(() => {
+  const filteredAds = useMemo(() => {
     let result = ads
 
     if (searchQuery) {
@@ -193,12 +163,64 @@ function HomePageContent() {
       )
     }
 
-    if (selectedCategory !== 'Alla') {
+    if (selectedCategory !== 'all') {
       result = result.filter(ad => ad.category === selectedCategory)
     }
 
-    setFilteredAds(result)
-  }, [searchQuery, selectedCategory, ads])
+    if (locationFilter) {
+      const lowerLocation = locationFilter.toLowerCase()
+      result = result.filter(ad => ad.location?.toLowerCase().includes(lowerLocation))
+    }
+
+    const minPrice = parseInt(priceMin)
+    const maxPrice = parseInt(priceMax)
+    if (!isNaN(minPrice)) {
+      result = result.filter(ad => ad.price >= minPrice)
+    }
+    if (!isNaN(maxPrice)) {
+      result = result.filter(ad => ad.price <= maxPrice)
+    }
+
+    if (isCarsCategory) {
+      const minYear = parseInt(yearMin)
+      const maxYear = parseInt(yearMax)
+      const minMileage = parseInt(mileageMin)
+      const maxMileage = parseInt(mileageMax)
+
+      result = result.filter(ad => {
+        const attributes = ad.attributes || {}
+        const carYear = typeof attributes.year === 'number' ? attributes.year : parseInt(String(attributes.year))
+        const carMileage = typeof attributes.mileage === 'number' ? attributes.mileage : parseInt(String(attributes.mileage))
+
+        if (!isNaN(minYear) && (!carYear || carYear < minYear)) return false
+        if (!isNaN(maxYear) && (!carYear || carYear > maxYear)) return false
+        if (!isNaN(minMileage) && (!carMileage || carMileage < minMileage)) return false
+        if (!isNaN(maxMileage) && (!carMileage || carMileage > maxMileage)) return false
+        if (fuelFilter && attributes.fuel !== fuelFilter) return false
+        if (gearboxFilter && attributes.gearbox !== gearboxFilter) return false
+        if (bodyTypeFilter && attributes.body_type !== bodyTypeFilter) return false
+
+        return true
+      })
+    }
+
+    return result
+  }, [
+    ads,
+    searchQuery,
+    selectedCategory,
+    locationFilter,
+    priceMin,
+    priceMax,
+    yearMin,
+    yearMax,
+    mileageMin,
+    mileageMax,
+    fuelFilter,
+    gearboxFilter,
+    bodyTypeFilter,
+    isCarsCategory,
+  ])
 
   // 3. Uppdatera URL-parametrar när sökning/kategori ändras
   useEffect(() => {
@@ -206,7 +228,7 @@ function HomePageContent() {
     if (searchQuery) {
       params.set('q', searchQuery)
     }
-    if (selectedCategory && selectedCategory !== 'Alla') {
+    if (selectedCategory && selectedCategory !== 'all') {
       params.set('category', selectedCategory)
     }
     
@@ -240,16 +262,181 @@ function HomePageContent() {
 
   // --- SÄKER NAVIGERING TILL "SÄLJ" ---
 
-  const favoriteIdSet = useMemo(() => new Set(favoriteIds), [favoriteIds])
-
-  const handleFavoriteToggle = (listingId: string, isFavorited: boolean) => {
-    setFavoriteIds((prev) => {
-      const next = new Set(prev)
-      if (isFavorited) next.add(listingId)
-      else next.delete(listingId)
-      return Array.from(next)
-    })
+  const resetCarFilters = () => {
+    setYearMin('')
+    setYearMax('')
+    setMileageMin('')
+    setMileageMax('')
+    setFuelFilter('')
+    setGearboxFilter('')
+    setBodyTypeFilter('')
   }
+
+  const handleCategoryChange = (value: string) => {
+    setSelectedCategory(value)
+    if (value !== 'cars') {
+      resetCarFilters()
+    }
+  }
+
+  const resetFilters = () => {
+    setSelectedCategory('all')
+    setPriceMin('')
+    setPriceMax('')
+    setLocationFilter('')
+    resetCarFilters()
+  }
+
+  const filterFields = (
+    <div className="space-y-4">
+      <div>
+        <label className="block text-sm font-medium text-brand-text mb-1">Kategori</label>
+        <select
+          className="w-full p-3 border border-gray-300 rounded-xl bg-white text-brand-text"
+          value={selectedCategory}
+          onChange={(e) => handleCategoryChange(e.target.value)}
+        >
+          <option value="all">Alla kategorier</option>
+          {CATEGORY_GROUPS.map((group) => (
+            <optgroup key={group.id} label={group.label}>
+              {group.children.map((child) => (
+                <option key={child.id} value={child.id}>{child.label}</option>
+              ))}
+            </optgroup>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-brand-text mb-1">Pris</label>
+        <div className="grid grid-cols-2 gap-3">
+          <input
+            type="number"
+            placeholder="Min"
+            className="w-full p-3 border border-gray-300 rounded-xl text-brand-text"
+            value={priceMin}
+            onChange={(e) => setPriceMin(e.target.value)}
+          />
+          <input
+            type="number"
+            placeholder="Max"
+            className="w-full p-3 border border-gray-300 rounded-xl text-brand-text"
+            value={priceMax}
+            onChange={(e) => setPriceMax(e.target.value)}
+          />
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-brand-text mb-1">Plats</label>
+        <input
+          type="text"
+          placeholder="Hela Sverige"
+          className="w-full p-3 border border-gray-300 rounded-xl text-brand-text placeholder:text-gray-400"
+          value={locationFilter}
+          onChange={(e) => setLocationFilter(e.target.value)}
+        />
+      </div>
+
+      {isCarsCategory && (
+        <div className="space-y-4 rounded-xl border border-gray-200 p-4 bg-white">
+          <p className="text-xs font-bold uppercase tracking-widest text-brand-text/60">Bilar</p>
+
+          <div>
+            <label className="block text-sm font-medium text-brand-text mb-1">År</label>
+            <div className="grid grid-cols-2 gap-3">
+              <input
+                type="number"
+                placeholder="Från"
+                className="w-full p-3 border border-gray-300 rounded-xl text-brand-text"
+                value={yearMin}
+                onChange={(e) => setYearMin(e.target.value)}
+              />
+              <input
+                type="number"
+                placeholder="Till"
+                className="w-full p-3 border border-gray-300 rounded-xl text-brand-text"
+                value={yearMax}
+                onChange={(e) => setYearMax(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-brand-text mb-1">Miltal</label>
+            <div className="grid grid-cols-2 gap-3">
+              <input
+                type="number"
+                placeholder="Från"
+                className="w-full p-3 border border-gray-300 rounded-xl text-brand-text"
+                value={mileageMin}
+                onChange={(e) => setMileageMin(e.target.value)}
+              />
+              <input
+                type="number"
+                placeholder="Till"
+                className="w-full p-3 border border-gray-300 rounded-xl text-brand-text"
+                value={mileageMax}
+                onChange={(e) => setMileageMax(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-brand-text mb-1">Bränsle</label>
+            <select
+              className="w-full p-3 border border-gray-300 rounded-xl bg-white text-brand-text"
+              value={fuelFilter}
+              onChange={(e) => setFuelFilter(e.target.value)}
+            >
+              <option value="">Alla</option>
+              <option value="Bensin">Bensin</option>
+              <option value="Diesel">Diesel</option>
+              <option value="El">El</option>
+              <option value="Hybrid">Hybrid</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-brand-text mb-1">Växellåda</label>
+            <select
+              className="w-full p-3 border border-gray-300 rounded-xl bg-white text-brand-text"
+              value={gearboxFilter}
+              onChange={(e) => setGearboxFilter(e.target.value)}
+            >
+              <option value="">Alla</option>
+              <option value="Manuell">Manuell</option>
+              <option value="Automat">Automat</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-brand-text mb-1">Kaross</label>
+            <select
+              className="w-full p-3 border border-gray-300 rounded-xl bg-white text-brand-text"
+              value={bodyTypeFilter}
+              onChange={(e) => setBodyTypeFilter(e.target.value)}
+            >
+              <option value="">Alla</option>
+              <option value="Kombi">Kombi</option>
+              <option value="Sedan">Sedan</option>
+              <option value="SUV">SUV</option>
+              <option value="Halvkombi">Halvkombi</option>
+              <option value="Cab">Cab</option>
+            </select>
+          </div>
+        </div>
+      )}
+
+      <button
+        type="button"
+        onClick={resetFilters}
+        className="w-full text-sm text-brand-green underline hover:text-brand-green/80"
+      >
+        Rensa filter
+      </button>
+    </div>
+  )
 
   return (
     <div className="min-h-screen bg-brand-beige flex flex-col">
@@ -319,83 +506,142 @@ function HomePageContent() {
               </button>
             </form>
 
-            {/* Kategoriknappar (Pill-shape, EAA-vänliga) */}
-            <div className="flex flex-col items-center gap-3">
-              <span className="text-xs font-bold text-brand-text/70 uppercase tracking-widest">
-                {t.landing.search.filterTitle}
-              </span>
-              <div className="flex flex-wrap gap-3 justify-center">
-                {t.landing.search.categories.map((cat) => {
-                  const isActive = selectedCategory === cat
-                  return (
-                    <button
-                      key={cat}
-                      type="button"
-                      onClick={() => setSelectedCategory(cat)}
-                      className={`min-h-[44px] px-5 md:px-6 rounded-full text-sm md:text-base font-medium inline-flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-brand-green focus:ring-offset-2 focus:ring-offset-brand-beige ${
-                        isActive
-                          ? 'bg-brand-green text-white border border-brand-green shadow-md'
-                          : 'bg-white text-brand-text border border-gray-300 hover:bg-brand-green/10'
-                      }`}
-                    >
-                      {cat}
-                    </button>
-                  )
-                })}
-              </div>
+            {/* Filter-knapp (Mobil) */}
+            <div className="flex items-center justify-center md:hidden">
+              <button
+                type="button"
+                onClick={() => setIsFilterOpen(true)}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-gray-300 bg-white text-brand-text text-sm font-medium shadow-sm hover:bg-brand-beige"
+              >
+                <SlidersHorizontal className="w-4 h-4" aria-hidden="true" />
+                Filter
+              </button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* --- ANNONS-GALLERI --- */}
-      <main id="search-results" className="max-w-6xl mx-auto p-3 w-full flex-grow">
-        {/* ARIA-live region för skärmläsare */}
-        <div 
-          aria-live="polite" 
-          aria-atomic="true" 
-          className="sr-only"
-        >
-          {searchQuery 
-            ? `Sökningen visar ${filteredAds.length} ${filteredAds.length === 1 ? 'resultat' : 'resultat'} för "${searchQuery}"`
-            : selectedCategory !== 'Alla'
-            ? `Visar ${filteredAds.length} ${filteredAds.length === 1 ? 'annons' : 'annonser'} i kategorin ${selectedCategory}`
-            : `Visar ${filteredAds.length} ${filteredAds.length === 1 ? 'annons' : 'annonser'}`
-          }
-        </div>
-        
-        <div className="flex justify-between items-end mb-3">
-          <h3 className="text-2xl font-display text-brand-green">{t.landing.listings.header}</h3>
-          <span className="text-sm text-brand-text/70">{filteredAds.length} träffar</span>
-        </div>
-
-        {loading ? (
-          <div className="text-center py-20 text-brand-text/60">Laddar annonser...</div>
-        ) : filteredAds.length === 0 ? (
-          <div className="text-center py-20 bg-white rounded-xl shadow-md border border-dashed border-gray-300">
-            <p className="text-brand-text/70 text-lg">{t.landing.listings.empty}</p>
-            <button 
-              onClick={() => {
-                setSearchQuery('')
-                setSelectedCategory('Alla')
-                setSearchSubmitted(false)
-              }} 
-              className="text-brand-green underline mt-2 hover:text-brand-green/80"
+      {isFilterOpen && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setIsFilterOpen(false)}
+          />
+          <div className="absolute right-0 top-0 h-full w-full max-w-sm bg-white p-6 overflow-y-auto shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-brand-text">Filter</h3>
+              <button
+                type="button"
+                onClick={() => setIsFilterOpen(false)}
+                className="p-2 rounded-full hover:bg-brand-beige"
+                aria-label="Stäng filter"
+              >
+                <X className="w-5 h-5" aria-hidden="true" />
+              </button>
+            </div>
+            {filterFields}
+            <button
+              type="button"
+              onClick={() => setIsFilterOpen(false)}
+              className="mt-6 w-full py-3 rounded-xl bg-brand-green text-white font-semibold"
             >
-              Rensa sökning
+              Visa resultat
             </button>
           </div>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-            {filteredAds.map((ad) => (
-              <ListingCard
-                key={ad.id}
-                listing={ad}
-                currentUserId={currentUserId}
-              />
-            ))}
-          </div>
+        </div>
+      )}
+
+      {/* --- ANNONS-GALLERI --- */}
+      <main id="search-results" className="max-w-6xl mx-auto p-3 w-full flex-grow relative">
+        {/* Desktop Filter Etikett (Sticky, till vänster i mitten) */}
+        <button
+          type="button"
+          onClick={() => setIsDesktopFilterOpen(!isDesktopFilterOpen)}
+          className="hidden md:flex fixed left-0 top-1/2 -translate-y-1/2 z-40 bg-brand-green text-white px-3 py-6 rounded-r-xl shadow-lg hover:bg-brand-green/90 transition-all font-medium items-center justify-center"
+          style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}
+        >
+          Filter
+        </button>
+
+        {/* Desktop Filter Overlay */}
+        {isDesktopFilterOpen && (
+          <div
+            className="hidden md:block fixed inset-0 bg-black/40 z-40"
+            onClick={() => setIsDesktopFilterOpen(false)}
+          />
         )}
+
+        {/* Desktop Filter Sidebar (Rullas fram) */}
+        <aside
+          className={`hidden md:block fixed left-0 top-0 h-full w-64 bg-white shadow-xl border-r border-gray-200 z-50 transition-transform duration-300 ease-in-out ${
+            isDesktopFilterOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
+        >
+          <div className="p-5 h-full overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-brand-text">Filter</h3>
+              <button
+                type="button"
+                onClick={() => setIsDesktopFilterOpen(false)}
+                className="p-2 rounded-full hover:bg-brand-beige"
+                aria-label="Stäng filter"
+              >
+                <X className="w-5 h-5" aria-hidden="true" />
+              </button>
+            </div>
+            {filterFields}
+          </div>
+        </aside>
+
+        {/* Annonser (Behåller bredd, 5 per rad på desktop) */}
+        <div className="md:pl-0">
+          {/* ARIA-live region för skärmläsare */}
+          <div 
+            aria-live="polite" 
+            aria-atomic="true" 
+            className="sr-only"
+          >
+            {searchQuery 
+              ? `Sökningen visar ${filteredAds.length} ${filteredAds.length === 1 ? 'resultat' : 'resultat'} för "${searchQuery}"`
+              : selectedCategory !== 'all'
+              ? `Visar ${filteredAds.length} ${filteredAds.length === 1 ? 'annons' : 'annonser'} i kategorin ${getCategoryLabel(selectedCategory)}`
+              : `Visar ${filteredAds.length} ${filteredAds.length === 1 ? 'annons' : 'annonser'}`
+            }
+          </div>
+          
+          <div className="flex justify-between items-end mb-3">
+            <h3 className="text-2xl font-display text-brand-green">{t.landing.listings.header}</h3>
+            <span className="text-sm text-brand-text/70">{filteredAds.length} träffar</span>
+          </div>
+
+          {loading ? (
+            <div className="text-center py-20 text-brand-text/60">Laddar annonser...</div>
+          ) : filteredAds.length === 0 ? (
+            <div className="text-center py-20 bg-white rounded-xl shadow-md border border-dashed border-gray-300">
+              <p className="text-brand-text/70 text-lg">{t.landing.listings.empty}</p>
+              <button 
+                onClick={() => {
+                  setSearchQuery('')
+                  resetFilters()
+                  setSearchSubmitted(false)
+                }} 
+                className="text-brand-green underline mt-2 hover:text-brand-green/80"
+              >
+                Rensa sökning
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+              {filteredAds.map((ad) => (
+                <ListingCard
+                  key={ad.id}
+                  listing={ad}
+                  currentUserId={currentUserId}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </main>
 
       {/* Scroll to Search-knapp */}

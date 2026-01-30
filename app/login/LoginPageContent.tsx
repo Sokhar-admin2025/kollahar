@@ -14,12 +14,12 @@ const supabase = createClient()
 type AuthName = 'login' | 'signup'
 
 // Användarvänliga felmeddelanden
-const getErrorMessage = (error: any, mode: AuthName): string => {
+const getErrorMessage = (error: unknown, mode: AuthName): string => {
   if (!error) {
     return DASHBOARD_TEXTS.auth[mode].errors.generic
   }
 
-  const message = String(error.message || '').toLowerCase()
+  const message = String(error instanceof Error ? error.message : '').toLowerCase()
 
   if (mode === 'login') {
     const loginErrors = DASHBOARD_TEXTS.auth.login.errors
@@ -115,7 +115,7 @@ export default function LoginPageContent() {
     try {
       await supabase.auth.signOut()
       await new Promise(resolve => setTimeout(resolve, 50))
-    } catch (err) {
+    } catch {
       // Ignorera fel vid signOut
     }
 
@@ -226,12 +226,12 @@ export default function LoginPageContent() {
     try {
       await supabase.auth.signOut()
       await new Promise(resolve => setTimeout(resolve, 50))
-    } catch (err) {
+    } catch {
       // Ignorera fel vid signOut
     }
 
     // 1. Försök skapa användare först (signUp)
-    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+    const { error: signUpError } = await supabase.auth.signUp({
       email: cleanEmail,
       password,
       options: {
@@ -291,7 +291,7 @@ export default function LoginPageContent() {
             setLoading(false)
             return
           }
-        } catch (checkErr) {
+        } catch {
           // Om vi inte kan kontrollera → visa standardmeddelande
           setMessage({
             text: DASHBOARD_TEXTS.auth.signup.errors.emailExists,

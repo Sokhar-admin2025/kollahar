@@ -6,6 +6,7 @@ export interface Listing {
   price: number;
   location: string;
   category: string;
+  attributes?: Record<string, unknown>;
   images: string[];
   user_id: string;
   status: 'active' | 'sold' | 'deleted';

@@ -1,13 +1,13 @@
 'use client'
 
-import { ReactNode } from 'react'
+import type { ReactNode, MouseEventHandler } from 'react'
 
 // Här bestämmer vi vilka "utseenden" knappen får ha
 type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'icon' | 'link'
 
 interface ButtonProps {
   children: ReactNode      // Texten eller ikonen inuti knappen
-  onClick?: (e: any) => void
+  onClick?: MouseEventHandler<HTMLButtonElement>
   variant?: ButtonVariant  // Vilken stil ska den ha?
   disabled?: boolean
   className?: string

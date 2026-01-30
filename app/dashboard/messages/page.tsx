@@ -115,7 +115,7 @@ export default function InboxPage() {
       }
       setMessages([...messages, tempMsg])
       setNewMessage('')
-    } catch (error) {
+    } catch {
       alert('Kunde inte skicka meddelande')
     } finally {
       setSending(false)

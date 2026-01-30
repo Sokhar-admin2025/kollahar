@@ -8,6 +8,7 @@ create table if not exists public.listings (
   price integer not null,
   location text not null,
   category text not null,
+  attributes jsonb not null default '{}'::jsonb,
   images text[] default '{}',
   status text not null default 'active' check (status in ('active', 'sold', 'deleted')),
   created_at timestamptz default now(),

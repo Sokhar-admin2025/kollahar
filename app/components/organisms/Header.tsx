@@ -146,7 +146,7 @@ export default function Header({
           await supabase.auth.signOut()
           router.push('/login')
         }
-      } catch (err) {
+      } catch {
         // Fallback: lås inte ute användaren om vi inte kan kontrollera
         router.push('/dashboard/create')
       }
@@ -178,7 +178,7 @@ export default function Header({
           await supabase.auth.signOut()
           router.push('/login')
         }
-      } catch (err) {
+      } catch {
         // Fallback: lås inte ute användaren om vi inte kan kontrollera
         router.push('/dashboard')
       }

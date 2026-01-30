@@ -54,7 +54,7 @@ export default function EditListing() {
 
         setListing(data as Listing)
         setFetching(false)
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Error fetching listing:', err)
         setError('Ett fel uppstod vid hämtning av annonsen.')
         setFetching(false)

@@ -1,20 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 
 export default function CookieConsent() {
-  const [showBanner, setShowBanner] = useState(false)
-
-  useEffect(() => {
-    // Kontrollera om användaren redan har gett samtycke
-    const consent = localStorage.getItem('cookie_consent')
-    
-    // Om ingen consent finns, visa bannern
-    if (!consent) {
-      setShowBanner(true)
-    }
-  }, [])
+  const [showBanner, setShowBanner] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return !localStorage.getItem('cookie_consent')
+  })
 
   const handleAccept = () => {
     // Spara samtycke i localStorage

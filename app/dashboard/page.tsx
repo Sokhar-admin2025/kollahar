@@ -1,10 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import type { MouseEvent } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { MessageSquare, Settings, LogOut, Edit, Trash2 } from 'lucide-react'
+import type { User } from '@supabase/supabase-js'
 
 import { DASHBOARD_TEXTS } from '../lib/content'
 import Button from '../components/atoms/Button'
@@ -18,10 +20,10 @@ const supabase = createClient()
 
 export default function DashboardPage() {
   const router = useRouter()
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
   
-  const [activeAds, setActiveAds] = useState<any[]>([])
-  const [soldAds, setSoldAds] = useState<any[]>([])
+  const [activeAds, setActiveAds] = useState<Listing[]>([])
+  const [soldAds, setSoldAds] = useState<Listing[]>([])
   const [favoriteAds, setFavoriteAds] = useState<Listing[]>([])
   
   const [isAuthChecking, setIsAuthChecking] = useState(true)
@@ -31,7 +33,7 @@ export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<'active' | 'favorites' | 'history'>('active')
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
-  const [adToDelete, setAdToDelete] = useState<any>(null)
+  const [adToDelete, setAdToDelete] = useState<Listing | null>(null)
   const [deleteReason, setDeleteReason] = useState('sold_here')
   const [isDeleting, setIsDeleting] = useState(false)
 
@@ -127,14 +129,14 @@ export default function DashboardPage() {
     router.refresh()
   }
 
-  const promptDelete = (e: any, ad: any) => {
+  const promptDelete = (e: MouseEvent<HTMLButtonElement>, ad: Listing) => {
     e.stopPropagation() 
     setAdToDelete(ad)
     setIsDeleteModalOpen(true)
   }
 
   const confirmDelete = async () => {
-    if (!adToDelete) return
+    if (!adToDelete || !user) return
     setIsDeleting(true)
 
     try {
@@ -144,7 +146,9 @@ export default function DashboardPage() {
           reason: deleteReason,
           ad_title: adToDelete.title
         })
-      } catch (err) { console.log("Logg misslyckades") }
+      } catch {
+        console.log("Logg misslyckades")
+      }
 
       if (deleteReason === 'sold_here') {
         const { error } = await supabase
@@ -168,8 +172,9 @@ export default function DashboardPage() {
       setAdToDelete(null)
       setDeleteReason('sold_here')
 
-    } catch (error: any) {
-      alert('Fel: ' + error.message)
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Okänt fel'
+      alert('Fel: ' + message)
     } finally {
       setIsDeleting(false)
     }

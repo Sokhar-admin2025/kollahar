@@ -166,7 +166,7 @@ export default function VerifyPageContent() {
         // Använd window.location.href för hard navigation istället för router.push
         window.location.href = `/?logged_in=${loginParam}`
       }
-    } catch (err) {
+    } catch {
       // Rensa timeout vid fel
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
@@ -259,7 +259,7 @@ export default function VerifyPageContent() {
           type: 'success' 
         })
       }
-    } catch (err) {
+    } catch {
       setMessage({ 
         text: 'Kunde inte skicka ny kod. Försök igen.', 
         type: 'error' 
