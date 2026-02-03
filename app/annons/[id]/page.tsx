@@ -11,8 +11,8 @@ import FavoriteButton from '@/app/components/FavoriteButton'
 import Header from '@/app/components/organisms/Header'
 import { createClient } from '@/lib/supabase/client'
 import type { Listing } from '@/app/types'
-import { MapPin, Loader2, ChevronLeft, ChevronRight } from 'lucide-react'
-import { getCategoryLabel } from '@/lib/categories'
+import { MapPin, Loader2, ChevronLeft, ChevronRight, Calendar, Gauge, Fuel, Settings2, Car, Palette, Zap } from 'lucide-react'
+import { getCategoryLabel, CATEGORY_GROUPS } from '@/lib/categories'
 
 const supabase = createClient()
 
@@ -268,7 +268,7 @@ function ListingDetails() {
                 <h1 className="text-3xl font-bold text-brand-green mb-2">{ad.title}</h1>
                 <div className="flex items-center text-brand-text/70 text-sm">
                   <span className="mr-2">📍</span>
-                  {ad.location}
+                  {ad.location.includes(',') ? ad.location.split(',')[0].trim() : ad.location}
                   <span className="mx-2">•</span>
                   {new Date(ad.created_at).toLocaleDateString()}
                 </div>
@@ -282,6 +282,168 @@ function ListingDetails() {
                 <h3 className="text-brand-text font-semibold mb-2">{t.sections.description}</h3>
                 <p className="whitespace-pre-line">{ad.description}</p>
               </div>
+
+              {/* --- BIL-SPECIFIKA ATTRIBUT (endast för bilar) --- */}
+              {ad.category === 'cars' && ad.attributes && (
+                <div className="mb-8 pt-6 border-t border-gray-100">
+                  <h3 className="text-brand-text font-semibold mb-4 antialiased">Bildetaljer</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {/* Modellår */}
+                    {(() => {
+                      const year = typeof ad.attributes.year === 'number' ? ad.attributes.year :
+                                  typeof ad.attributes.year === 'string' ? parseInt(ad.attributes.year) : null;
+                      return year ? (
+                        <div className="flex items-center gap-2 bg-brand-beige/50 p-3 rounded-lg border border-gray-200">
+                          <Calendar className="w-4 h-4 text-brand-green flex-shrink-0" />
+                          <div>
+                            <p className="text-xs text-brand-text/60 antialiased">Modellår</p>
+                            <p className="text-sm font-semibold text-brand-text antialiased">{year}</p>
+                          </div>
+                        </div>
+                      ) : null;
+                    })()}
+
+                    {/* Miltal */}
+                    {(() => {
+                      const mileage = typeof ad.attributes.mileage === 'number' ? ad.attributes.mileage :
+                                     typeof ad.attributes.mileage === 'string' ? parseInt(ad.attributes.mileage) : null;
+                      const formattedMileage = mileage ? new Intl.NumberFormat('sv-SE').format(mileage) + ' mil' : null;
+                      return formattedMileage ? (
+                        <div className="flex items-center gap-2 bg-brand-beige/50 p-3 rounded-lg border border-gray-200">
+                          <Gauge className="w-4 h-4 text-brand-green flex-shrink-0" />
+                          <div>
+                            <p className="text-xs text-brand-text/60 antialiased">Miltal</p>
+                            <p className="text-sm font-semibold text-brand-text antialiased">{formattedMileage}</p>
+                          </div>
+                        </div>
+                      ) : null;
+                    })()}
+
+                    {/* Växellåda */}
+                    {(() => {
+                      const gearbox = typeof ad.attributes.gearbox === 'string' ? ad.attributes.gearbox : null;
+                      return gearbox ? (
+                        <div className="flex items-center gap-2 bg-brand-beige/50 p-3 rounded-lg border border-gray-200">
+                          <Settings2 className="w-4 h-4 text-brand-green flex-shrink-0" />
+                          <div>
+                            <p className="text-xs text-brand-text/60 antialiased">Växellåda</p>
+                            <p className="text-sm font-semibold text-brand-text antialiased">{gearbox}</p>
+                          </div>
+                        </div>
+                      ) : null;
+                    })()}
+
+                    {/* Drivmedel */}
+                    {(() => {
+                      const fuel = typeof ad.attributes.fuel === 'string' ? ad.attributes.fuel : null;
+                      return fuel ? (
+                        <div className="flex items-center gap-2 bg-brand-beige/50 p-3 rounded-lg border border-gray-200">
+                          <Fuel className="w-4 h-4 text-brand-green flex-shrink-0" />
+                          <div>
+                            <p className="text-xs text-brand-text/60 antialiased">Drivmedel</p>
+                            <p className="text-sm font-semibold text-brand-text antialiased">{fuel}</p>
+                          </div>
+                        </div>
+                      ) : null;
+                    })()}
+
+                    {/* Karosstyp */}
+                    {(() => {
+                      const bodyType = typeof ad.attributes.body_type === 'string' ? ad.attributes.body_type : null;
+                      return bodyType ? (
+                        <div className="flex items-center gap-2 bg-brand-beige/50 p-3 rounded-lg border border-gray-200">
+                          <Car className="w-4 h-4 text-brand-green flex-shrink-0" />
+                          <div>
+                            <p className="text-xs text-brand-text/60 antialiased">Karosstyp</p>
+                            <p className="text-sm font-semibold text-brand-text antialiased">{bodyType}</p>
+                          </div>
+                        </div>
+                      ) : null;
+                    })()}
+
+                    {/* Färg */}
+                    {(() => {
+                      const color = typeof ad.attributes.color === 'string' ? ad.attributes.color : null;
+                      const colorCustom = typeof ad.attributes.color_custom === 'string' ? ad.attributes.color_custom : null;
+                      const displayColor = colorCustom || color;
+                      return displayColor ? (
+                        <div className="flex items-center gap-2 bg-brand-beige/50 p-3 rounded-lg border border-gray-200">
+                          <Palette className="w-4 h-4 text-brand-green flex-shrink-0" />
+                          <div>
+                            <p className="text-xs text-brand-text/60 antialiased">Färg</p>
+                            <p className="text-sm font-semibold text-brand-text antialiased">{displayColor}</p>
+                          </div>
+                        </div>
+                      ) : null;
+                    })()}
+
+                    {/* Skick (endast för icke-fordon) */}
+                    {(() => {
+                      // Kontrollera om kategorin tillhör "Fordon"-gruppen
+                      const vehiclesGroup = CATEGORY_GROUPS.find(group => group.id === 'vehicles')
+                      const isVehicleCategory = vehiclesGroup?.children.some(child => child.id === ad.category) ?? false
+                      // Visa endast skick om det INTE är en fordon-kategori
+                      if (isVehicleCategory) return null
+                      const condition = typeof ad.attributes.condition === 'string' ? ad.attributes.condition : null;
+                      return condition ? (
+                        <div className="flex items-center gap-2 bg-brand-beige/50 p-3 rounded-lg border border-gray-200">
+                          <div className="w-4 h-4 flex-shrink-0 flex items-center justify-center">
+                            <span className="text-brand-green text-xs">✓</span>
+                          </div>
+                          <div>
+                            <p className="text-xs text-brand-text/60 antialiased">Skick</p>
+                            <p className="text-sm font-semibold text-brand-text antialiased">{condition}</p>
+                          </div>
+                        </div>
+                      ) : null;
+                    })()}
+
+                    {/* Hästkrafter */}
+                    {(() => {
+                      const horsePower = typeof ad.attributes.horse_power === 'number' ? ad.attributes.horse_power :
+                                        typeof ad.attributes.horse_power === 'string' ? parseInt(ad.attributes.horse_power) : null;
+                      return horsePower ? (
+                        <div className="flex items-center gap-2 bg-brand-beige/50 p-3 rounded-lg border border-gray-200">
+                          <Zap className="w-4 h-4 text-brand-green flex-shrink-0" />
+                          <div>
+                            <p className="text-xs text-brand-text/60 antialiased">Hästkrafter</p>
+                            <p className="text-sm font-semibold text-brand-text antialiased">{horsePower} hk</p>
+                          </div>
+                        </div>
+                      ) : null;
+                    })()}
+
+                    {/* Drivhjul */}
+                    {(() => {
+                      const driveWheel = typeof ad.attributes.drive_wheel === 'string' ? ad.attributes.drive_wheel : null;
+                      return driveWheel ? (
+                        <div className="flex items-center gap-2 bg-brand-beige/50 p-3 rounded-lg border border-gray-200">
+                          <Car className="w-4 h-4 text-brand-green flex-shrink-0" />
+                          <div>
+                            <p className="text-xs text-brand-text/60 antialiased">Drivhjul</p>
+                            <p className="text-sm font-semibold text-brand-text antialiased">{driveWheel}</p>
+                          </div>
+                        </div>
+                      ) : null;
+                    })()}
+
+                    {/* Märke & Modell */}
+                    {(() => {
+                      const make = typeof ad.attributes.make === 'string' ? ad.attributes.make : null;
+                      const model = typeof ad.attributes.model === 'string' ? ad.attributes.model : null;
+                      return make && model ? (
+                        <div className="flex items-center gap-2 bg-brand-beige/50 p-3 rounded-lg border border-gray-200 col-span-2 md:col-span-1">
+                          <Car className="w-4 h-4 text-brand-green flex-shrink-0" />
+                          <div>
+                            <p className="text-xs text-brand-text/60 antialiased">Märke & Modell</p>
+                            <p className="text-sm font-semibold text-brand-text antialiased">{make} {model}</p>
+                          </div>
+                        </div>
+                      ) : null;
+                    })()}
+                  </div>
+                </div>
+              )}
 
               {/* --- NYTT: SÄLJARKORT --- */}
               <div className="mt-auto">

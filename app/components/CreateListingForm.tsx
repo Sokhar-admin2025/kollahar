@@ -81,7 +81,13 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
       setExistingImageUrls(initialData.images || [])
       const attributes = initialData.attributes || {}
       // Type-safe access to attributes with fallback to empty string
-      setCondition(typeof attributes.condition === 'string' ? attributes.condition : '')
+      // Kontrollera om kategorin tillhör "Fordon"-gruppen
+      const vehiclesGroup = CATEGORY_GROUPS.find(group => group.id === 'vehicles')
+      const isVehicleCategory = vehiclesGroup?.children.some(child => child.id === initialData.category) ?? false
+      // Lägg endast in condition om det INTE är en fordon-kategori
+      if (!isVehicleCategory) {
+        setCondition(typeof attributes.condition === 'string' ? attributes.condition : '')
+      }
       setRegNr(typeof attributes.reg_nr === 'string' ? attributes.reg_nr : '')
       setMake(typeof attributes.make === 'string' ? attributes.make : '')
       setModel(typeof attributes.model === 'string' ? attributes.model : '')
@@ -254,14 +260,22 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
         return
       }
 
-      if (!condition) {
+      // Kontrollera om kategorin tillhör "Fordon"-gruppen
+      const vehiclesGroup = CATEGORY_GROUPS.find(group => group.id === 'vehicles')
+      const isVehicleCategory = vehiclesGroup?.children.some(child => child.id === category) ?? false
+
+      // Skick är endast obligatoriskt för icke-fordon
+      if (!isVehicleCategory && !condition) {
         alert('Välj skick.')
         setLoading(false)
         return
       }
 
-      const attributes: Record<string, unknown> = {
-        condition,
+      const attributes: Record<string, unknown> = {}
+      
+      // Lägg endast till condition om det INTE är en fordon-kategori
+      if (!isVehicleCategory && condition) {
+        attributes.condition = condition
       }
 
       if (isCarsCategory) {
@@ -513,23 +527,25 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
           </select>
         </div>
 
-        {/* Skick */}
-        <div>
-          <label className="block text-sm font-medium text-brand-text mb-1 antialiased">
-            Skick <span className="text-red-500">*</span>
-          </label>
-          <select
-            className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition bg-white text-brand-text antialiased"
-            value={condition}
-            onChange={(e) => setCondition(e.target.value)}
-            required
-          >
-            <option value="" disabled>Välj skick</option>
-            {conditionOptions.map((opt) => (
-              <option key={opt} value={opt}>{opt}</option>
-            ))}
-          </select>
-        </div>
+        {/* Skick (endast för icke-fordon) */}
+        {!isVehicleCategory && (
+          <div>
+            <label className="block text-sm font-medium text-brand-text mb-1 antialiased">
+              Skick <span className="text-red-500">*</span>
+            </label>
+            <select
+              className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition bg-white text-brand-text antialiased"
+              value={condition}
+              onChange={(e) => setCondition(e.target.value)}
+              required
+            >
+              <option value="" disabled>Välj skick</option>
+              {conditionOptions.map((opt) => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {/* Märke & Modell (endast för bilar) */}
         {isCarsCategory && (

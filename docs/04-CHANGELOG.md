@@ -8,6 +8,38 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ### ✨ Tillagt
 
+#### ListingCard och detaljsida - UX-förbättringar
+- **Pris-styling**: Priset är nu högerställt på egen rad i ListingCard för bättre visuell hierarki
+- **Location-visning**: Endast kommun visas i annonskort och detaljsida (t.ex. "Täby" istället för "Täby, Stockholms län")
+  - Om location innehåller komma, visas endast första delen (kommunen)
+  - Om location saknar komma, visas hela strängen (region)
+- **Bil-specifikationer i ListingCard**: Kompakt textsträng med bullet separator (•) för bilannonser
+  - Format: `Modellår • Miltal • Växellåda • Drivmedel`
+  - Visas endast för bilannonser (`category === 'cars'`)
+- **Badge för extremt skick**: Visas endast för icke-fordon när skick är "Ny" eller "Defekt"
+  - Grön badge för "Ny", orange badge för "Defekt"
+- **Bildetaljer på detaljsidan**: Grid-system med ikoner för att visa alla bil-attribut
+  - Ikoner för Modellår, Miltal, Växellåda, Drivmedel, Karosstyp, Färg, Hästkrafter, Drivhjul, Märke & Modell
+  - Responsiv grid: 2 kolumner på mobil, 3 på desktop
+
+#### Ta bort "Skick"-fält för fordon
+- **CreateListingForm**: "Skick"-fältet döljs för alla fordon-kategorier (bilar, båtar, MC, husvagn, övrigt fordon)
+  - "Skick" är endast obligatoriskt för icke-fordon
+  - "Skick" sparas inte i `attributes` för fordon
+- **ListingCard**: "Skick"-badge visas endast för icke-fordon
+- **Detaljsidan**: "Skick"-visning döljs för alla fordon-kategorier
+- **Defensiv kodning**: Kontrollerar alltid om kategorin tillhör fordon-gruppen innan "Skick" visas eller sparas
+
+#### SQL-migration för dummy-data
+- **Ny migration** (`supabase/migrations/20260131000000_update_dummy_data.sql`): Uppdaterar dummy-data för att fungera med ny struktur
+  - Mappar om kategorier från gamla textvärden till nya ID:n
+  - Genererar JSONB attributes för bilar med slumpad data (make, model, year, mileage, fuel, gearbox)
+  - Genererar enkla attributes för övriga kategorier (condition)
+  - Slumpat pris för bilar mellan 50 000 och 400 000 kr
+  - Redo att köras i Supabase SQL Editor för testning av filter
+
+### ✨ Tillagt
+
 #### Bilannons-formulär med kategorispecifika fält och filter
 - **Skick-fält**: Lagt till obligatoriskt "Skick"-fält i CreateListingForm
   - Dropdown med alternativ: Ny, Som ny, Bra, Använd, Defekt
