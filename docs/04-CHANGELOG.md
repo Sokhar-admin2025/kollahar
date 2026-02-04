@@ -8,6 +8,17 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ### ✨ Tillagt
 
+#### Avancerad platsfilter (LocationFilter) och desktop-filter som overlay
+- **LocationFilter-komponent** (`app/components/LocationFilter.tsx`): Checkbox-träd för län/kommun med sök, progressive disclosure och chips-vänlig state
+  - Data från `LOCATION_TREE` i `lib/swedish-locations.ts` (label/value/count, sorterad efter befolkningsmängd)
+  - Default: endast sökruta + knapp "Välj län i lista"; listan visas vid klick eller när användaren skriver
+  - Knapp "Göm lista" när listan är synlig; "Visa alla län" / "Visa alla kommuner" under topp 8 län resp. 10 kommuner
+  - State: `fullCounties` (hela länet valt) och `partialMunicipalities` (enskilda kommuner); chips enligt scenario A/B/C
+- **Desktop-filter som fixed overlay**: Sidebaren är `fixed inset-y-0 left-0 z-50`, bredd 350px, glider in/ut med transition; annonserna påverkas inte
+  - Backdrop (fixed, bg-black/40, z-40) vid öppet filter; klick utanför stänger panelen
+  - Filter-tabben visas när panelen är stängt, döljs när panelen är öppen
+- **Layout**: Annons-gallret använder `max-w-6xl mx-auto px-4` så det ligger i kant med header (logo och "Sälj något"-knappen)
+
 #### ListingCard och detaljsida - UX-förbättringar
 - **Pris-styling**: Priset är nu högerställt på egen rad i ListingCard för bättre visuell hierarki
 - **Location-visning**: Endast kommun visas i annonskort och detaljsida (t.ex. "Täby" istället för "Täby, Stockholms län")
@@ -39,6 +50,26 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
   - Redo att köras i Supabase SQL Editor för testning av filter
 
 ### ✨ Tillagt
+
+#### UX-renovering av sökfilter (startsidan)
+- Ersatt sliders för pris, modellår och miltal med:
+  - Två exakta nummerfält för pris (min/max).
+  - Två dropdowns för modellår (från/till) med spann 1990–nuvarande år + 1.
+  - En dropdown för max miltal med tydliga steg (1000, 3000, 5000, 10000, 15000, 20000+).
+- Infört hierarkiskt platsfilter baserat på `SWEDISH_LOCATIONS`:
+  - Fält 1: Län – multi-select där användaren kan välja flera län.
+  - Fält 2: Kommun – multi-select som aktiveras först när minst ett län är valt och visar kommuner för valda län.
+  - Filtreringen använder OR-logik mellan valda län och kommuner utan att skapa dubletter (en annons visas bara en gång även om både län och kommun matchar).
+- Lagt till rad med aktiva filter-chip ovanför resultatlistan:
+  - Visar valda kategori, län, kommuner, prisintervall och bilspecifika filter (år, miltal, drivmedel, växellåda, kaross, drivhjul, färg, effekt).
+  - Chips går endast att rensa (inte redigera) – klick på X på ett chip tar bort just det filtret.
+  - Att ta bort ett län-chip tar bort alla kommuner som hör till det länet, men lämnar kommuner från andra län orörda.
+- Förbättrat mobilens filter-drawer:
+  - Fullhöjdspanel med scrollbart filterinnehåll och en fast bottendel med en tydlig primärknapp: “Visa X resultat”.
+  - Gör det enklare att använda filtret på iPhone/Android utan att tangentbordet döljer knappen.
+- **Framtida skalningssteg (ej implementerat än)**:
+  - När antalet annonser växer bör nuvarande klientside-filtrering flyttas till Supabase (pris/år/miltal/attribut via `gte`/`lte`-villkor).
+  - Rekommendation: Extrahera filterstate till en hook (t.ex. `useSearchFilters`) och återanvänd den både i UI:t och i datalagerskiktet.
 
 #### Bilannons-formulär med kategorispecifika fält och filter
 - **Skick-fält**: Lagt till obligatoriskt "Skick"-fält i CreateListingForm

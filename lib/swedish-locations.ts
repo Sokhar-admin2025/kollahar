@@ -1,3 +1,235 @@
+export interface SwedishCounty {
+  county: string
+  municipalities: string[]
+}
+
+// Kuraterad lista med vanliga län/kommuner för filtret.
+// Detta är tänkt som en första version för UX-testning.
+export const SWEDISH_LOCATIONS: SwedishCounty[] = [
+  {
+    county: 'Stockholms län',
+    municipalities: [
+      'Stockholm',
+      'Huddinge',
+      'Solna',
+      'Sundbyberg',
+      'Täby',
+      'Södertälje',
+      'Lidingö',
+      'Nacka',
+      'Danderyd',
+      'Järfälla',
+    ],
+  },
+  {
+    county: 'Västra Götalands län',
+    municipalities: [
+      'Göteborg',
+      'Borås',
+      'Trollhättan',
+      'Uddevalla',
+      'Lidköping',
+      'Skövde',
+      'Alingsås',
+      'Kungälv',
+      'Falköping',
+    ],
+  },
+  {
+    county: 'Skåne län',
+    municipalities: [
+      'Malmö',
+      'Lund',
+      'Helsingborg',
+      'Kristianstad',
+      'Hässleholm',
+      'Trelleborg',
+      'Ystad',
+      'Ängelholm',
+    ],
+  },
+  {
+    county: 'Uppsala län',
+    municipalities: [
+      'Uppsala',
+      'Enköping',
+      'Östhammar',
+      'Tierp',
+    ],
+  },
+  {
+    county: 'Östergötlands län',
+    municipalities: [
+      'Linköping',
+      'Norrköping',
+      'Motala',
+      'Mjölby',
+    ],
+  },
+  {
+    county: 'Jönköpings län',
+    municipalities: [
+      'Jönköping',
+      'Nässjö',
+      'Värnamo',
+      'Eksjö',
+    ],
+  },
+  {
+    county: 'Hallands län',
+    municipalities: [
+      'Halmstad',
+      'Varberg',
+      'Kungsbacka',
+      'Falkenberg',
+    ],
+  },
+  {
+    county: 'Örebro län',
+    municipalities: [
+      'Örebro',
+      'Kumla',
+      'Hallsberg',
+      'Lindesberg',
+    ],
+  },
+]
+
+// --- Platsfilter (LocationFilter) – träd med label/value/count ---
+
+export interface LocationMunicipality {
+  label: string
+  value: string
+  count: number
+}
+
+export interface LocationCounty {
+  label: string
+  value: string
+  count: number
+  municipalities: LocationMunicipality[]
+}
+
+// Sorterad efter ungefärlig befolkningsmängd (största först). Count kan kopplas mot DB senare.
+export const LOCATION_TREE: LocationCounty[] = [
+  {
+    label: 'Stockholms län',
+    value: 'stockholms-lan',
+    count: 0,
+    municipalities: [
+      { label: 'Stockholm', value: 'stockholm', count: 0 },
+      { label: 'Huddinge', value: 'huddinge', count: 0 },
+      { label: 'Solna', value: 'solna', count: 0 },
+      { label: 'Södertälje', value: 'sodertalje', count: 0 },
+      { label: 'Nacka', value: 'nacka', count: 0 },
+      { label: 'Täby', value: 'taby', count: 0 },
+      { label: 'Sundbyberg', value: 'sundbyberg', count: 0 },
+      { label: 'Lidingö', value: 'lidingo', count: 0 },
+      { label: 'Danderyd', value: 'danderyd', count: 0 },
+      { label: 'Järfälla', value: 'jarfalla', count: 0 },
+    ],
+  },
+  {
+    label: 'Västra Götalands län',
+    value: 'vastra-gotalands-lan',
+    count: 0,
+    municipalities: [
+      { label: 'Göteborg', value: 'goteborg', count: 0 },
+      { label: 'Borås', value: 'boras', count: 0 },
+      { label: 'Trollhättan', value: 'trollhattan', count: 0 },
+      { label: 'Uddevalla', value: 'uddevalla', count: 0 },
+      { label: 'Lidköping', value: 'lidkoping', count: 0 },
+      { label: 'Skövde', value: 'skovde', count: 0 },
+      { label: 'Alingsås', value: 'alingsas', count: 0 },
+      { label: 'Kungälv', value: 'kungalv', count: 0 },
+      { label: 'Mölndal', value: 'molndal', count: 0 },
+      { label: 'Falköping', value: 'falkoping', count: 0 },
+    ],
+  },
+  {
+    label: 'Skåne län',
+    value: 'skane-lan',
+    count: 0,
+    municipalities: [
+      { label: 'Malmö', value: 'malmo', count: 0 },
+      { label: 'Lund', value: 'lund', count: 0 },
+      { label: 'Helsingborg', value: 'helsingborg', count: 0 },
+      { label: 'Kristianstad', value: 'kristianstad', count: 0 },
+      { label: 'Hässleholm', value: 'hassleholm', count: 0 },
+      { label: 'Trelleborg', value: 'trelleborg', count: 0 },
+      { label: 'Ystad', value: 'ystad', count: 0 },
+      { label: 'Ängelholm', value: 'angelholm', count: 0 },
+      { label: 'Landskrona', value: 'landskrona', count: 0 },
+      { label: 'Eslöv', value: 'eslov', count: 0 },
+    ],
+  },
+  {
+    label: 'Uppsala län',
+    value: 'uppsala-lan',
+    count: 0,
+    municipalities: [
+      { label: 'Uppsala', value: 'uppsala', count: 0 },
+      { label: 'Enköping', value: 'enkoping', count: 0 },
+      { label: 'Östhammar', value: 'osthammar', count: 0 },
+      { label: 'Tierp', value: 'tierp', count: 0 },
+    ],
+  },
+  {
+    label: 'Östergötlands län',
+    value: 'ostergotlands-lan',
+    count: 0,
+    municipalities: [
+      { label: 'Linköping', value: 'linkoping', count: 0 },
+      { label: 'Norrköping', value: 'norrkoping', count: 0 },
+      { label: 'Motala', value: 'motala', count: 0 },
+      { label: 'Mjölby', value: 'mjolby', count: 0 },
+    ],
+  },
+  {
+    label: 'Hallands län',
+    value: 'hallands-lan',
+    count: 0,
+    municipalities: [
+      { label: 'Halmstad', value: 'halmstad', count: 0 },
+      { label: 'Varberg', value: 'varberg', count: 0 },
+      { label: 'Kungsbacka', value: 'kungsbacka', count: 0 },
+      { label: 'Falkenberg', value: 'falkenberg', count: 0 },
+    ],
+  },
+  {
+    label: 'Jönköpings län',
+    value: 'jonkopings-lan',
+    count: 0,
+    municipalities: [
+      { label: 'Jönköping', value: 'jonkoping', count: 0 },
+      { label: 'Nässjö', value: 'nassjo', count: 0 },
+      { label: 'Värnamo', value: 'varnamo', count: 0 },
+      { label: 'Eksjö', value: 'eksjo', count: 0 },
+    ],
+  },
+  {
+    label: 'Örebro län',
+    value: 'orebro-lan',
+    count: 0,
+    municipalities: [
+      { label: 'Örebro', value: 'orebro', count: 0 },
+      { label: 'Kumla', value: 'kumla', count: 0 },
+      { label: 'Hallsberg', value: 'hallsberg', count: 0 },
+      { label: 'Lindesberg', value: 'lindesberg', count: 0 },
+    ],
+  },
+]
+
+export function getCountyByValue(value: string): LocationCounty | undefined {
+  return LOCATION_TREE.find((c) => c.value === value)
+}
+
+export function getMunicipalityLabel(countyValue: string, municipalityValue: string): string | undefined {
+  const county = getCountyByValue(countyValue)
+  const m = county?.municipalities.find((mm) => mm.value === municipalityValue)
+  return m?.label
+}
+
 // Svenska län och kommuner
 // Data från SCB (Statistiska centralbyrån) - 2024
 
