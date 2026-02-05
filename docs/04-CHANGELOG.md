@@ -211,6 +211,14 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ### 🚀 Prestanda & UX-förbättringar
 
+#### Listings & Sök – Server-arkitektur med Server Actions
+- **Ny arkitektur-lagtext**: `ARCHITECTURE.md` definierar nu strikt separation mellan UI och datalager (feature-baserad struktur, services, Result-typer och namngivning).
+- **ListingsService**: `lib/features/listings/listing-service.ts` introducerar `getListings(filters)` som Server Action med typad `ListingSearchFilters` (query, category, location, prisintervall, år, miltal, offset/limit).
+- **Result-typ**: Alla services (börjat med Location & Listings) returnerar `ServiceResult<T>` (`{ success, data?, error? }`) så frontend aldrig behöver gissa om ett anrop lyckades.
+- **HomePage-uppdelning**: `app/page.tsx` är nu en ren serverkomponent som läser `searchParams`, anropar `getListings` och skickar `initialListings` + ev. `initialError` till `HomePageClient`.
+- **HomePageClient**: Ny client-komponent (`app/components/home/HomePageClient.tsx`) som hanterar filter-state, URL-sync, debounce för sök, server-side filtrering (kategori, plats, prisintervall m.m.) och offset-baserad “Visa fler”-paginering.
+- **LocationService**: `lib/features/location/location-service.ts` kapslar RPC-anropet `get_location_stats` och levererar data i exakt det format som `mergeLocationCounts` förväntar sig, med robust felhantering.
+
 #### OTP-verifiering prestandaoptimering
 - **Hard navigation**: Använder `window.location.href` istället för `router.push` för omedelbar feedback
   - Förhindrar att Next.js "fryser" i transition-state vid långsamma nätverk

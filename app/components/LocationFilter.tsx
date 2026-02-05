@@ -2,8 +2,8 @@
 
 import { useState, useMemo, useEffect } from 'react'
 import { ChevronDown, ChevronRight, Search, ListPlus } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import { LOCATION_TREE, mergeLocationCounts, type LocationCounty } from '@/lib/swedish-locations'
+import { getLocationStats } from '@/lib/features/location/location-service'
 
 /** Antal län som visas innan "Visa alla län". */
 const INITIAL_COUNTIES = 8
@@ -45,26 +45,43 @@ export default function LocationFilter({
   const [showAllCounties, setShowAllCounties] = useState(false)
   const [showAllMunicipalities, setShowAllMunicipalities] = useState<Record<string, boolean>>({})
   const [treeWithCounts, setTreeWithCounts] = useState<LocationCounty[] | null>(null)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   useEffect(() => {
-    const supabase = createClient()
-    const categoryFilter =
-      selectedCategory && selectedCategory !== 'all' ? selectedCategory : null
-    const searchFilter =
-      typeof externalSearchQuery === 'string' && externalSearchQuery.trim()
-        ? externalSearchQuery.trim()
-        : null
+    let isMounted = true
 
-    supabase
-      .rpc('get_location_stats', {
-        category_filter: categoryFilter ?? null,
-        search_query: searchFilter ?? null,
+    const fetchLocationCounts = async () => {
+      const categoryFilter =
+        selectedCategory && selectedCategory !== 'all' ? selectedCategory : null
+      const searchFilter =
+        typeof externalSearchQuery === 'string' && externalSearchQuery.trim()
+          ? externalSearchQuery.trim()
+          : null
+
+      const result = await getLocationStats({
+        categoryFilter,
+        searchQuery: searchFilter,
       })
-      .then(({ data, error }) => {
-        if (error) return
-        const rows = (data ?? []) as { location_value: string; count: number }[]
-        setTreeWithCounts(mergeLocationCounts(LOCATION_TREE, rows))
-      })
+
+      if (!isMounted) return
+
+      if (!result.success) {
+        // Spara felmeddelande lokalt – kan visas i UI eller loggas vidare.
+        setErrorMessage(result.error ?? 'Kunde inte hämta platsstatistik.')
+        // Faller tillbaka till basträdet utan counts.
+        setTreeWithCounts(null)
+        return
+      }
+
+      setErrorMessage(null)
+      setTreeWithCounts(mergeLocationCounts(LOCATION_TREE, result.data ?? []))
+    }
+
+    fetchLocationCounts()
+
+    return () => {
+      isMounted = false
+    }
   }, [selectedCategory, externalSearchQuery])
 
   const baseTree = treeWithCounts ?? LOCATION_TREE
@@ -198,6 +215,11 @@ export default function LocationFilter({
 
   const listEl = (
     <>
+      {errorMessage && (
+        <div className="mb-2 rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-xs text-red-700">
+          {errorMessage}
+        </div>
+      )}
       <div
         className={
           stickySearch
