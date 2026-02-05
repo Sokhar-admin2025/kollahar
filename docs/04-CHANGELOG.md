@@ -8,6 +8,10 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ### ✨ Tillagt
 
+#### Platsfilter med riktiga counts (get_location_stats)
+- **RPC** `get_location_stats(category_filter, search_query)` i `supabase/migrations/20260204100000_get_location_stats.sql`: Returnerar antal aktiva annonser per location. Parametrarna är valfria; `COALESCE(..., '') = ''` säkerställer att null/tom sträng inte filtrerar bort något – inga filter ger totalt antal per plats.
+- **Frontend**: LocationFilter anropar RPC vid mount och när `selectedCategory` eller `searchQuery` ändras; skickar `null` (inte undefined) när filter är tomt. `mergeLocationCounts()` i `lib/swedish-locations.ts` slår ihop RPC-svar med LOCATION_TREE (län = summa kommuner). Siffrorna (N) bredvid län/kommun uppdateras enligt vald kategori och söktext.
+
 #### Stabil main-layout och scrollbar-fix (inga krympande annonser)
 - **Main-container**: Alltid `w-full max-w-7xl mx-auto px-4`; rubriken "Senaste annonserna" och annonsgridet ligger i samma bredd-begränsade container oavsett antal träffar eller om filter är öppet/stängt.
 - **Tomt tillstånd ("Inga annonser")**: List-området har `w-full min-h-[50vh]` så containern inte krymper; tomt-meddelandet är centrerat inuti utan att påverka förälderns bredd.

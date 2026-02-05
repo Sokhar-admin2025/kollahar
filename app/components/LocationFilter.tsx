@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { ChevronDown, ChevronRight, Search, ListPlus } from 'lucide-react'
-import { LOCATION_TREE } from '@/lib/swedish-locations'
+import { createClient } from '@/lib/supabase/client'
+import { LOCATION_TREE, mergeLocationCounts, type LocationCounty } from '@/lib/swedish-locations'
 
 /** Antal län som visas innan "Visa alla län". */
 const INITIAL_COUNTIES = 8
@@ -20,6 +21,10 @@ interface LocationFilterProps {
   className?: string
   /** I mobil-drawer: sökfält fast överst, listan scrollbar under */
   stickySearch?: boolean
+  /** Vald kategori (t.ex. 'cars') – plats-counts räknas bara för denna kategori när satt */
+  selectedCategory?: string
+  /** Sökfråga – plats-counts räknas bara annonser som matchar title/description */
+  searchQuery?: string
 }
 
 const ROW_MIN_H = 'min-h-[44px]'
@@ -31,19 +36,44 @@ export default function LocationFilter({
   onChange,
   className = '',
   stickySearch = false,
+  selectedCategory,
+  searchQuery: externalSearchQuery = '',
 }: LocationFilterProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [listVisible, setListVisible] = useState(false)
   const [expandedCounties, setExpandedCounties] = useState<Set<string>>(new Set())
   const [showAllCounties, setShowAllCounties] = useState(false)
   const [showAllMunicipalities, setShowAllMunicipalities] = useState<Record<string, boolean>>({})
+  const [treeWithCounts, setTreeWithCounts] = useState<LocationCounty[] | null>(null)
 
+  useEffect(() => {
+    const supabase = createClient()
+    const categoryFilter =
+      selectedCategory && selectedCategory !== 'all' ? selectedCategory : null
+    const searchFilter =
+      typeof externalSearchQuery === 'string' && externalSearchQuery.trim()
+        ? externalSearchQuery.trim()
+        : null
+
+    supabase
+      .rpc('get_location_stats', {
+        category_filter: categoryFilter ?? null,
+        search_query: searchFilter ?? null,
+      })
+      .then(({ data, error }) => {
+        if (error) return
+        const rows = (data ?? []) as { location_value: string; count: number }[]
+        setTreeWithCounts(mergeLocationCounts(LOCATION_TREE, rows))
+      })
+  }, [selectedCategory, externalSearchQuery])
+
+  const baseTree = treeWithCounts ?? LOCATION_TREE
   const showList = listVisible || searchQuery.trim().length > 0
 
   const filteredTree = useMemo(() => {
     const q = searchQuery.trim().toLowerCase()
-    if (!q) return LOCATION_TREE
-    return LOCATION_TREE.filter((county) => {
+    if (!q) return baseTree
+    return baseTree.filter((county) => {
       const countyMatch = county.label.toLowerCase().includes(q)
       const hasMatchingMunicipality = county.municipalities.some((m) =>
         m.label.toLowerCase().includes(q)
@@ -55,7 +85,7 @@ export default function LocationFilter({
         m.label.toLowerCase().includes(q) || county.label.toLowerCase().includes(q)
       ),
     }))
-  }, [searchQuery])
+  }, [searchQuery, baseTree])
 
   const countiesToShow = showAllCounties ? filteredTree : filteredTree.slice(0, INITIAL_COUNTIES)
   const hasMoreCounties = filteredTree.length > INITIAL_COUNTIES && !showAllCounties

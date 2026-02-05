@@ -545,6 +545,58 @@ function buildLocationTree(): LocationCounty[] {
 
 export const LOCATION_TREE: LocationCounty[] = buildLocationTree();
 
+/** Resultat från RPC get_location_stats: location_value (t.ex. "Täby, Stockholms län") och count. */
+export interface LocationStatRow {
+  location_value: string
+  count: number
+}
+
+/**
+ * Slår ihop RPC-svar (location_value + count) med trädstrukturen.
+ * location_value förväntas vara "Kommun, Län". Län = summa av underliggande kommuners count.
+ */
+export function mergeLocationCounts(
+  tree: LocationCounty[],
+  stats: LocationStatRow[]
+): LocationCounty[] {
+  const countyCounts = new Map<string, number>()
+  const munCounts = new Map<string, Map<string, number>>()
+
+  for (const county of tree) {
+    countyCounts.set(county.value, 0)
+    munCounts.set(county.value, new Map(county.municipalities.map((m) => [m.value, 0])))
+  }
+
+  for (const row of stats) {
+    const s = row.location_value.trim()
+    const commaIdx = s.indexOf(',')
+    const kommun = commaIdx >= 0 ? s.slice(0, commaIdx).trim() : ''
+    const lan = commaIdx >= 0 ? s.slice(commaIdx + 1).trim() : ''
+    if (!kommun || !lan) continue
+
+    const county = tree.find((c) => c.label === lan)
+    if (!county) continue
+    const munMap = munCounts.get(county.value)
+    if (!munMap) continue
+    const mun = county.municipalities.find((m) => m.label === kommun)
+    if (!mun) continue
+
+    const prev = munMap.get(mun.value) ?? 0
+    munMap.set(mun.value, prev + row.count)
+  }
+
+  return tree.map((county) => {
+    const munMap = munCounts.get(county.value)!
+    let countySum = 0
+    const municipalities = county.municipalities.map((m) => {
+      const c = munMap.get(m.value) ?? 0
+      countySum += c
+      return { ...m, count: c }
+    })
+    return { ...county, count: countySum, municipalities }
+  })
+}
+
 // Hjälpfunktioner
 export function getKommunerByLan(lan: string): string[] {
   return SWEDISH_KOMMUNER

@@ -438,6 +438,8 @@ function HomePageContent() {
             value={locationFilter}
             onChange={setLocationFilter}
             stickySearch={isFilterOpen}
+            selectedCategory={selectedCategory}
+            searchQuery={searchQuery}
           />
         </div>
 
@@ -546,7 +548,8 @@ function HomePageContent() {
         )}
       </div>
 
-      {/* Avancerade filter (Collapsible) */}
+      {/* Avancerade filter – visas endast när kategorin är Bilar (då finns bil-specifika filter). */}
+      {isCarsCategory && (
       <div className="border-t border-gray-200 pt-4">
         <button
           type="button"
@@ -564,7 +567,6 @@ function HomePageContent() {
         {showMoreFilters && (
           <div className="mt-4 space-y-6">
             {/* Bil-specifika filter */}
-            {isCarsCategory && (
               <>
                 {/* Drivmedel (Chips) */}
                 <div>
@@ -681,10 +683,10 @@ function HomePageContent() {
                   </div>
                 </div>
               </>
-            )}
           </div>
         )}
       </div>
+      )}
 
       <button
         type="button"
