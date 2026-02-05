@@ -11,6 +11,7 @@ import FavoriteButton from '@/app/components/FavoriteButton'
 import Header from '@/app/components/organisms/Header'
 import { createClient } from '@/lib/supabase/client'
 import type { Listing } from '@/app/types'
+import { getListingById } from '@/lib/features/listings/listing-service'
 import { MapPin, Loader2, ChevronLeft, ChevronRight, Calendar, Gauge, Fuel, Settings2, Car, Palette, Zap } from 'lucide-react'
 import { getCategoryLabel, CATEGORY_GROUPS } from '@/lib/categories'
 
@@ -46,17 +47,36 @@ function ListingDetails() {
   const listingId = typeof id === 'string' ? id : id?.[0]
   const t = DASHBOARD_TEXTS.details
 
-  // Bygg tillbaka-URL med bevara sökparametrar
+  // Bygg tillbaka-URL och bevara relevanta filter-parametrar (inkl. plats)
   const backUrl = (() => {
     const q = searchParams.get('q')
     const category = searchParams.get('category')
-    if (q || category) {
-      const params = new URLSearchParams()
-      if (q) params.set('q', q)
-      if (category) params.set('category', category)
-      return `/?${params.toString()}`
-    }
-    return '/'
+    const minPrice = searchParams.get('minPrice')
+    const maxPrice = searchParams.get('maxPrice')
+    const minYear = searchParams.get('minYear')
+    const maxYear = searchParams.get('maxYear')
+    const maxMileage = searchParams.get('maxMileage')
+    const sort = searchParams.get('sort')
+    const counties = searchParams.getAll('county')
+    const municipalities = searchParams.getAll('mun')
+
+    const params = new URLSearchParams()
+
+    if (q) params.set('q', q)
+    if (category) params.set('category', category)
+    if (minPrice) params.set('minPrice', minPrice)
+    if (maxPrice) params.set('maxPrice', maxPrice)
+    if (minYear) params.set('minYear', minYear)
+    if (maxYear) params.set('maxYear', maxYear)
+    if (maxMileage) params.set('maxMileage', maxMileage)
+    if (sort && sort !== 'newest') params.set('sort', sort)
+
+    counties.forEach((c) => params.append('county', c))
+    municipalities.forEach((m) => params.append('mun', m))
+
+    const qs = params.toString()
+    if (!qs) return '/'
+    return `/?${qs}`
   })()
 
   // State för Annons
@@ -70,32 +90,39 @@ function ListingDetails() {
   const [loading, setLoading] = useState(true)
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null)
   const [contacting, setContacting] = useState(false)
+  const [fetchError, setFetchError] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchData = async () => {
-      // 1. Hämta annonsen
-      const { data: adData, error } = await supabase
-        .from('listings')
-        .select('*')
-        .eq('id', listingId)
-        .single()
+      if (!listingId) {
+        setLoading(false)
+        return
+      }
 
-      if (error) {
-        console.error('Error fetching listing:', error)
-      } else {
+      setFetchError(null)
+      const result = await getListingById(listingId)
+
+      if (!result.success) {
+        console.error('Error fetching listing:', result.error)
+        setFetchError(result.error ?? 'Kunde inte hämta annonsen.')
+        setAd(null)
+        setLoading(false)
+        return
+      }
+
+      const adData = result.data
+      if (adData) {
         setAd(adData)
         if (adData.images && adData.images.length > 0) {
           setActiveImageIndex(0)
         }
 
-        // 3. Hämta säljarens profil (NYTT!)
-        // Vi använder adData.user_id för att hitta rätt profil
         const { data: profileData } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', adData.user_id)
           .single()
-        
+
         if (profileData) {
           setSellerProfile(profileData)
         }
@@ -104,7 +131,7 @@ function ListingDetails() {
       setLoading(false)
     }
 
-    if (listingId) fetchData()
+    fetchData()
   }, [listingId])
 
   useEffect(() => {
@@ -173,9 +200,26 @@ function ListingDetails() {
   }
   
   if (!ad) return (
-    <div className="p-10 text-center bg-brand-beige min-h-screen">
+    <div className="p-10 text-center bg-brand-beige min-h-screen flex flex-col items-center">
+      <Header />
+      {fetchError && (
+        <div
+          className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-red-600 text-white text-sm px-4 py-2 rounded-full shadow-lg flex items-center gap-2 max-w-[90vw]"
+          role="alert"
+          aria-live="polite"
+        >
+          <span>{fetchError}</span>
+          <button
+            type="button"
+            onClick={() => setFetchError(null)}
+            className="text-white/80 hover:text-white underline text-xs whitespace-nowrap"
+          >
+            Stäng
+          </button>
+        </div>
+      )}
       <h2 className="text-xl font-display text-brand-green mb-4">{t.notFound.title}</h2>
-      <Link href="/" className="text-brand-green underline hover:text-brand-green/80">{t.notFound.link}</Link>
+      <Link href={backUrl} className="text-brand-green underline hover:text-brand-green/80">{t.notFound.link}</Link>
     </div>
   )
 

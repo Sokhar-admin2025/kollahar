@@ -40,11 +40,10 @@ Detta dokument samlar alla planerade features, tekniska förbättringar och go-l
 - ✅ **SQL-setup skript** - Alla migrations dokumenterade
 
 ### 🔍 Sök & Filter
-- ✅ **Client-side sök** - Söker i titel + beskrivning
-- ✅ **Kategorifilter** - Fungerar client-side
-- 📋 **Server-side search** - Se "Planerade Features" nedan
-- 📋 **Filter på pris/plats/datum** - Se "Planerade Features" nedan
-- 📋 **Sortering** - Se "Planerade Features" nedan
+- ✅ **Server-side listning** - `getListings` med query, kategori, plats, pris, år, mil, bilfilter (bränsle, växellåda, kaross, drivhjul, färg, hk), sortering och paginering (offset/limit)
+- ✅ **Refetch vid filterändring** - Vid ändring av filter hämtas ny första sida från servern; "Visa fler" lägger till nästa sida med samma filter
+- ✅ **Filter-chips och URL-sync** - Valda filter (inkl. plats county/mun) synkas till URL; chips för kategori, plats, pris, år, mil, bilfilter med möjlighet att rensa
+- 📋 **Full-Text Search (utökad)** - Eventuell förbättring av fritextsök (nu: ilike på titel/beskrivning)
 
 ### 🖼️ Bildhantering
 - ✅ **Bilduppladdning** - Max 5 bilder, 2MB, validering
@@ -348,9 +347,7 @@ Detta dokument samlar alla planerade features, tekniska förbättringar och go-l
 
 ### Fase 2: Viktigt (Efter Initial Lansering)
 3. 📋 Om oss-sida (`/about`)
-4. 📋 Server-side search med Full-Text Search
-5. 📋 Filter på pris/plats/datum
-6. 📋 Sortering
+4. 📋 Full-Text Search (utökad) – filter/sortering/paginering är redan server-side
 
 ### Fase 3: Nice to Have
 6. 📋 Push-notifikationer (PWA)
@@ -379,5 +376,5 @@ Detta är en sammanfattning av alla design- och UI-uppgifter som diskuterats:
 
 ---
 
-**Senast uppdaterad:** 2025-01-17  
+**Senast uppdaterad:** 2026-02-05  
 **Nästa granskning:** Vid go-live-planering

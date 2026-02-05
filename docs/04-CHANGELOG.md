@@ -8,6 +8,13 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ### ✨ Tillagt
 
+#### Listningsflöde: server-side filter, paginering och refetch
+- **Listing-service** (`lib/features/listings/listing-service.ts`): `getListings(filters)` med `ListingSearchFilters` (query, category, location, min/max pris, år, mil, bilfilter, offset, limit, sort). `getListingById(id)` för annonsdetalj. Alla filter tillämpas i Supabase-query; UI anropar endast dessa Server Actions (inga direkta Supabase-anrop i komponenter).
+- **Startsida** (`app/page.tsx`, `app/HomePageClient.tsx`): Initial data från `getListings(searchParams)`; filter (inkl. plats county/mun) synkas till URL; filter-chips och sortering; vid filterändring refetch med `getListings(buildFilters(0))` och ersätt listan; "Visa fler"-paginering anropar `getListings` med `offset: ads.length` och lägger till resultat i listan (`hasMore`/`loadingMore`).
+- **Bilfilter på servern**: `ListingSearchFilters` och `getListings` utökade med fuel, gearbox, bodyType, driveWheel, color, horsepowerMin, horsepowerMax (attributes JSONB). `buildFilters()` i HomePageClient skickar alla bilfilter; client-side `filteredAds` används endast för flera platser (servern får en plats-term).
+- **Annonsdetalj** (`app/annons/[id]/page.tsx`): Hämtar med `getListingById`; fel visas i toast med "Stäng"; tillbaka-länk med `backUrl` som bevarar alla filter-parametrar (county/mun).
+- **Kategori-byte**: När användaren byter från Bilar till annan kategori rensas bilfilter (år, mil, bränsle, växellåda, kaross, drivhjul, färg, hk) via `resetCarFilters()` i `handleCategoryChange`.
+
 #### Platsfilter med riktiga counts (get_location_stats)
 - **RPC** `get_location_stats(category_filter, search_query)` i `supabase/migrations/20260204100000_get_location_stats.sql`: Returnerar antal aktiva annonser per location. Parametrarna är valfria; `COALESCE(..., '') = ''` säkerställer att null/tom sträng inte filtrerar bort något – inga filter ger totalt antal per plats.
 - **Frontend**: LocationFilter anropar RPC vid mount och när `selectedCategory` eller `searchQuery` ändras; skickar `null` (inte undefined) när filter är tomt. `mergeLocationCounts()` i `lib/swedish-locations.ts` slår ihop RPC-svar med LOCATION_TREE (län = summa kommuner). Siffrorna (N) bredvid län/kommun uppdateras enligt vald kategori och söktext.
