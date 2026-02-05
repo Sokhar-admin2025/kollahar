@@ -2,7 +2,8 @@ import './globals.css'
 import type { Metadata } from 'next'
 import { Knewave, DM_Sans } from 'next/font/google'
 import Footer from './components/organisms/Footer'
-import CookieConsent from './components/layout/CookieConsent' 
+import CookieConsent from './components/layout/CookieConsent'
+import ScrollbarGutter from './components/ScrollbarGutter' 
 
 const knewave = Knewave({ 
   subsets: ['latin'],
@@ -48,7 +49,7 @@ export default function RootLayout({
   return (
     <html lang="sv">
       <body className={`${dmSans.variable} ${knewave.variable} font-body min-h-screen flex flex-col bg-brand-beige`}>
-        
+        <ScrollbarGutter />
         {/* Huvudinnehållet (växer för att fylla skärmen) */}
         <div className="flex-grow">
           {children}

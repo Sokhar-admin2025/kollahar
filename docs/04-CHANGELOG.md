@@ -8,6 +8,14 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ### ✨ Tillagt
 
+#### Stabil main-layout och scrollbar-fix (inga krympande annonser)
+- **Main-container**: Alltid `w-full max-w-7xl mx-auto px-4`; rubriken "Senaste annonserna" och annonsgridet ligger i samma bredd-begränsade container oavsett antal träffar eller om filter är öppet/stängt.
+- **Tomt tillstånd ("Inga annonser")**: List-området har `w-full min-h-[50vh]` så containern inte krymper; tomt-meddelandet är centrerat inuti utan att påverka förälderns bredd.
+- **Header**: Bredd uppdaterad till `max-w-7xl` så den linjerar med main.
+- **Filter-knapp**: Flyttad från fast vänsterflik till samma rad som "Senaste annonserna" och "X träffar" (desktop), så annonserna inte påverkas av filter-öronen.
+- **Scrollbar så att annonser inte krymper**: Ny komponent `ScrollbarGutter.tsx` mäter scrollbar-bredd och sätter `--scrollbar-width`; i `globals.css` får `html` alltid `padding-right: var(--scrollbar-width)` (alla viewports) så innehållets bredd inte hoppar när användaren skriver i sökfältet eller filtrerar – annonskorten behåller höjd.
+- **LOCATION_TREE**: Byggs från befintliga `SWEDISH_LAN` + `SWEDISH_KOMMUNER` (alla 21 län och alla kommuner) i `lib/swedish-locations.ts`; platsfiltret använder denna lista med "Visa alla län" / "Visa fler kommuner (+X)".
+
 #### Avancerad platsfilter (LocationFilter) och desktop-filter som overlay
 - **LocationFilter-komponent** (`app/components/LocationFilter.tsx`): Checkbox-träd för län/kommun med sök, progressive disclosure och chips-vänlig state
   - Data från `LOCATION_TREE` i `lib/swedish-locations.ts` (label/value/count, sorterad efter befolkningsmängd)
@@ -17,7 +25,7 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 - **Desktop-filter som fixed overlay**: Sidebaren är `fixed inset-y-0 left-0 z-50`, bredd 350px, glider in/ut med transition; annonserna påverkas inte
   - Backdrop (fixed, bg-black/40, z-40) vid öppet filter; klick utanför stänger panelen
   - Filter-tabben visas när panelen är stängt, döljs när panelen är öppen
-- **Layout**: Annons-gallret använder `max-w-6xl mx-auto px-4` så det ligger i kant med header (logo och "Sälj något"-knappen)
+- **Layout**: Annons-gallret och header använder `max-w-7xl mx-auto px-4`; filter-knappen ligger i rubrikraden ("Senaste annonserna").
 
 #### ListingCard och detaljsida - UX-förbättringar
 - **Pris-styling**: Priset är nu högerställt på egen rad i ListingCard för bättre visuell hierarki

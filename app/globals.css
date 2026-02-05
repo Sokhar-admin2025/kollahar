@@ -32,6 +32,19 @@
   }
 }
 
+/* Reservera alltid plats för scrollbar (--scrollbar-width från ScrollbarGutter.tsx)
+   på alla skärmstorlekar så att innehållets bredd inte hoppar när användaren
+   skriver i sökfältet eller filtrerar (annonserna krymper annars i höjd). */
+html {
+  padding-right: var(--scrollbar-width, 17px);
+  box-sizing: border-box;
+}
+html *,
+html *::before,
+html *::after {
+  box-sizing: inherit;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);

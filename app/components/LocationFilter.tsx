@@ -4,7 +4,9 @@ import { useState, useMemo } from 'react'
 import { ChevronDown, ChevronRight, Search, ListPlus } from 'lucide-react'
 import { LOCATION_TREE } from '@/lib/swedish-locations'
 
+/** Antal län som visas innan "Visa alla län". */
 const INITIAL_COUNTIES = 8
+/** Antal kommuner per län innan "Visa fler kommuner". */
 const INITIAL_MUNICIPALITIES = 10
 
 export interface LocationFilterValue {
@@ -57,6 +59,7 @@ export default function LocationFilter({
 
   const countiesToShow = showAllCounties ? filteredTree : filteredTree.slice(0, INITIAL_COUNTIES)
   const hasMoreCounties = filteredTree.length > INITIAL_COUNTIES && !showAllCounties
+  const canCollapseCounties = showAllCounties && filteredTree.length > INITIAL_COUNTIES
 
   const toggleCounty = (countyValue: string) => {
     const county = LOCATION_TREE.find((c) => c.value === countyValue)
@@ -247,9 +250,9 @@ export default function LocationFilter({
                         onClick={() =>
                           setShowAllMunicipalities((prev) => ({ ...prev, [county.value]: true }))
                         }
-                        className={`text-sm text-brand-green hover:underline w-full text-left ${ROW_MIN_H} ${TOUCH_PADDING} px-2 touch-manipulation`}
+                        className="text-sm text-brand-green hover:underline cursor-pointer py-2 pl-2 pr-2 touch-manipulation"
                       >
-                        Visa alla kommuner
+                        Visa fler kommuner (+{county.municipalities.length - INITIAL_MUNICIPALITIES})
                       </button>
                     )}
                   </div>
@@ -264,9 +267,18 @@ export default function LocationFilter({
         <button
           type="button"
           onClick={() => setShowAllCounties(true)}
-          className={`text-sm text-brand-green hover:underline w-full text-center ${ROW_MIN_H} ${TOUCH_PADDING} touch-manipulation shrink-0`}
+          className="text-sm text-brand-green hover:underline cursor-pointer py-2 px-2 w-full text-left touch-manipulation shrink-0"
         >
           Visa alla län
+        </button>
+      )}
+      {canCollapseCounties && (
+        <button
+          type="button"
+          onClick={() => setShowAllCounties(false)}
+          className="text-sm text-brand-green hover:underline cursor-pointer py-2 px-2 w-full text-left touch-manipulation shrink-0"
+        >
+          Visa färre
         </button>
       )}
     </>

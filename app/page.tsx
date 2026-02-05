@@ -428,10 +428,7 @@ function HomePageContent() {
         </select>
       </div>
 
-      {/* Obligatoriska filter överst */}
       <div className="space-y-6">
-        <h3 className="text-sm font-semibold text-brand-text uppercase tracking-wider">Obligatoriska filter</h3>
-        
         {/* Plats: avancerad LocationFilter. I mobil-drawer (stickySearch): sök fast, listan scrollar i egen container. */}
         <div>
           <label className="block text-sm font-medium text-brand-text mb-2 antialiased">
@@ -826,19 +823,8 @@ function HomePageContent() {
         </div>
       )}
 
-      {/* --- ANNONS-GALLERI --- */}
-      <main id="search-results" className="max-w-6xl mx-auto px-4 py-3 flex-grow relative">
-        {/* Desktop Filter-tab: synlig när filtret är stängt, döljs när panelen är öppen */}
-        <button
-          type="button"
-          onClick={() => setIsDesktopFilterOpen(!isDesktopFilterOpen)}
-          className={`hidden lg:flex fixed left-0 top-1/2 -translate-y-1/2 z-40 bg-brand-green text-white px-3 py-6 rounded-r-xl shadow-lg hover:bg-brand-green/90 transition-all font-medium items-center justify-center ${isDesktopFilterOpen ? 'lg:hidden' : ''}`}
-          style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}
-          aria-label="Öppna filter"
-        >
-          Filter
-        </button>
-
+      {/* --- ANNONS-GALLERI: statisk bredd, oberoende av sidebar/filter/antal träffar --- */}
+      <main id="search-results" className="w-full max-w-7xl mx-auto px-4 py-3 flex-grow relative">
         {/* Backdrop: klick utanför panelen stänger filtret */}
         {isDesktopFilterOpen && (
           <div
@@ -871,8 +857,8 @@ function HomePageContent() {
           </div>
         </aside>
 
-        {/* Annonser: centrerad container, opåverkad av om filtret är öppet eller ej */}
-        <div>
+        {/* Rubrik och grid i samma container – bredd styrs av main (max-w-7xl). */}
+        <div className="min-w-0 w-full">
           {/* ARIA-live region för skärmläsare */}
           <div 
             aria-live="polite" 
@@ -887,9 +873,20 @@ function HomePageContent() {
             }
           </div>
           
-          <div className="flex justify-between items-end mb-3">
+          <div className="flex justify-between items-end gap-3 mb-3">
             <h3 className="text-2xl font-display text-brand-green">{t.landing.listings.header}</h3>
-            <span className="text-sm text-brand-text/70">{filteredAds.length} träffar</span>
+            <div className="flex items-center gap-3 shrink-0">
+              <span className="text-sm text-brand-text/70">{filteredAds.length} träffar</span>
+              <button
+                type="button"
+                onClick={() => setIsDesktopFilterOpen(!isDesktopFilterOpen)}
+                className="hidden lg:inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-green text-white text-sm font-medium shadow-sm hover:bg-brand-green/90 transition-colors"
+                aria-label={isDesktopFilterOpen ? 'Stäng filter' : 'Öppna filter'}
+              >
+                <SlidersHorizontal className="w-4 h-4" aria-hidden />
+                Filter
+              </button>
+            </div>
           </div>
 
           {/* Aktiva filter som chips */}
@@ -1097,33 +1094,39 @@ function HomePageContent() {
             )}
           </div>
 
-          {loading ? (
-            <div className="text-center py-20 text-brand-text/60">Laddar annonser...</div>
-          ) : filteredAds.length === 0 ? (
-            <div className="text-center py-20 bg-white rounded-xl shadow-md border border-dashed border-gray-300">
-              <p className="text-brand-text/70 text-lg">{t.landing.listings.empty}</p>
-              <button 
-                onClick={() => {
-                  setSearchQuery('')
-                  resetFilters()
-                  setSearchSubmitted(false)
-                }} 
-                className="text-brand-green underline mt-2 hover:text-brand-green/80"
-              >
-                Rensa sökning
-              </button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-              {filteredAds.map((ad) => (
-                <ListingCard
-                  key={ad.id}
-                  listing={ad}
-                  currentUserId={currentUserId}
-                />
-              ))}
-            </div>
-          )}
+          {/* List-område: alltid full bredd och minst 50vh så containern inte krymper vid 0 träffar. */}
+          <div className="w-full min-h-[50vh]">
+            {loading ? (
+              <div className="text-center py-20 text-brand-text/60">Laddar annonser...</div>
+            ) : filteredAds.length === 0 ? (
+              <div className="flex items-center justify-center w-full min-h-[50vh]">
+                <div className="text-center py-20 px-6 bg-white rounded-xl shadow-md border border-dashed border-gray-300">
+                  <p className="text-brand-text/70 text-lg">{t.landing.listings.empty}</p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery('')
+                      resetFilters()
+                      setSearchSubmitted(false)
+                    }}
+                    className="text-brand-green underline mt-2 hover:text-brand-green/80"
+                  >
+                    Rensa sökning
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                {filteredAds.map((ad) => (
+                  <ListingCard
+                    key={ad.id}
+                    listing={ad}
+                    currentUserId={currentUserId}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </main>
 
