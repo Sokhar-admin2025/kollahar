@@ -285,14 +285,18 @@ export default function HomePageClient({ initialAds, initialError }: HomePageCli
     const hpMin = horsepowerMin ? parseInt(horsepowerMin, 10) : undefined
     const hpMax = horsepowerMax ? parseInt(horsepowerMax, 10) : undefined
 
+    // Plats: servern får EN plats-term; multi-select (flera län/kommuner) hanteras client-side.
+    const totalLocationSelections =
+      locationFilter.fullCounties.length + locationFilter.partialMunicipalities.length
     let location: string | undefined
-    if (locationFilter.fullCounties.length > 0) {
-      const county = getCountyByValue(locationFilter.fullCounties[0])
-      location = county?.label
-    }
-    if (!location && locationFilter.partialMunicipalities.length > 0) {
-      const m = locationFilter.partialMunicipalities[0]
-      location = getMunicipalityLabel(m.countyValue, m.municipalityValue)
+    if (totalLocationSelections === 1) {
+      if (locationFilter.fullCounties.length === 1) {
+        const county = getCountyByValue(locationFilter.fullCounties[0])
+        location = county?.label
+      } else if (locationFilter.partialMunicipalities.length === 1) {
+        const m = locationFilter.partialMunicipalities[0]
+        location = getMunicipalityLabel(m.countyValue, m.municipalityValue)
+      }
     }
 
     return {
