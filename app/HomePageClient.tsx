@@ -14,7 +14,9 @@ import { CATEGORY_GROUPS, getCategoryLabel } from '@/lib/categories'
 import { getCountyByValue, getMunicipalityLabel } from '@/lib/swedish-locations'
 import CarMakeModelCombobox from './components/CarMakeModelCombobox'
 import LocationFilter, { type LocationFilterValue } from './components/LocationFilter'
-import { getListings, type ListingSearchFilters } from '@/lib/features/listings/listing-service'
+import PriceInput from './components/PriceInput'
+import { getPriceOptions, parsePrice } from '@/lib/features/listings/price-utils'
+import type { ListingSearchFilters } from '@/lib/features/listings/listing-service'
 
 const supabase = createClient()
 const PAGE_SIZE = 24
@@ -277,8 +279,8 @@ export default function HomePageClient({ initialAds, initialError }: HomePageCli
 
   /** Bygger serverfilter från aktuellt state (samma logik som page.tsx). */
   const buildFilters = (offset: number): ListingSearchFilters => {
-    const minPrice = priceMin ? parseInt(priceMin, 10) : undefined
-    const maxPrice = priceMax ? parseInt(priceMax, 10) : undefined
+    const minPrice = priceMin ? parsePrice(priceMin) ?? undefined : undefined
+    const maxPrice = priceMax ? parsePrice(priceMax) ?? undefined : undefined
     const minYear = yearFrom ? parseInt(yearFrom, 10) : undefined
     const maxYear = yearTo ? parseInt(yearTo, 10) : undefined
     const maxMileageNum = maxMileage ? parseInt(maxMileage, 10) : undefined
@@ -328,24 +330,37 @@ export default function HomePageClient({ initialAds, initialError }: HomePageCli
       return
     }
     let cancelled = false
-    setLoading(true)
-    setServerError(null)
-    getListings(buildFilters(0))
-      .then((result) => {
+    const run = async () => {
+      setLoading(true)
+      setServerError(null)
+      try {
+        const res = await fetch('/api/listings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filters: buildFilters(0) }),
+        })
+        const json = await res.json()
         if (cancelled) return
-        if (!result.success) {
-          setServerError(result.error ?? null)
+        if (!res.ok) {
+          setServerError(json?.error ?? 'Kunde inte hämta annonser just nu.')
           setAds([])
           setHasMore(false)
         } else {
-          const data = result.data ?? []
+          const data = (json?.data ?? []) as Listing[]
           setAds(data)
           setHasMore(data.length === PAGE_SIZE)
         }
-      })
-      .finally(() => {
+      } catch (err) {
+        if (cancelled) return
+        console.error('Refetch listings failed', err)
+        setServerError('Kunde inte hämta annonser just nu. Försök igen senare.')
+        setAds([])
+        setHasMore(false)
+      } finally {
         if (!cancelled) setLoading(false)
-      })
+      }
+    }
+    run()
     return () => {
       cancelled = true
     }
@@ -373,17 +388,29 @@ export default function HomePageClient({ initialAds, initialError }: HomePageCli
     setLoadingMore(true)
     setServerError(null)
     const nextOffset = ads.length
-    const result = await getListings(buildFilters(nextOffset))
-    if (!result.success) {
-      setServerError(result.error ?? null)
+    try {
+      const res = await fetch('/api/listings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filters: buildFilters(nextOffset) }),
+      })
+      const json = await res.json()
+      if (!res.ok) {
+        setServerError(json?.error ?? 'Kunde inte hämta fler annonser just nu.')
+        setHasMore(false)
+        setLoadingMore(false)
+        return
+      }
+      const newListings = (json?.data ?? []) as Listing[]
+      setAds((prev) => [...prev, ...newListings])
+      setHasMore(newListings.length === PAGE_SIZE)
+    } catch (err) {
+      console.error('Load more listings failed', err)
+      setServerError('Kunde inte hämta fler annonser just nu.')
       setHasMore(false)
+    } finally {
       setLoadingMore(false)
-      return
     }
-    const newListings = result.data ?? []
-    setAds((prev) => [...prev, ...newListings])
-    setHasMore(newListings.length === PAGE_SIZE)
-    setLoadingMore(false)
   }
 
   const fuelOptions = ['Bensin', 'Diesel', 'El', 'Gas', 'Hybrid'].sort()
@@ -506,23 +533,26 @@ export default function HomePageClient({ initialAds, initialError }: HomePageCli
             Prisintervall (kr)
           </label>
           <div className="grid grid-cols-2 gap-3">
-            <input
-              type="number"
-              min={0}
+            <PriceInput
+              label="Min"
+              value={priceMin ? parsePrice(priceMin) ?? null : null}
+              onChange={(val) => setPriceMin(val != null ? String(val) : '')}
+              options={getPriceOptions(selectedCategory)}
               placeholder="Min kr"
-              className="w-full p-3 border border-gray-300 rounded-xl bg-white text-brand-text antialiased"
-              value={priceMin}
-              onChange={(e) => setPriceMin(e.target.value)}
             />
-            <input
-              type="number"
-              min={0}
+            <PriceInput
+              label="Max"
+              value={priceMax ? parsePrice(priceMax) ?? null : null}
+              onChange={(val) => setPriceMax(val != null ? String(val) : '')}
+              options={getPriceOptions(selectedCategory)}
               placeholder="Max kr"
-              className="w-full p-3 border border-gray-300 rounded-xl bg-white text-brand-text antialiased"
-              value={priceMax}
-              onChange={(e) => setPriceMax(e.target.value)}
             />
           </div>
+          {priceMin && priceMax && (parsePrice(priceMin) ?? 0) > (parsePrice(priceMax) ?? 0) && (
+            <p className="mt-1 text-xs text-red-600">
+              Lägsta pris kan inte vara högre än högsta pris.
+            </p>
+          )}
         </div>
 
         {/* Bil-specifika primära filter */}
