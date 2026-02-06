@@ -1,10 +1,12 @@
--- RPC: Returnerar antal aktiva annonser per location, med valfria filter (kategori, sökfråga).
+-- RPC: Returnerar antal aktiva annonser per location, med valfria filter (kategori, sökfråga, pris).
 -- listnings.location är text, t.ex. "Täby, Stockholms län" (kommun, län).
--- Frontend skickar category_filter (t.ex. 'cars') och/eller search_query så att siffrorna matchar valda filter.
+-- Frontend skickar category_filter, search_query, min_price, max_price så att siffrorna matchar valda filter.
 
 create or replace function public.get_location_stats(
   category_filter text default null,
-  search_query text default null
+  search_query text default null,
+  min_price integer default null,
+  max_price integer default null
 )
 returns table (location_value text, count integer)
 language sql
@@ -21,8 +23,10 @@ as $$
       or title ilike '%' || search_query || '%'
       or description ilike '%' || search_query || '%'
     )
+    and (min_price is null or price >= min_price)
+    and (max_price is null or price <= max_price)
   group by location;
 $$;
 
-comment on function public.get_location_stats(text, text) is
-  'Antal annonser per område. category_filter: t.ex. cars. search_query: fritext för title/description.';
+comment on function public.get_location_stats(text, text, integer, integer) is
+  'Antal annonser per område. category_filter, search_query, min_price, max_price är valfria.';

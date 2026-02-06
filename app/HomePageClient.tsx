@@ -14,8 +14,8 @@ import { CATEGORY_GROUPS, getCategoryLabel } from '@/lib/categories'
 import { getCountyByValue, getMunicipalityLabel } from '@/lib/swedish-locations'
 import CarMakeModelCombobox from './components/CarMakeModelCombobox'
 import LocationFilter, { type LocationFilterValue } from './components/LocationFilter'
-import PriceInput from './components/PriceInput'
-import { getPriceOptions, parsePrice } from '@/lib/features/listings/price-utils'
+import { PriceInput } from '@/components/listings/filters/price-input'
+import { formatCurrency, getPriceOptions, parsePrice } from '@/lib/features/listings/utils/price-utils'
 import type { ListingSearchFilters } from '@/lib/features/listings/listing-service'
 
 const supabase = createClient()
@@ -524,6 +524,8 @@ export default function HomePageClient({ initialAds, initialError }: HomePageCli
             stickySearch={isFilterOpen}
             selectedCategory={selectedCategory}
             searchQuery={searchQuery}
+            minPrice={priceMin ? parsePrice(priceMin) ?? undefined : undefined}
+            maxPrice={priceMax ? parsePrice(priceMax) ?? undefined : undefined}
           />
         </div>
 
@@ -533,20 +535,24 @@ export default function HomePageClient({ initialAds, initialError }: HomePageCli
             Prisintervall (kr)
           </label>
           <div className="grid grid-cols-2 gap-3">
-            <PriceInput
-              label="Min"
-              value={priceMin ? parsePrice(priceMin) ?? null : null}
-              onChange={(val) => setPriceMin(val != null ? String(val) : '')}
-              options={getPriceOptions(selectedCategory)}
-              placeholder="Min kr"
-            />
-            <PriceInput
-              label="Max"
-              value={priceMax ? parsePrice(priceMax) ?? null : null}
-              onChange={(val) => setPriceMax(val != null ? String(val) : '')}
-              options={getPriceOptions(selectedCategory)}
-              placeholder="Max kr"
-            />
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1">Min</label>
+              <PriceInput
+                label="Min pris"
+                value={priceMin ? parsePrice(priceMin) ?? undefined : undefined}
+                onChange={(val) => setPriceMin(val != null ? String(val) : '')}
+                options={getPriceOptions(selectedCategory)}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1">Max</label>
+              <PriceInput
+                label="Max pris"
+                value={priceMax ? parsePrice(priceMax) ?? undefined : undefined}
+                onChange={(val) => setPriceMax(val != null ? String(val) : '')}
+                options={getPriceOptions(selectedCategory)}
+              />
+            </div>
           </div>
           {priceMin && priceMax && (parsePrice(priceMin) ?? 0) > (parsePrice(priceMax) ?? 0) && (
             <p className="mt-1 text-xs text-red-600">
@@ -1031,7 +1037,7 @@ export default function HomePageClient({ initialAds, initialError }: HomePageCli
                 onClick={() => removeFilterChip('priceMin', '')}
                 className="inline-flex items-center gap-1 px-3 py-1 text-xs rounded-full bg-brand-green/5 text-brand-text"
               >
-                <span>Min {priceMin} kr</span>
+                <span>Min {formatCurrency(parsePrice(priceMin) ?? 0)}</span>
                 <X className="w-3 h-3" />
               </button>
             )}
@@ -1042,7 +1048,7 @@ export default function HomePageClient({ initialAds, initialError }: HomePageCli
                 onClick={() => removeFilterChip('priceMax', '')}
                 className="inline-flex items-center gap-1 px-3 py-1 text-xs rounded-full bg-brand-green/5 text-brand-text"
               >
-                <span>Max {priceMax} kr</span>
+                <span>Max {formatCurrency(parsePrice(priceMax) ?? 0)}</span>
                 <X className="w-3 h-3" />
               </button>
             )}

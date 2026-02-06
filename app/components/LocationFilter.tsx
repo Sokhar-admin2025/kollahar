@@ -25,6 +25,10 @@ interface LocationFilterProps {
   selectedCategory?: string
   /** Sökfråga – plats-counts räknas bara annonser som matchar title/description */
   searchQuery?: string
+  /** Min pris (kr) – plats-counts räknas bara annonser med price >= minPrice */
+  minPrice?: number | null
+  /** Max pris (kr) – plats-counts räknas bara annonser med price <= maxPrice */
+  maxPrice?: number | null
 }
 
 const ROW_MIN_H = 'min-h-[44px]'
@@ -38,6 +42,8 @@ export default function LocationFilter({
   stickySearch = false,
   selectedCategory,
   searchQuery: externalSearchQuery = '',
+  minPrice,
+  maxPrice,
 }: LocationFilterProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [listVisible, setListVisible] = useState(false)
@@ -61,6 +67,8 @@ export default function LocationFilter({
       const result = await getLocationStats({
         categoryFilter,
         searchQuery: searchFilter,
+        minPrice: minPrice ?? null,
+        maxPrice: maxPrice ?? null,
       })
 
       if (!isMounted) return
@@ -82,7 +90,7 @@ export default function LocationFilter({
     return () => {
       isMounted = false
     }
-  }, [selectedCategory, externalSearchQuery])
+  }, [selectedCategory, externalSearchQuery, minPrice, maxPrice])
 
   const baseTree = treeWithCounts ?? LOCATION_TREE
   const showList = listVisible || searchQuery.trim().length > 0

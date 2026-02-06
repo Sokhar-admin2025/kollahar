@@ -5,6 +5,8 @@ import type { LocationStatRow } from '@/lib/swedish-locations'
 export interface LocationStatsParams {
   categoryFilter?: string | null
   searchQuery?: string | null
+  minPrice?: number | null
+  maxPrice?: number | null
 }
 
 /**
@@ -19,11 +21,13 @@ export async function getLocationStats(
 ): Promise<ServiceResult<LocationStatRow[]>> {
   try {
     const supabase = createClient()
-    const { categoryFilter, searchQuery } = params
+    const { categoryFilter, searchQuery, minPrice, maxPrice } = params
 
     const { data, error } = await supabase.rpc('get_location_stats', {
       category_filter: categoryFilter ?? null,
       search_query: searchQuery ?? null,
+      min_price: minPrice ?? null,
+      max_price: maxPrice ?? null,
     })
 
     if (error) {
