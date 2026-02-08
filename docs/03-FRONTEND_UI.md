@@ -63,16 +63,25 @@ Använder Tailwind's standard spacing scale:
 Komponenter är organiserade enligt Atomic Design:
 
 ```
-app/components/
-├── atoms/              # Små, återanvändbara komponenter
-│   └── Button.tsx
-├── layout/             # Layout-komponenter
-│   └── CookieConsent.tsx
-├── FavoriteButton.tsx  # Molecule (atom + logik)
-├── ListingCard.tsx     # Molecule (flera atoms)
-└── organisms/          # Större komponenter
-    └── Footer.tsx
+app/
+├── context/
+│   └── HeaderOptionsContext.tsx   # Context för header-sök (startsidan)
+├── components/
+│   ├── atoms/
+│   │   └── Button.tsx
+│   ├── layout/
+│   │   ├── CookieConsent.tsx
+│   │   └── LayoutWithHeader.tsx  # Wrapper: Header + HeaderOptionsProvider + children
+│   ├── FavoriteButton.tsx
+│   ├── InboxClient.tsx           # Meddelanden/inkorg (Realtime-prenumeration)
+│   ├── ListingCard.tsx
+│   └── organisms/
+│       ├── Footer.tsx
+│       └── Header.tsx            # Får initialUserId/initialIsVerified från layout (server)
+└── ...
 ```
+
+**Header & auth:** Header renderas i rot-layouten via `LayoutWithHeader`. Användaren hämtas på servern (`app/layout.tsx`) och skickas som `initialUserId`/`initialIsVerified` så att det inte flimrar mellan "Logga in" och profil. Sökfältet i headern styrs via `HeaderOptionsContext` när användaren är på startsidan.
 
 ### Button Component
 
@@ -407,7 +416,7 @@ interface CreateListingFormProps {
 - Visas bara om profil finns
 
 **Kontaktknapp:**
-- Skapar konversation via `messageService`
+- Skapar konversation via `createConversationAction` (message-actions)
 - Redirectar till `/dashboard/messages`
 - Disabled om annonsen är såld
 

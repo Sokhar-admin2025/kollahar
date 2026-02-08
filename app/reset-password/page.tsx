@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { DASHBOARD_TEXTS } from '@/app/lib/content'
-import Header from '@/app/components/organisms/Header'
 import Button from '@/app/components/atoms/Button'
 import { AUTH_CONFIG } from '@/lib/constants'
 
@@ -118,7 +117,6 @@ export default function ResetPasswordPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-brand-beige">
-      <Header />
       <div className="flex flex-col items-center justify-center flex-grow px-4">
         <div className="w-full max-w-md bg-white rounded-xl shadow-md p-8 border border-gray-200">
           <h1 className="text-2xl font-display text-brand-green text-center mb-2">

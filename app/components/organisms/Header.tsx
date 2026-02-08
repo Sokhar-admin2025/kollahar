@@ -7,10 +7,16 @@ import { useEffect, useState } from 'react'
 import UserMenu from '../UserMenu'
 import Button from '../atoms/Button'
 import { DASHBOARD_TEXTS } from '@/app/lib/content'
+import { useHeaderOptions } from '@/app/context/HeaderOptionsContext'
 
 const supabase = createClient()
 
 interface HeaderProps {
+  /** Server-hämtat – används för initial rendering (ingen flimmer). */
+  initialUserId?: string | null
+  /** Server-hämtat från profile.otp_verified. */
+  initialIsVerified?: boolean
+  /** Sök-props kan sättas via useHeaderOptions() (t.ex. från HomePageClient); fallback om inte context används. */
   showSearch?: boolean
   searchQuery?: string
   onSearchChange?: (value: string) => void
@@ -19,68 +25,31 @@ interface HeaderProps {
 }
 
 export default function Header({
-  showSearch = false,
-  searchQuery = '',
-  onSearchChange,
-  onSearchSubmit,
-  onClearSearch,
+  initialUserId = null,
+  initialIsVerified = true,
+  showSearch: showSearchProp,
+  searchQuery: searchQueryProp,
+  onSearchChange: onSearchChangeProp,
+  onSearchSubmit: onSearchSubmitProp,
+  onClearSearch: onClearSearchProp,
 }: HeaderProps) {
   const router = useRouter()
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
-  const [isVerified, setIsVerified] = useState<boolean>(true) // Default true för att inte låsa ute gamla användare
+  const { options: headerOptions } = useHeaderOptions()
+
+  const showSearch = showSearchProp ?? headerOptions.showSearch ?? false
+  const searchQuery = searchQueryProp ?? headerOptions.searchQuery ?? ''
+  const onSearchChange = onSearchChangeProp ?? headerOptions.onSearchChange
+  const onSearchSubmit = onSearchSubmitProp ?? headerOptions.onSearchSubmit
+  const onClearSearch = onClearSearchProp ?? headerOptions.onClearSearch
+
+  const [currentUserId, setCurrentUserId] = useState<string | null>(initialUserId ?? null)
+  const [isVerified, setIsVerified] = useState<boolean>(initialIsVerified)
   const t = DASHBOARD_TEXTS
 
   useEffect(() => {
-    const initAuth = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      const userId = user?.id ?? null
-
-      // VIKTIGT: Kontrollera OTP-status INNAN vi sätter currentUserId
-      // Detta förhindrar att profilikonen blinkar fram när sidan laddas
-      if (userId) {
-        try {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('otp_verified')
-            .eq('id', userId)
-            .single()
-
-          const otpVerified =
-            profile && typeof profile.otp_verified === 'boolean'
-              ? profile.otp_verified
-              : true // Fallback: lås inte ute användare om vi inte kan kontrollera
-
-          setIsVerified(otpVerified)
-
-          // Om kontot inte är verifierat → logga ut omedelbart och visa INTE profilikonen
-          if (!otpVerified) {
-            await supabase.auth.signOut()
-            setCurrentUserId(null)
-            setIsVerified(true)
-            return // Avbryt här så att vi inte sätter currentUserId
-          }
-
-          // Endast om kontot är verifierat → visa profilikonen
-          setCurrentUserId(userId)
-        } catch (err) {
-          // Om vi inte kan kontrollera → lås inte ute användaren (fallback)
-          console.warn('Kunde inte kontrollera OTP-status i header:', err)
-          setIsVerified(true)
-          setCurrentUserId(userId)
-        }
-      } else {
-        setCurrentUserId(null)
-        setIsVerified(true)
-      }
-    }
-
-    initAuth()
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       const userId = session?.user?.id ?? null
 
-      // VIKTIGT: Kontrollera OTP-status INNAN vi sätter currentUserId
-      // Detta förhindrar att profilikonen blinkar fram när en session skapas
       if (userId) {
         try {
           const { data: profile } = await supabase
@@ -96,19 +65,16 @@ export default function Header({
 
           setIsVerified(otpVerified)
 
-          // Om kontot inte är verifierat → logga ut omedelbart och visa INTE profilikonen
           if (!otpVerified) {
             await supabase.auth.signOut()
             setCurrentUserId(null)
             setIsVerified(true)
-            return // Avbryt här så att vi inte sätter currentUserId
+            return
           }
 
-          // Endast om kontot är verifierat → visa profilikonen
           setCurrentUserId(userId)
         } catch (err) {
           console.warn('Kunde inte kontrollera OTP-status vid auth state change:', err)
-          // Fallback: lås inte ute användaren om vi inte kan kontrollera
           setIsVerified(true)
           setCurrentUserId(userId)
         }

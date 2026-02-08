@@ -180,7 +180,7 @@ CREATE TABLE public.listings (
 - `images`: Array av bild-URLs (från `listing-images` bucket)
 - `status`: Status (`'active'`, `'sold'`, `'deleted'`)
 - `created_at`: Skapad datum
-- `deleted_at`: Borttagen datum (sätts när status ändras till `'sold'`)
+- `deleted_at`: Borttagen datum (sätts inte vid `'sold'`; sålda annonser visas för alla med banner "Såld")
 
 #### 4. `public.favorites`
 
@@ -305,6 +305,12 @@ CREATE POLICY "Public read active ads"
   FOR SELECT
   USING (status = 'active');
 
+-- Public read sold listings (så att besökare kan se annonssidan som "Såld" utan 404)
+CREATE POLICY "Public read sold listings"
+  ON public.listings
+  FOR SELECT
+  USING (status = 'sold');
+
 -- Auth users create ads
 CREATE POLICY "Auth users create ads"
   ON public.listings
@@ -408,53 +414,19 @@ CREATE POLICY "Users send messages"
 
 ## 🔧 Service Layer
 
-### `listingService.ts`
+### Listing-service (`lib/features/listings/listing-service.ts`)
 
-Abstraktioner för listing-relaterade operationer.
+All listing-relaterad datahämtning och mutation sker via denna server-baserade service (Supabase med cookie-session). Exempel: `getListings(filters)`, `getListingById(id)`, `getUserListings(userId)`, `createListing`, `updateListing`, `toggleFavorite`, `getFavoriteListings`, `getFavoriteIds`.
 
+**Användning (Server Components / Server Actions):**
 ```typescript
-// app/services/listingService.ts
-export const listingService = {
-  getAllActive: async (): Promise<Listing[]> => {
-    // Hämta alla aktiva annonser
-  },
-  
-  getById: async (id: string): Promise<Listing | null> => {
-    // Hämta specifik annons
-  }
-}
+import { getListings, getListingById } from '@/lib/features/listings/listing-service'
+const result = await getListings({ category: 'cars', limit: 24 })
 ```
 
-**Användning:**
-```typescript
-import { listingService } from '@/app/services/listingService'
-const listings = await listingService.getAllActive()
-```
+### Message-service (`lib/features/messages/message-service.ts`)
 
-### `messageService.ts`
-
-Abstraktioner för meddelanden.
-
-```typescript
-// app/services/messageService.ts
-export const messageService = {
-  createConversation: async (listingId, buyerId, sellerId) => {
-    // Skapa eller hämta befintlig konversation
-  },
-  
-  getMyConversations: async (userId) => {
-    // Hämta alla konversationer för användare
-  },
-  
-  getMessages: async (conversationId) => {
-    // Hämta meddelanden i konversation
-  },
-  
-  sendMessage: async (conversationId, senderId, content) => {
-    // Skicka meddelande
-  }
-}
-```
+Meddelande- och konversationslogik med server-Supabase: `getMyConversations(userId)`, `getUnreadConversationIds(userId)`, `getMessages(conversationId)`, `markConversationAsRead(conversationId, userId)`, `sendMessage(conversationId, senderId, content)`, `createConversation(listingId, buyerId, sellerId)`. Anropas från Server Components eller via `app/actions/message-actions.ts` (sendMessageAction, markAsReadAction, getMessagesAction, createConversationAction).
 
 ## 🛡️ Säkerhetsbestämmelser
 
@@ -513,6 +485,7 @@ Migrations ligger i `supabase/migrations/`:
 
 - `20260116090000_create_favorites.sql`: Skapar favorites-tabellen och RLS policies
 - `20260205100000_listings_own_select_policy.sql`: Lägger till RLS-policy "Users can view all own listings" på `listings` så att inloggade användare kan se alla egna annonser (aktiva + sålda) i Dashboard.
+- `20260206100000_public_read_sold_listings.sql`: Lägger till RLS-policy "Public read sold listings" på `listings` så att besökare kan läsa sålda annonser (visas som "Såld" på annonssidan).
 
 Utöver migrations finns även manuella setup-skript:
 

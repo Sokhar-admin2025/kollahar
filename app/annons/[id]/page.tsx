@@ -6,9 +6,8 @@ import Link from 'next/link'
 
 import { DASHBOARD_TEXTS } from '@/app/lib/content'
 import Button from '@/app/components/atoms/Button'
-import { messageService } from '@/app/services/messageService'
+import { createConversationAction } from '@/app/actions/message-actions'
 import FavoriteButton from '@/app/components/FavoriteButton'
-import Header from '@/app/components/organisms/Header'
 import { createClient } from '@/lib/supabase/client'
 import type { Listing } from '@/app/types'
 import { getListingById } from '@/lib/features/listings/listing-service'
@@ -174,12 +173,12 @@ function ListingDetails() {
     setContacting(true)
 
     try {
-      await messageService.createConversation(
-        ad.id,
-        currentUser.id,
-        ad.user_id
-      )
-      router.push('/dashboard/messages')
+      const result = await createConversationAction(ad.id, ad.user_id)
+      if (result.success) {
+        router.push('/dashboard/messages')
+      } else {
+        alert(result.error ?? "Kunde inte starta chatten just nu.")
+      }
     } catch (error) {
       console.error(error)
       alert("Kunde inte starta chatten just nu.")
@@ -201,7 +200,6 @@ function ListingDetails() {
   
   if (!ad) return (
     <div className="p-10 text-center bg-brand-beige min-h-screen flex flex-col items-center">
-      <Header />
       {fetchError && (
         <div
           className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-red-600 text-white text-sm px-4 py-2 rounded-full shadow-lg flex items-center gap-2 max-w-[90vw]"
@@ -223,6 +221,7 @@ function ListingDetails() {
     </div>
   )
 
+  const isSold = ad.status === 'sold' || !!ad.deleted_at
   const images = ad.images || []
   const activeImage = images[activeImageIndex] || null
 
@@ -238,18 +237,23 @@ function ListingDetails() {
 
   return (
     <div className="min-h-screen bg-brand-beige flex flex-col">
-      <Header />
-      
       <div className="max-w-4xl mx-auto py-10 px-4 flex-grow">
         <Link href={backUrl} className="inline-block mb-6 text-sm font-medium text-brand-text/70 hover:text-brand-green transition">
           {t.backToHome}
         </Link>
 
+        {isSold && (
+          <div className="mb-6 rounded-xl bg-amber-500/90 text-white px-6 py-4 text-center shadow-lg border-2 border-amber-600" role="alert">
+            <p className="text-xl md:text-2xl font-bold uppercase tracking-wide">Tyvärr, denna vara är såld</p>
+            <p className="text-sm mt-1 opacity-95">Du kan fortfarande se innehållet men det går inte att kontakta säljaren.</p>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           
           {/* --- BILDGALLERI (VÄNSTER) --- */}
           <div className="flex flex-col gap-4">
-            <div className="bg-white rounded-xl overflow-hidden shadow-md border border-gray-200 aspect-square relative">
+            <div className={`bg-white rounded-xl overflow-hidden shadow-md border border-gray-200 aspect-square relative ${isSold ? 'opacity-75' : ''}`}>
               {activeImage ? (
                 <img src={activeImage} alt={ad.title} className="w-full h-full object-cover transition-all duration-300" />
               ) : (
@@ -283,7 +287,7 @@ function ListingDetails() {
             </div>
 
             {images.length > 1 && (
-              <div className="flex gap-2 overflow-x-auto pb-2">
+              <div className={`flex gap-2 overflow-x-auto pb-2 ${isSold ? 'opacity-75' : ''}`}>
                 {images.map((img: string, index: number) => (
                   <button 
                     key={index}
@@ -522,8 +526,8 @@ function ListingDetails() {
                   </div>
                 </div>
 
-                {/* Kontaktknapp */}
-                {ad.status === 'active' ? (
+                {/* Kontaktknapp (döljs när annonsen är såld/borttagen) */}
+                {!isSold ? (
                   <Button 
                     onClick={handleContact} 
                     className="w-full py-4 text-lg font-bold shadow-lg"

@@ -8,6 +8,31 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ### ✨ Tillagt
 
+#### Header: server-side auth (ingen flimmer)
+- **Layout** (`app/layout.tsx`): Rot-layouten är async och hämtar användaren med `createClient()` (server) + `auth.getUser()` samt `profile.otp_verified`. Skickar `initialUserId` och `initialIsVerified` till en klient-wrapper.
+- **LayoutWithHeader** (`app/components/layout/LayoutWithHeader.tsx`): Klientkomponent som renderar Header (med server-user) och children; använder `HeaderOptionsProvider` så att startsidan kan styra sökfält via context.
+- **Header** (`app/components/organisms/Header.tsx`): Tar emot `initialUserId` och `initialIsVerified` som props; använder dem som initial state (`useState(initialUserId)` etc.) så att första render visar rätt (Logga in vs profil) utan väntan på klient-auth. `onAuthStateChange` behålls för live-uppdatering vid in/utloggning. Sök på startsidan styrs via `useHeaderOptions()` (context).
+- **HeaderOptionsContext** (`app/context/HeaderOptionsContext.tsx`): Context för `showSearch`, `searchQuery`, `onSearchChange`, `onSearchSubmit`, `onClearSearch`. HomePageClient sätter dessa när `pathname === '/'`.
+- **Sidor**: Header är borttagen från alla undersidor; den renderas endast en gång i layouten.
+
+#### Sålda annonser: visa som "Såld" istället för 404
+- **Listing-service** (`lib/features/listings/listing-service.ts`): `getListingById` filtrerar redan inte på status. `updateListingStatus` sätter inte längre `deleted_at` vid status `'sold'` så att annonsen kan visas för alla.
+- **RLS** (`supabase/migrations/20260206100000_public_read_sold_listings.sql`): Ny policy "Public read sold listings" (`status = 'sold'`) så att besökare kan läsa sålda annonser.
+- **Annonssida** (`app/annons/[id]/page.tsx`): `isSold = listing.status === 'sold' || !!listing.deleted_at`. Vid såld: tydlig banner "Tyvärr, denna vara är såld", bilder med opacity-75, "Kontakta säljare"-knappen döljs (ersatt med "Denna vara är inte längre till salu").
+
+#### Realtime-chatt (Supabase Realtime)
+- **InboxClient** (`app/components/InboxClient.tsx`): I en `useEffect` som körs när `selectedConversation` ändras skapas en Supabase Realtime-channel mot tabellen `messages` med filter `conversation_id=eq.${id}` och event INSERT. Nya meddelanden från motparten läggs till i state (med deduplicering mot optimistiska egna meddelanden). Cleanup: `supabase.removeChannel(channel)` vid byte av konversation.
+
+#### Chatt stängd när varan såld/borttagen
+- **Message-service** (`lib/features/messages/message-service.ts`): `getMyConversations` hämtar nu `listing.status` och `listing.deleted_at` i join. Ny funktion `isConversationListingClosed(supabase, conversationId)`; `sendMessage` kastar om annonsen är såld/borttagen ("Chatten är stängd – varan är såld eller borttagen.").
+- **Message-actions** (`app/actions/message-actions.ts`): `sendMessageAction` returnerar felmeddelandet vid stängd chatt.
+- **Typer** (`app/types/index.ts`): `Conversation.listing` utökad med `status?` och `deleted_at?`.
+- **InboxClient**: `isListingClosed(conv)` (status sold/deleted eller listing saknas). Konversationslistan visar badge "Såld" på stängda chattar. I chatten: notis "Varan är såld/borttagen. Chatten är stängd – du kan läsa föregående meddelanden men inte skicka nya."; skrivfältet ersatt med text "Du kan inte skicka nya meddelanden – chatten är stängd." Meddelandehistoriken visas fortfarande (read-only).
+
+#### Städning inför MVP: enhetlig listing-service + middleware-säkerhet
+- **Listing-service:** Den gamla `app/services/listingService.ts` (getAllActive, getById med env-baserad Supabase-klient) är borttagen. All listing-logik används nu enbart från `lib/features/listings/listing-service.ts` (getListings, getListingById, getUserListings, createListing, updateListing, toggleFavorite, getFavoriteListings, getFavoriteIds) med server-klient (cookies). Inga app-filer importerade den gamla modulen; dokumentation (00-START_HERE, 01-SYSTEM_ARCHITECT, 02-BACKEND_DATABASE, HEALTH_CHECK_ARCHITECTURE) uppdaterad.
+- **Middleware:** Skyddade rutter (`/dashboard`, `/fav*`) redirectar nu till `/login` när användaren saknar session: villkoret är `isProtected && (error || !user)` så att både fel från `getUser()` och saknad användare ger redirect. Inga redirect-loopar (på `/login` redirectas endast inloggade användare till `/dashboard`).
+
 #### Favoriter: Server Components + Server Action (wire-up)
 - **Listing-service** (`lib/features/listings/listing-service.ts`): `getFavoriteListings(userId)` hämtar användarens sparade annonser som fulla `Listing[]`; `getFavoriteIds(userId)` returnerar bara favorit-IDs (undviker N+1); `toggleFavorite(userId, listingId)` lägger till eller tar bort favorit.
 - **Server Action** (`app/actions/favorite-actions.ts`): `toggleFavoriteAction(listingId)` – kräver inloggning, anropar `toggleFavorite`, `revalidatePath('/dashboard')` och `revalidatePath('/')`.

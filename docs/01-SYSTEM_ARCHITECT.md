@@ -10,7 +10,7 @@ Kollahär är en **fullstack Next.js-applikation** med Supabase som Backend-as-a
 
 1. **Server Components First**: Datahämtning sker på servern där det är möjligt
 2. **Client Components för Interaktivitet**: Endast när interaktivitet krävs (forms, buttons, state)
-3. **Service Layer**: Abstraktioner för API-anrop (`listingService.ts`, `messageService.ts`)
+3. **Service Layer**: Abstraktioner för data och API (`lib/features/listings/listing-service.ts`, `lib/features/messages/message-service.ts`); mutationer via Server Actions (`app/actions/`)
 4. **Type Safety**: TypeScript genom hela stacken
 5. **Security First**: Row Level Security (RLS) på alla tabeller
 

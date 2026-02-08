@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import Header from '../components/organisms/Header'
 
 export const metadata: Metadata = {
   title: 'Kontakt',
@@ -9,7 +8,6 @@ export const metadata: Metadata = {
 export default function ContactPage() {
   return (
     <>
-      <Header />
       <main className="min-h-screen bg-brand-beige py-12 md:py-16">
         <div className="max-w-3xl mx-auto px-6">
           {/* Centrerad container med vit content-yta */}

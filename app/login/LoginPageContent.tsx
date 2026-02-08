@@ -6,7 +6,6 @@ import { createClient } from '@/lib/supabase/client'
 import { AUTH_CONFIG } from '@/lib/constants'
 import { DASHBOARD_TEXTS } from '@/app/lib/content'
 import { Eye, EyeOff } from 'lucide-react'
-import Header from '@/app/components/organisms/Header'
 
 // Kopplingen till Supabase
 const supabase = createClient()
@@ -437,9 +436,6 @@ export default function LoginPageContent() {
 
   return (
     <div className="flex min-h-screen flex-col bg-brand-beige">
-      {/* Header med logotyp som länk till startsidan */}
-      <Header />
-      
       <div className="flex flex-col items-center justify-center flex-grow p-4">
         <div className="w-full max-w-md space-y-4">
           <button

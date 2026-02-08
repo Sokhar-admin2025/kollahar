@@ -1,12 +1,8 @@
 'use client'
 
-import Header from '../components/organisms/Header'
-
 export default function DashboardLoading() {
   return (
     <div className="min-h-screen bg-brand-beige flex flex-col">
-      <Header />
-      
       <div className="p-6 relative flex-grow">
         {/* Header-sektion (titel + välkomsttext) */}
         <div id="dashboard-header" className="mx-auto max-w-4xl mb-8">

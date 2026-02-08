@@ -1,9 +1,11 @@
 import './globals.css'
 import type { Metadata } from 'next'
 import { Knewave, DM_Sans } from 'next/font/google'
+import { createClient } from '@/lib/supabase/server'
 import Footer from './components/organisms/Footer'
 import CookieConsent from './components/layout/CookieConsent'
-import ScrollbarGutter from './components/ScrollbarGutter' 
+import ScrollbarGutter from './components/ScrollbarGutter'
+import LayoutWithHeader from './components/layout/LayoutWithHeader' 
 
 const knewave = Knewave({ 
   subsets: ['latin'],
@@ -41,19 +43,37 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  let initialIsVerified = true
+  if (user?.id) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('otp_verified')
+      .eq('id', user.id)
+      .single()
+    initialIsVerified = profile && typeof profile.otp_verified === 'boolean' ? profile.otp_verified : true
+  }
+
   return (
     <html lang="sv">
       <body className={`${dmSans.variable} ${knewave.variable} font-body min-h-screen flex flex-col bg-brand-beige`}>
         <ScrollbarGutter />
-        {/* Huvudinnehållet (växer för att fylla skärmen) */}
-        <div className="flex-grow">
-          {children}
-        </div>
+        {/* Header med server-hämtad user = inget flimmer; innehållet wrappat i LayoutWithHeader */}
+        <LayoutWithHeader
+          initialUserId={user?.id ?? null}
+          initialIsVerified={initialIsVerified}
+        >
+          {/* Huvudinnehållet: min-h-0 så att flex-barn (t.ex. InboxClient med h-full) kan fylla utan att tvinga body att växa */}
+          <div className="flex-grow min-h-0 flex flex-col">
+            {children}
+          </div>
+        </LayoutWithHeader>
 
         {/* Footern hamnar alltid längst ner */}
         <Footer />

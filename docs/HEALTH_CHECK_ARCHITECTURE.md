@@ -47,7 +47,7 @@ middleware.ts               # Route protection, session refresh
 - **Skyddade prefix:** `pathname.startsWith('/dashboard')` och `pathname.startsWith('/fav')`.  
 - Vid **fel** från `supabase.auth.getUser()` på skyddad rutt → redirect till `/login`.  
 - Inloggad användare på `/login` → redirect till `/dashboard`.  
-- **OBS:** Redirect till login sker idag endast vid `error && isProtected`. Det finns **ingen explicit kontroll** för `!user && isProtected`, vilket kan innebära att ej inloggade användare i vissa fall inte omdirigeras (beroende på hur Supabase returnerar vid saknad session). Rekommendation: lägg till `if (!user && isProtected) return NextResponse.redirect(...)`.
+- Oinloggade användare som försöker nå skyddade rutter omdirigeras till `/login` (`isProtected && (error || !user)`).
 
 ### Var sparas användarens session?
 - **Supabase Auth** med **cookies** (hanteras av `@supabase/ssr`).  
@@ -90,7 +90,6 @@ middleware.ts               # Route protection, session refresh
   - `getFavoriteIds(userId)` – returnerar bara favorit-`listing_id` (används på startsidan för att undvika N+1).  
   - `toggleFavorite(userId, listingId)` – lägger till eller tar bort rad i `favorites`; anropas från Server Action.  
 - **Favoriter – Server Action:** `app/actions/favorite-actions.ts` – `toggleFavoriteAction(listingId)`; kräver inloggning, anropar `toggleFavorite`, därefter `revalidatePath('/dashboard')` och `revalidatePath('/')`. Dashboard hämtar favoritlistan på servern; startsidan hämtar `favoriteIds` en gång och skickar till klienten så att varje kort kan visa "är jag favorit?" utan extra anrop.  
-- **`app/services/listingService.ts`**: Äldre/alternativ modul som använder `createClient` från `@supabase/supabase-js` med env-variabler (ingen cookie-session); används för `getAllActive` och `getById`.  
 - **Typer:** `app/types/index.ts` – `Listing` (id, title, description, price, location, category, attributes, images, user_id, status, …). Ingen generering från DB-schema; typer är manuella.
 
 ---
@@ -112,21 +111,12 @@ middleware.ts               # Route protection, session refresh
 
 ## 6. Förbättringspotential
 
-1. **Middleware: explicit kontroll för ej inloggad användare**  
-   Lägg till `if (!user && isProtected) return NextResponse.redirect(new URL('/login', request.url))` så att alla skyddade rutter kräver inloggning även när `getUser()` inte returnerar ett fel.
-
-2. **Create/Update listing: Server Action + validering**  
-   Flytta insert/update till en Server Action (eller skyddad API-route) som anropar Supabase med server-klienten. Inför **Zod** (eller liknande) för schema-validering på servern så att klientmanipulerade payloads inte accepteras utan validering.
-
-3. **Enhetlig dataåtkomst för listings**  
-   Projektet har både `lib/features/listings/listing-service.ts` (server) och `app/services/listingService.ts` (annan klient, env-baserad). Överväg att använda en gemensam entry point (t.ex. endast listing-service) och fascha ut den äldre modulen för att undvika dubbel logik och olika säkerhetsmodeller.
-
-4. **Typer från databasen**  
+1. **Typer från databasen**  
    Överweeg att generera TypeScript-typer från Supabase (t.ex. `supabase gen types`) och använda dem i `app/types` och listing-service så att schema och kod hålls i synk.
 
-5. **Bilduppladdning: storlek/typ på servern**  
+2. **Bilduppladdning: storlek/typ på servern**  
    Idag valideras storlek och typ främst på klienten. För extra säkerhet kan en Server Action eller API-route godkänna upload-URL:er (t.ex. signed upload) eller validera filer på servern innan de sparas, så att begränsningar inte kan kringgås från klienten.
 
 ---
 
-*Slutsats: Projektet har tydlig struktur, RLS används konsekvent och auth bygger på Supabase med cookies. Största förbättringsområdena är att säkerställa middleware-skydd vid saknad användare, att införa server-side validering (t.ex. Zod) för create/update listing, och att samla listing-åtkomst i en tjänst och tydligare koppla typer till databasen.*
+*Slutsats: Projektet har tydlig struktur, RLS används konsekvent och auth bygger på Supabase med cookies. Middleware skickar oinloggade användare på skyddade rutter till `/login`. Listing-åtkomst är samlad i `lib/features/listings/listing-service.ts`. Kvarvarande förbättringar: typer från databasen och eventuell server-side validering av bilduppladdning.*

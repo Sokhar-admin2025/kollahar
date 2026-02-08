@@ -9,7 +9,6 @@ import { Loader2 } from 'lucide-react'
 import { DASHBOARD_TEXTS } from '@/app/lib/content'
 import { AUTH_CONFIG } from '@/lib/constants'
 import Button from '@/app/components/atoms/Button'
-import Header from '@/app/components/organisms/Header'
 import LocationInput from '@/app/components/LocationInput'
 import { createClient } from '@/lib/supabase/client'
 
@@ -268,7 +267,6 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-brand-beige flex flex-col">
-      <Header />
       <div className="max-w-2xl mx-auto py-10 px-4 flex-grow">
         
         {/* Header */}

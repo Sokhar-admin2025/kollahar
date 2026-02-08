@@ -48,7 +48,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  if (error && isProtected) {
+  if (isProtected && (error || !user)) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 

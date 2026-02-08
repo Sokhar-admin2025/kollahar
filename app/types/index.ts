@@ -27,6 +27,8 @@ export interface Conversation {
     title: string;
     images: string[];
     price?: number;
+    status?: 'active' | 'sold' | 'deleted';
+    deleted_at?: string | null;
   };
   hasUnread?: boolean;
 }

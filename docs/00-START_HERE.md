@@ -103,7 +103,7 @@ kollahar/
 ### Viktiga Mappar Förklaras
 
 - **`app/components/`**: Alla UI-komponenter, organiserade efter Atomic Design-principer
-- **`app/services/`**: Abstraktioner för API-anrop (t.ex. `listingService.ts`)
+- **`app/services/`**: Kvarvarande API-abstraktioner (tomt efter flytt). Listing-data via `lib/features/listings/listing-service.ts`, meddelanden via `lib/features/messages/message-service.ts` och `app/actions/message-actions.ts`.
 - **`lib/supabase/`**: Supabase-klienter för client/server-kontext
 - **`app/lib/content.ts`**: Centraliserad text-hantering (SOURCE OF TRUTH för alla texter)
 

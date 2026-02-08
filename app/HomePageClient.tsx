@@ -7,7 +7,7 @@ import { Search, X, SlidersHorizontal, ChevronDown, ChevronUp } from 'lucide-rea
 
 import { DASHBOARD_TEXTS } from './lib/content'
 import ListingCard from './components/ListingCard'
-import Header from './components/organisms/Header'
+import { useHeaderOptions } from '@/app/context/HeaderOptionsContext'
 import ScrollToSearch from './components/ScrollToSearch'
 import type { Listing } from './types'
 import { CATEGORY_GROUPS, getCategoryLabel } from '@/lib/categories'
@@ -252,6 +252,19 @@ export default function HomePageClient({
       setSearchSubmitted(false)
     }
   }
+
+  const { setOptions: setHeaderOptions } = useHeaderOptions()
+  useEffect(() => {
+    if (pathname !== '/') return
+    setHeaderOptions({
+      showSearch: true,
+      searchQuery,
+      onSearchChange: handleSearchInputChange,
+      onSearchSubmit: handleSearch,
+      onClearSearch: () => setSearchQuery(''),
+    })
+    return () => setHeaderOptions({ showSearch: false })
+  }, [pathname, searchQuery, setHeaderOptions])
 
   const resetCarFilters = () => {
     setYearFrom('')
@@ -793,18 +806,6 @@ export default function HomePageClient({
 
   return (
     <div className="min-h-screen bg-brand-beige flex flex-col">
-      {/* HEADER */}
-      <Header
-        showSearch={true}
-        searchQuery={searchQuery}
-        onSearchChange={handleSearchInputChange}
-        onSearchSubmit={handleSearch}
-        onClearSearch={() => {
-          setSearchQuery('')
-          setSearchSubmitted(false)
-        }}
-      />
-
       {/* HERO + mobil-sök/filter */}
       <div id="hero-section" className="relative bg-brand-beige py-6 md:py-10 px-4 text-center overflow-hidden">
         <div className="relative z-10 max-w-4xl mx-auto">

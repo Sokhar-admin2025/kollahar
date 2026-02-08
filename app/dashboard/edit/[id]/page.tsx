@@ -6,7 +6,6 @@ import { createClient } from '@/lib/supabase/client'
 
 import { DASHBOARD_TEXTS } from '../../../lib/content'
 import Button from '../../../components/atoms/Button'
-import Header from '../../../components/organisms/Header'
 import CreateListingForm from '../../../components/CreateListingForm'
 import type { Listing } from '../../../types'
 
@@ -69,7 +68,6 @@ export default function EditListing() {
   if (fetching) {
     return (
       <div className="min-h-screen bg-brand-beige flex flex-col">
-        <Header />
         <div className="max-w-2xl mx-auto py-10 px-4 flex-grow">
           <div className="p-10 text-center text-brand-text antialiased">{tEdit.loadingData}</div>
         </div>
@@ -80,7 +78,6 @@ export default function EditListing() {
   if (error || !listing) {
     return (
       <div className="min-h-screen bg-brand-beige flex flex-col">
-        <Header />
         <div className="max-w-2xl mx-auto py-10 px-4 flex-grow">
           <div className="mb-8 flex items-center justify-between">
             <h1 className="text-3xl font-display text-brand-green">{tEdit.header}</h1>
@@ -101,7 +98,6 @@ export default function EditListing() {
 
   return (
     <div className="min-h-screen bg-brand-beige flex flex-col">
-      <Header />
       <div className="max-w-2xl mx-auto py-10 px-4 flex-grow">
         
         <div className="mb-8 flex items-center justify-between">

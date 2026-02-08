@@ -10,10 +10,8 @@ import { MessageSquare, Settings, LogOut, Edit, Trash2 } from 'lucide-react'
 import { DASHBOARD_TEXTS } from '@/app/lib/content'
 import Button from '@/app/components/atoms/Button'
 import ListingCard from '@/app/components/ListingCard'
-import Header from '@/app/components/organisms/Header'
 import ScrollToSearch from '@/app/components/ScrollToSearch'
 import type { Listing } from '@/app/types'
-import { messageService } from '@/app/services/messageService'
 import { deleteListingAction, markAsSoldAction } from '@/app/actions/listing-actions'
 
 const supabase = createClient()
@@ -22,12 +20,14 @@ interface DashboardClientProps {
   listings: Listing[]
   favoriteListings: Listing[]
   user: { id: string; email?: string }
+  hasUnreadMessages?: boolean
 }
 
 export default function DashboardClient({
   listings,
   favoriteListings,
   user,
+  hasUnreadMessages = false,
 }: DashboardClientProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -41,8 +41,6 @@ export default function DashboardClient({
     [listings]
   )
 
-  const [hasUnreadMessages, setHasUnreadMessages] = useState(false)
-  const [isUnreadLoading, setIsUnreadLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'active' | 'favorites' | 'history'>('active')
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
@@ -51,29 +49,6 @@ export default function DashboardClient({
   const [isDeleting, setIsDeleting] = useState(false)
 
   const t = DASHBOARD_TEXTS
-
-  useEffect(() => {
-    let isMounted = true
-
-    const loadUnread = async () => {
-      try {
-        const unreadSet = await messageService.getUnreadConversationIds(user.id)
-        if (!isMounted) return
-        setHasUnreadMessages(unreadSet.size > 0)
-      } catch (err) {
-        console.error('Kunde inte hämta olästa meddelanden:', err)
-        if (!isMounted) return
-        setHasUnreadMessages(false)
-      } finally {
-        if (isMounted) setIsUnreadLoading(false)
-      }
-    }
-
-    loadUnread()
-    return () => {
-      isMounted = false
-    }
-  }, [user.id])
 
   useEffect(() => {
     const tab = searchParams.get('tab')
@@ -135,8 +110,6 @@ export default function DashboardClient({
 
   return (
     <div className="min-h-screen bg-brand-beige flex flex-col">
-      <Header />
-
       <div className="p-6 relative flex-grow">
         <div id="dashboard-header" className="mx-auto max-w-4xl mb-8">
           <h1 className="text-3xl font-display text-brand-green mb-2">{t.header.title}</h1>
@@ -150,7 +123,7 @@ export default function DashboardClient({
           <Link href="/dashboard/messages" title="Mina meddelanden" className="relative">
             <div className="p-2 text-brand-text hover:text-brand-green hover:bg-brand-green/10 rounded-full transition cursor-pointer">
               <MessageSquare size={24} />
-              {!isUnreadLoading && hasUnreadMessages && (
+              {hasUnreadMessages && (
                 <span
                   className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-brand-green"
                   aria-hidden="true"

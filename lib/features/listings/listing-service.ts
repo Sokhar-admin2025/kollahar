@@ -528,7 +528,8 @@ export async function deleteListing(
 }
 
 /**
- * Uppdatera endast status (t.ex. till 'sold'). Sätter deleted_at vid status 'sold'.
+ * Uppdatera endast status (t.ex. till 'sold').
+ * Sätter inte deleted_at vid 'sold' så att annonsen fortfarande kan visas som "Såld" för alla (RLS tillåter SELECT på sålda).
  */
 export async function updateListingStatus(
   listingId: string,
@@ -547,10 +548,7 @@ export async function updateListingStatus(
   try {
     const supabase = await createClient()
 
-    const payload: { status: string; deleted_at?: string } = { status }
-    if (status === 'sold') {
-      payload.deleted_at = new Date().toISOString()
-    }
+    const payload: { status: string } = { status }
 
     const { error } = await supabase
       .from('listings')
