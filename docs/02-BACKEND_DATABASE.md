@@ -512,6 +512,7 @@ CREATE INDEX idx_conversations_listing_id ON public.conversations(listing_id);
 Migrations ligger i `supabase/migrations/`:
 
 - `20260116090000_create_favorites.sql`: Skapar favorites-tabellen och RLS policies
+- `20260205100000_listings_own_select_policy.sql`: Lägger till RLS-policy "Users can view all own listings" på `listings` så att inloggade användare kan se alla egna annonser (aktiva + sålda) i Dashboard.
 
 Utöver migrations finns även manuella setup-skript:
 

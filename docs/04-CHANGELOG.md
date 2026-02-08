@@ -8,6 +8,13 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ### ✨ Tillagt
 
+#### Dashboard refaktor: Server Component + listing-service
+- **RLS** (`supabase/migrations/20260205100000_listings_own_select_policy.sql`): Ny policy "Users can view all own listings" (`auth.uid() = user_id`) så att användare kan se alla egna annonser (aktiva + sålda) i Historik-fliken.
+- **Listing-service** (`lib/features/listings/listing-service.ts`): `getUserListings(userId)` hämtar alla annonser för användaren (sorterat `created_at` desc). `deleteListing(listingId, userId)` verifierar ägande och utför hård DELETE. `updateListingStatus(listingId, status, userId)` sätter status (t.ex. `'sold'`) och `deleted_at` vid såld.
+- **Server Actions** (`app/actions/listing-actions.ts`): `deleteListingAction(listingId, logReason?, adTitle?)` och `markAsSoldAction(listingId, logReason?, adTitle?)`; båda loggar till `deletion_logs` vid behov och anropar `revalidatePath('/dashboard')`.
+- **Dashboard-sida** (`app/dashboard/page.tsx`): Async Server Component – hämtar användare (redirect till `/login` om ej inloggad), anropar `getUserListings(user.id)` och skickar data till `<DashboardClient />`.
+- **DashboardClient** (`app/components/DashboardClient.tsx`): Ny klientkomponent med flikar (Aktiva, Sparade, Historik), radlista för Aktiva (oförändrad UI), grid för Sparade, tabell med horisontell scroll för Historik. Ta bort/såld-modal anropar Server Actions och `router.refresh()` efter lyckat svar.
+
 #### Listningsflöde: server-side filter, paginering och refetch
 - **Listing-service** (`lib/features/listings/listing-service.ts`): `getListings(filters)` med `ListingSearchFilters` (query, category, location, min/max pris, år, mil, bilfilter, offset, limit, sort). `getListingById(id)` för annonsdetalj. Alla filter tillämpas i Supabase-query.
 - **API-route** (`app/api/listings/route.ts`): POST `/api/listings` tar emot `{ filters }` och anropar `getListings` på servern. HomePageClient använder denna route för refetch vid filterändring och "Visa fler"-paginering (undviker att anropa Server Action direkt från klienten – fixar "getListings is not defined").

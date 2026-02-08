@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import type { ServiceResult } from '@/lib/types/result'
 import type { Listing } from '@/app/types'
+import type { InsertListingInput, UpdateListingInput } from '@/lib/validators/listing-schema'
 
 export interface ListingSearchFilters {
   query?: string
@@ -197,6 +198,236 @@ export async function getListingById(id: string): Promise<ServiceResult<Listing>
     return {
       success: false,
       error: 'Ett oväntat fel uppstod vid hämtning av annonsen.',
+    }
+  }
+}
+
+/**
+ * Skapa ny annons. Använd server-klient och RLS (auth.uid() = user_id).
+ * Returnerar id vid lyckad insert.
+ */
+export async function createListing(
+  data: InsertListingInput,
+  userId: string
+): Promise<ServiceResult<{ id: string }>> {
+  try {
+    const supabase = await createClient()
+
+    const { data: row, error } = await supabase
+      .from('listings')
+      .insert({
+        title: data.title.trim(),
+        description: data.description.trim(),
+        price: data.price,
+        location: data.location.trim(),
+        category: data.category,
+        images: data.images ?? [],
+        attributes: data.attributes ?? null,
+        user_id: userId,
+        status: 'active',
+      })
+      .select('id')
+      .single()
+
+    if (error) {
+      console.error('createListing failed', error)
+      return {
+        success: false,
+        error: 'Kunde inte skapa annons. Försök igen senare.',
+      }
+    }
+
+    if (!row?.id) {
+      return { success: false, error: 'Kunde inte skapa annons.' }
+    }
+
+    return { success: true, data: { id: row.id } }
+  } catch (err) {
+    console.error('createListing unexpected error', err)
+    return {
+      success: false,
+      error: 'Ett oväntat fel uppstod vid skapande av annons.',
+    }
+  }
+}
+
+/**
+ * Uppdatera befintlig annons. Endast ägare kan uppdatera (RLS + user_id-check).
+ */
+export async function updateListing(
+  data: UpdateListingInput,
+  userId: string
+): Promise<ServiceResult<{ id: string }>> {
+  try {
+    const supabase = await createClient()
+
+    const { error } = await supabase
+      .from('listings')
+      .update({
+        title: data.title.trim(),
+        description: data.description.trim(),
+        price: data.price,
+        location: data.location.trim(),
+        category: data.category,
+        images: data.images ?? [],
+        attributes: data.attributes ?? null,
+      })
+      .eq('id', data.id)
+      .eq('user_id', userId)
+
+    if (error) {
+      console.error('updateListing failed', error)
+      return {
+        success: false,
+        error: 'Kunde inte uppdatera annons. Försök igen senare.',
+      }
+    }
+
+    return { success: true, data: { id: data.id } }
+  } catch (err) {
+    console.error('updateListing unexpected error', err)
+    return {
+      success: false,
+      error: 'Ett oväntat fel uppstod vid uppdatering av annons.',
+    }
+  }
+}
+
+/**
+ * Hämta alla annonser för en användare (alla statusar). Kräver RLS-policy "Users can view all own listings".
+ */
+export async function getUserListings(userId: string): Promise<ServiceResult<Listing[]>> {
+  if (!userId || userId.trim().length === 0) {
+    return { success: false, error: 'Ogiltigt användar-id.' }
+  }
+
+  try {
+    const supabase = await createClient()
+
+    const { data, error } = await supabase
+      .from('listings')
+      .select('*')
+      .eq('user_id', userId.trim())
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('getUserListings failed', error)
+      return {
+        success: false,
+        error: 'Kunde inte hämta dina annonser. Försök igen senare.',
+      }
+    }
+
+    return {
+      success: true,
+      data: (data ?? []) as Listing[],
+    }
+  } catch (err) {
+    console.error('getUserListings unexpected error', err)
+    return {
+      success: false,
+      error: 'Ett oväntat fel uppstod vid hämtning av annonser.',
+    }
+  }
+}
+
+/**
+ * Hård DELETE av annons. Verifierar ägande (user_id === userId) innan radering.
+ */
+export async function deleteListing(
+  listingId: string,
+  userId: string
+): Promise<ServiceResult<{ id: string }>> {
+  if (!listingId?.trim() || !userId?.trim()) {
+    return { success: false, error: 'Ogiltigt annons- eller användar-id.' }
+  }
+
+  try {
+    const supabase = await createClient()
+
+    const { data: row, error: fetchError } = await supabase
+      .from('listings')
+      .select('id, user_id')
+      .eq('id', listingId.trim())
+      .single()
+
+    if (fetchError || !row) {
+      return { success: false, error: 'Annonsen hittades inte.' }
+    }
+
+    if ((row as { user_id: string }).user_id !== userId) {
+      return { success: false, error: 'Du får bara radera egna annonser.' }
+    }
+
+    const { error: deleteError } = await supabase
+      .from('listings')
+      .delete()
+      .eq('id', listingId.trim())
+      .eq('user_id', userId)
+
+    if (deleteError) {
+      console.error('deleteListing failed', deleteError)
+      return {
+        success: false,
+        error: 'Kunde inte radera annonsen. Försök igen senare.',
+      }
+    }
+
+    return { success: true, data: { id: listingId.trim() } }
+  } catch (err) {
+    console.error('deleteListing unexpected error', err)
+    return {
+      success: false,
+      error: 'Ett oväntat fel uppstod vid radering.',
+    }
+  }
+}
+
+/**
+ * Uppdatera endast status (t.ex. till 'sold'). Sätter deleted_at vid status 'sold'.
+ */
+export async function updateListingStatus(
+  listingId: string,
+  status: string,
+  userId: string
+): Promise<ServiceResult<{ id: string }>> {
+  if (!listingId?.trim() || !userId?.trim()) {
+    return { success: false, error: 'Ogiltigt annons- eller användar-id.' }
+  }
+
+  const allowed = ['active', 'sold', 'deleted']
+  if (!allowed.includes(status)) {
+    return { success: false, error: 'Ogiltig status.' }
+  }
+
+  try {
+    const supabase = await createClient()
+
+    const payload: { status: string; deleted_at?: string } = { status }
+    if (status === 'sold') {
+      payload.deleted_at = new Date().toISOString()
+    }
+
+    const { error } = await supabase
+      .from('listings')
+      .update(payload)
+      .eq('id', listingId.trim())
+      .eq('user_id', userId)
+
+    if (error) {
+      console.error('updateListingStatus failed', error)
+      return {
+        success: false,
+        error: 'Kunde inte uppdatera annonsen. Försök igen senare.',
+      }
+    }
+
+    return { success: true, data: { id: listingId.trim() } }
+  } catch (err) {
+    console.error('updateListingStatus unexpected error', err)
+    return {
+      success: false,
+      error: 'Ett oväntat fel uppstod vid uppdatering.',
     }
   }
 }
