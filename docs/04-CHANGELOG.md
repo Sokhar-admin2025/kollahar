@@ -8,6 +8,13 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ### ✨ Tillagt
 
+#### Skapa/redigera annons: Server Actions + Zod
+- **Validering** (`lib/validators/listing-schema.ts`): Zod-schema för create/update med svenska felmeddelanden (titel 3–100 tecken, beskrivning 10–5000, pris ≥ 0, kategori och plats min 1 tecken; images och attributes valfria).
+- **Server Actions** (`app/actions/listing-actions.ts`): `createListingAction` och `updateListingAction` – safeParse, auth, anrop till listing-service, `revalidatePath`; vid fel returneras `fieldErrors` (plattade så att t.ex. `attributes.mileage` även finns under nyckeln `mileage` för enkel åtkomst i formuläret).
+- **Listing-service** (`lib/features/listings/listing-service.ts`): `createListing` och `updateListing` med server-Supabase, returnerar `ServiceResult<{ id: string }>`.
+- **CreateListingForm**: Använder actions för submit; fel från servern visas med röd ram och röd feltext (title, location, price, category, description, fordonsfält). Normaliserar `fieldErrors` från action så att alla fält får korrekt visning. **LocationInput** har prop `hasError` för röd ram vid platsfel.
+- **Regler:** Pris kan vara 0 för alla annonser. Skick är **valfritt** (inte obligatoriskt). Växellåda är **obligatoriskt** för bilar och placerat under Drivmedel; klientvalidering kräver växellåda vid bilannons.
+
 #### Dashboard refaktor: Server Component + listing-service
 - **RLS** (`supabase/migrations/20260205100000_listings_own_select_policy.sql`): Ny policy "Users can view all own listings" (`auth.uid() = user_id`) så att användare kan se alla egna annonser (aktiva + sålda) i Historik-fliken.
 - **Listing-service** (`lib/features/listings/listing-service.ts`): `getUserListings(userId)` hämtar alla annonser för användaren (sorterat `created_at` desc). `deleteListing(listingId, userId)` verifierar ägande och utför hård DELETE. `updateListingStatus(listingId, status, userId)` sätter status (t.ex. `'sold'`) och `deleted_at` vid såld.

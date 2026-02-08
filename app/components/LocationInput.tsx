@@ -10,14 +10,16 @@ interface LocationInputProps {
   placeholder?: string
   required?: boolean
   className?: string
+  hasError?: boolean
 }
 
-export default function LocationInput({ 
-  value, 
-  onChange, 
+export default function LocationInput({
+  value,
+  onChange,
   placeholder = 'T.ex. Stockholm eller välj län → kommun',
   required = false,
-  className = ''
+  className = '',
+  hasError = false,
 }: LocationInputProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [showSuggestions, setShowSuggestions] = useState(false)
@@ -128,7 +130,7 @@ export default function LocationInput({
           onFocus={handleInputFocus}
           placeholder={placeholder}
           required={required}
-          className="w-full pl-11 pr-10 p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-brand-text antialiased"
+          className={`w-full pl-11 pr-10 p-3 border rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-brand-text antialiased ${hasError ? 'border-red-500 focus:ring-red-500/30 focus:border-red-500' : 'border-gray-300'}`}
         />
         <button
           type="button"
