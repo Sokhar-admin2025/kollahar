@@ -1,88 +1,67 @@
-'use client';
+'use client'
 
-import { useState, useEffect } from 'react';
-import { Heart } from 'lucide-react';
-import { createBrowserClient } from '@supabase/ssr';
+import { useState, useEffect } from 'react'
+import { Heart } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
+import { toggleFavoriteAction } from '@/app/actions/favorite-actions'
 
-// VIKTIGT: Vi skapar klienten utanför komponenten för att slippa varningar
-const supabase = createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+const supabase = createClient()
 
 interface FavoriteButtonProps {
   listingId: string
+  /** Om satt används detta (ingen egen fetch = undviker N+1). Annars hämtas status en gång med useEffect (t.ex. annonsdetaljsida). */
+  isFavorited?: boolean
   onFavoriteRemoved?: (listingId: string) => void
 }
 
-export default function FavoriteButton({ listingId, onFavoriteRemoved }: FavoriteButtonProps) {
-  const [isFavorited, setIsFavorited] = useState(false);
+export default function FavoriteButton({
+  listingId,
+  isFavorited: isFavoritedProp,
+  onFavoriteRemoved,
+}: FavoriteButtonProps) {
+  const [fetchedFavorited, setFetchedFavorited] = useState<boolean | null>(null)
+  const [optimisticFavorited, setOptimisticFavorited] = useState<boolean | null>(null)
 
-  // 1. Kolla om den är favorit när sidan laddas
   useEffect(() => {
-    const checkStatus = async () => {
-      // Hämta inloggad användare
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
+    if (isFavoritedProp !== undefined) return
+    let isMounted = true
+    const check = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user || !isMounted) return
       const { data } = await supabase
         .from('favorites')
-        .select('*')
+        .select('user_id')
         .eq('user_id', user.id)
         .eq('listing_id', listingId)
-        .single();
+        .maybeSingle()
+      if (isMounted) setFetchedFavorited(!!data)
+    }
+    check()
+    return () => { isMounted = false }
+  }, [listingId, isFavoritedProp])
 
-      if (data) setIsFavorited(true);
-    };
+  const resolvedInitial =
+    isFavoritedProp !== undefined ? isFavoritedProp : (fetchedFavorited ?? false)
+  const isFavorited = optimisticFavorited !== null ? optimisticFavorited : resolvedInitial
 
-    checkStatus();
-  }, [listingId]);
-
-  // 2. Hantera klicket
   const handleToggle = async (e: React.MouseEvent) => {
-    // STOPPA klicket från att gå vidare till länken
-    e.preventDefault(); 
-    e.stopPropagation();
+    e.preventDefault()
+    e.stopPropagation()
 
-    console.log("Klickade på hjärtat för listing:", listingId);
+    const previous = optimisticFavorited !== null ? optimisticFavorited : isFavoritedProp ?? false
+    setOptimisticFavorited(!previous)
 
-    // Optimistisk uppdatering (byt färg direkt)
-    const previousState = isFavorited;
-    setIsFavorited(!isFavorited);
+    const result = await toggleFavoriteAction(listingId)
 
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      console.log("Ingen användare inloggad, redirect borde ske här eller visa login-modal");
-      setIsFavorited(previousState); // Rulla tillbaka
-      // Här kan du lägga till: window.location.href = '/login';
-      return;
+    if (!result.success) {
+      setOptimisticFavorited(previous)
+      return
     }
 
-    try {
-      if (previousState) {
-        // Ta bort favorit
-        await supabase
-          .from('favorites')
-          .delete()
-          .eq('user_id', user.id)
-          .eq('listing_id', listingId);
-        
-        // Anropa callback om favoriten togs bort
-        if (onFavoriteRemoved) {
-          onFavoriteRemoved(listingId);
-        }
-      } else {
-        // Lägg till favorit
-        await supabase
-          .from('favorites')
-          .insert({ user_id: user.id, listing_id: listingId });
-      }
-    } catch (error) {
-      console.error("Fel vid uppdatering:", error);
-      setIsFavorited(previousState); // Rulla tillbaka om det blev fel
+    if (!result.added && onFavoriteRemoved) {
+      onFavoriteRemoved(listingId)
     }
-  };
+  }
 
   return (
     <button
@@ -92,11 +71,11 @@ export default function FavoriteButton({ listingId, onFavoriteRemoved }: Favorit
     >
       <Heart
         className={`w-5 h-5 transition-colors duration-200 ${
-          isFavorited 
-            ? 'fill-red-500 text-red-500' 
+          isFavorited
+            ? 'fill-red-500 text-red-500'
             : 'text-gray-600 group-hover/btn:text-red-500'
         }`}
       />
     </button>
-  );
+  )
 }

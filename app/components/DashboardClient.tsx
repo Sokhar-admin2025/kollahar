@@ -20,10 +20,15 @@ const supabase = createClient()
 
 interface DashboardClientProps {
   listings: Listing[]
+  favoriteListings: Listing[]
   user: { id: string; email?: string }
 }
 
-export default function DashboardClient({ listings, user }: DashboardClientProps) {
+export default function DashboardClient({
+  listings,
+  favoriteListings,
+  user,
+}: DashboardClientProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -36,8 +41,6 @@ export default function DashboardClient({ listings, user }: DashboardClientProps
     [listings]
   )
 
-  const [favoriteAds, setFavoriteAds] = useState<Listing[]>([])
-  const [isFavoritesLoading, setIsFavoritesLoading] = useState(true)
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false)
   const [isUnreadLoading, setIsUnreadLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'active' | 'favorites' | 'history'>('active')
@@ -48,35 +51,6 @@ export default function DashboardClient({ listings, user }: DashboardClientProps
   const [isDeleting, setIsDeleting] = useState(false)
 
   const t = DASHBOARD_TEXTS
-
-  useEffect(() => {
-    let isMounted = true
-
-    const loadFavorites = async () => {
-      try {
-        const { data: favorites } = await supabase
-          .from('favorites')
-          .select('*, listing:listings(*)')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-
-        if (!isMounted) return
-
-        const favoriteListings = (favorites as { listing: Listing | null }[] | null)
-          ?.map((f) => f.listing)
-          .filter((listing): listing is Listing => Boolean(listing)) ?? []
-
-        setFavoriteAds(favoriteListings)
-      } finally {
-        if (isMounted) setIsFavoritesLoading(false)
-      }
-    }
-
-    loadFavorites()
-    return () => {
-      isMounted = false
-    }
-  }, [user.id])
 
   useEffect(() => {
     let isMounted = true
@@ -224,7 +198,7 @@ export default function DashboardClient({ listings, user }: DashboardClientProps
                   activeTab === 'favorites' ? 'text-brand-green border-b-2 border-brand-green' : 'text-brand-text hover:text-brand-text'
                 }`}
               >
-                Sparade annonser ({favoriteAds.length})
+                Sparade annonser ({favoriteListings.length})
               </button>
               <button
                 onClick={() => setActiveTab('history')}
@@ -350,13 +324,7 @@ export default function DashboardClient({ listings, user }: DashboardClientProps
           {/* FAVORITER */}
           {activeTab === 'favorites' && (
             <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200">
-              {isFavoritesLoading ? (
-                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 animate-pulse">
-                  {Array.from({ length: 4 }).map((_, idx) => (
-                    <div key={idx} className="h-40 bg-gray-200 rounded-xl" />
-                  ))}
-                </div>
-              ) : favoriteAds.length === 0 ? (
+              {favoriteListings.length === 0 ? (
                 <div className="text-center py-10 text-brand-text bg-brand-beige rounded-xl border border-dashed border-gray-300">
                   <p>Du har inte sparat några annonser än.</p>
                   <Link href="/" className="text-brand-green underline mt-2 inline-block hover:text-brand-green/80">
@@ -365,14 +333,13 @@ export default function DashboardClient({ listings, user }: DashboardClientProps
                 </div>
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                  {favoriteAds.map((listing) => (
+                  {favoriteListings.map((listing) => (
                     <ListingCard
                       key={listing.id}
                       listing={listing}
                       currentUserId={user.id}
-                      onFavoriteRemoved={(listingId) => {
-                        setFavoriteAds((prev) => prev.filter((ad) => ad.id !== listingId))
-                      }}
+                      isFavorited
+                      onFavoriteRemoved={() => router.refresh()}
                     />
                   ))}
                 </div>

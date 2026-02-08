@@ -8,6 +8,15 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ### ✨ Tillagt
 
+#### Favoriter: Server Components + Server Action (wire-up)
+- **Listing-service** (`lib/features/listings/listing-service.ts`): `getFavoriteListings(userId)` hämtar användarens sparade annonser som fulla `Listing[]`; `getFavoriteIds(userId)` returnerar bara favorit-IDs (undviker N+1); `toggleFavorite(userId, listingId)` lägger till eller tar bort favorit.
+- **Server Action** (`app/actions/favorite-actions.ts`): `toggleFavoriteAction(listingId)` – kräver inloggning, anropar `toggleFavorite`, `revalidatePath('/dashboard')` och `revalidatePath('/')`.
+- **Dashboard** (`app/dashboard/page.tsx`): Hämtar `getFavoriteListings(user.id)` på servern och skickar `favoriteListings` till DashboardClient; fliken "Sparade annonser" använder alltså serverdata (ingen klient-`useEffect`).
+- **DashboardClient**: Tar emot `favoriteListings` som prop; vid borttagning av favorit anropas `router.refresh()` så att sidan får ny data.
+- **FavoriteButton**: Använder `toggleFavoriteAction` istället för direkt Supabase; optional prop `isFavorited` (när satt ingen egen fetch). Om `isFavorited` ej skickas (t.ex. annonssida) görs en fetch i `useEffect` för det kortet.
+- **Startsida** (`app/page.tsx`): Hämtar vid behov `getFavoriteIds(user.id)` på servern och skickar `favoriteIds` till HomePageClient; varje ListingCard får `isFavorited={favoriteIds.includes(ad.id)}` – inga N+1-anrop per kort.
+- **ListingCard**: Ny prop `isFavorited?: boolean` som skickas till FavoriteButton.
+
 #### Skapa/redigera annons: Server Actions + Zod
 - **Validering** (`lib/validators/listing-schema.ts`): Zod-schema för create/update med svenska felmeddelanden (titel 3–100 tecken, beskrivning 10–5000, pris ≥ 0, kategori och plats min 1 tecken; images och attributes valfria).
 - **Server Actions** (`app/actions/listing-actions.ts`): `createListingAction` och `updateListingAction` – safeParse, auth, anrop till listing-service, `revalidatePath`; vid fel returneras `fieldErrors` (plattade så att t.ex. `attributes.mileage` även finns under nyckeln `mileage` för enkel åtkomst i formuläret).

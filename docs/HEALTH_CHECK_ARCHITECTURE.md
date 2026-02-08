@@ -86,6 +86,10 @@ middleware.ts               # Route protection, session refresh
 - **`lib/features/listings/listing-service.ts`** (märkt `'use server'`):  
   - `getListings(filters)` – använder **server-Supabase** (`createClient()` från `@/lib/supabase/server`), bygger query med filter (kategori, pris, plats, bilattribut, sortering, paginering).  
   - `getListingById(id)` – samma server-klient, en rad.  
+  - `getFavoriteListings(userId)` – hämtar användarens sparade annonser (full `Listing[]`) för Dashboard-fliken "Sparade annonser".  
+  - `getFavoriteIds(userId)` – returnerar bara favorit-`listing_id` (används på startsidan för att undvika N+1).  
+  - `toggleFavorite(userId, listingId)` – lägger till eller tar bort rad i `favorites`; anropas från Server Action.  
+- **Favoriter – Server Action:** `app/actions/favorite-actions.ts` – `toggleFavoriteAction(listingId)`; kräver inloggning, anropar `toggleFavorite`, därefter `revalidatePath('/dashboard')` och `revalidatePath('/')`. Dashboard hämtar favoritlistan på servern; startsidan hämtar `favoriteIds` en gång och skickar till klienten så att varje kort kan visa "är jag favorit?" utan extra anrop.  
 - **`app/services/listingService.ts`**: Äldre/alternativ modul som använder `createClient` från `@supabase/supabase-js` med env-variabler (ingen cookie-session); används för `getAllActive` och `getById`.  
 - **Typer:** `app/types/index.ts` – `Listing` (id, title, description, price, location, category, attributes, images, user_id, status, …). Ingen generering från DB-schema; typer är manuella.
 

@@ -332,6 +332,150 @@ export async function getUserListings(userId: string): Promise<ServiceResult<Lis
 }
 
 /**
+ * Hämta användarens favorit-annonser (full Listing-objekt). För Dashboard-fliken "Sparade annonser".
+ */
+export async function getFavoriteListings(userId: string): Promise<ServiceResult<Listing[]>> {
+  if (!userId?.trim()) {
+    return { success: false, error: 'Ogiltigt användar-id.' }
+  }
+
+  try {
+    const supabase = await createClient()
+
+    const { data: rows, error } = await supabase
+      .from('favorites')
+      .select('listing_id')
+      .eq('user_id', userId.trim())
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('getFavoriteListings (favorites) failed', error)
+      return {
+        success: false,
+        error: 'Kunde inte hämta sparade annonser. Försök igen senare.',
+      }
+    }
+
+    const ids = (rows ?? []).map((r) => (r as { listing_id: string }).listing_id).filter(Boolean)
+    if (ids.length === 0) {
+      return { success: true, data: [] }
+    }
+
+    const { data: listings, error: listError } = await supabase
+      .from('listings')
+      .select('*')
+      .in('id', ids)
+      .eq('status', 'active')
+
+    if (listError) {
+      console.error('getFavoriteListings (listings) failed', listError)
+      return {
+        success: false,
+        error: 'Kunde inte hämta sparade annonser. Försök igen senare.',
+      }
+    }
+
+    const orderMap = new Map(ids.map((id, i) => [id, i]))
+    const sorted = (listings ?? [])
+      .filter((l) => orderMap.has(l.id))
+      .sort((a, b) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0))
+
+    return { success: true, data: sorted as Listing[] }
+  } catch (err) {
+    console.error('getFavoriteListings unexpected error', err)
+    return {
+      success: false,
+      error: 'Ett oväntat fel uppstod vid hämtning av sparade annonser.',
+    }
+  }
+}
+
+/**
+ * Hämta endast användarens favorit-IDs. För att undvika N+1 (varje kort behöver bara kolla listId i listan).
+ */
+export async function getFavoriteIds(userId: string): Promise<ServiceResult<string[]>> {
+  if (!userId?.trim()) {
+    return { success: false, error: 'Ogiltigt användar-id.' }
+  }
+
+  try {
+    const supabase = await createClient()
+
+    const { data, error } = await supabase
+      .from('favorites')
+      .select('listing_id')
+      .eq('user_id', userId.trim())
+
+    if (error) {
+      console.error('getFavoriteIds failed', error)
+      return {
+        success: false,
+        error: 'Kunde inte hämta favorit-ID:n.',
+      }
+    }
+
+    const ids = (data ?? []).map((r) => (r as { listing_id: string }).listing_id).filter(Boolean)
+    return { success: true, data: ids }
+  } catch (err) {
+    console.error('getFavoriteIds unexpected error', err)
+    return {
+      success: false,
+      error: 'Ett oväntat fel uppstod.',
+    }
+  }
+}
+
+/**
+ * Toggla favorit: om raden finns tas den bort, annars läggs den till. Returnerar om annonsen lades till (true) eller togs bort (false).
+ */
+export async function toggleFavorite(
+  userId: string,
+  listingId: string
+): Promise<ServiceResult<{ added: boolean }>> {
+  if (!userId?.trim() || !listingId?.trim()) {
+    return { success: false, error: 'Ogiltigt användar- eller annons-id.' }
+  }
+
+  try {
+    const supabase = await createClient()
+
+    const { data: existing } = await supabase
+      .from('favorites')
+      .select('user_id')
+      .eq('user_id', userId.trim())
+      .eq('listing_id', listingId.trim())
+      .maybeSingle()
+
+    if (existing) {
+      const { error: delError } = await supabase
+        .from('favorites')
+        .delete()
+        .eq('user_id', userId.trim())
+        .eq('listing_id', listingId.trim())
+
+      if (delError) {
+        console.error('toggleFavorite delete failed', delError)
+        return { success: false, error: 'Kunde inte ta bort från sparade.' }
+      }
+      return { success: true, data: { added: false } }
+    }
+
+    const { error: insError } = await supabase
+      .from('favorites')
+      .insert({ user_id: userId.trim(), listing_id: listingId.trim() })
+
+    if (insError) {
+      console.error('toggleFavorite insert failed', insError)
+      return { success: false, error: 'Kunde inte spara annonsen.' }
+    }
+    return { success: true, data: { added: true } }
+  } catch (err) {
+    console.error('toggleFavorite unexpected error', err)
+    return { success: false, error: 'Ett oväntat fel uppstod.' }
+  }
+}
+
+/**
  * Hård DELETE av annons. Verifierar ägande (user_id === userId) innan radering.
  */
 export async function deleteListing(

@@ -21,10 +21,17 @@ interface Listing {
 interface ListingCardProps {
   listing: Listing
   currentUserId?: string | null
+  /** Om true visas hjärtat som fyllt (ingen N+1: skicka från servern t.ex. favoriteIds.includes(listing.id)) */
+  isFavorited?: boolean
   onFavoriteRemoved?: (listingId: string) => void
 }
 
-export default function ListingCard({ listing, currentUserId, onFavoriteRemoved }: ListingCardProps) {
+export default function ListingCard({
+  listing,
+  currentUserId,
+  isFavorited: isFavoritedProp,
+  onFavoriteRemoved,
+}: ListingCardProps) {
   // Formatera pris snyggt
   const formattedPrice = new Intl.NumberFormat('sv-SE', {
     style: 'currency',
@@ -78,7 +85,11 @@ export default function ListingCard({ listing, currentUserId, onFavoriteRemoved 
       {/* --- FAVORITKNAPPEN (Ligger helt utanför länken) --- */}
       {!isOwner && (
         <div className="absolute top-3 right-3 z-10">
-          <FavoriteButton listingId={listing.id} onFavoriteRemoved={onFavoriteRemoved} />
+          <FavoriteButton
+            listingId={listing.id}
+            isFavorited={isFavoritedProp}
+            onFavoriteRemoved={onFavoriteRemoved}
+          />
         </div>
       )}
 

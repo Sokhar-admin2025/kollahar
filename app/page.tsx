@@ -1,5 +1,6 @@
 import HomePageClient from './HomePageClient'
-import { getListings, type ListingSearchFilters } from '@/lib/features/listings/listing-service'
+import { createClient } from '@/lib/supabase/server'
+import { getListings, getFavoriteIds, type ListingSearchFilters } from '@/lib/features/listings/listing-service'
 
 const PAGE_SIZE = 24
 
@@ -57,10 +58,23 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     sort: (toStringOrUndefined(sortParam) as ListingSearchFilters['sort']) ?? 'newest',
   }
 
-  const result = await getListings(filters)
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
 
-  const initialAds = result.success ? result.data ?? [] : []
-  const initialError = result.success ? null : result.error ?? 'Kunde inte hämta annonser just nu.'
+  const [listingsResult, favoriteIdsResult] = await Promise.all([
+    getListings(filters),
+    user ? getFavoriteIds(user.id) : Promise.resolve({ success: true as const, data: [] as string[] }),
+  ])
 
-  return <HomePageClient initialAds={initialAds} initialError={initialError} />
+  const initialAds = listingsResult.success ? listingsResult.data ?? [] : []
+  const initialError = listingsResult.success ? null : listingsResult.error ?? 'Kunde inte hämta annonser just nu.'
+  const favoriteIds = favoriteIdsResult.success && favoriteIdsResult.data ? favoriteIdsResult.data : []
+
+  return (
+    <HomePageClient
+      initialAds={initialAds}
+      initialError={initialError}
+      favoriteIds={favoriteIds}
+    />
+  )
 }

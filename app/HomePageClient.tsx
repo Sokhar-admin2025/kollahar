@@ -24,9 +24,15 @@ const PAGE_SIZE = 24
 interface HomePageClientProps {
   initialAds: Listing[]
   initialError?: string | null
+  /** Favorit-IDs från servern (en fetch för hela listan, undviker N+1) */
+  favoriteIds?: string[]
 }
 
-export default function HomePageClient({ initialAds, initialError }: HomePageClientProps) {
+export default function HomePageClient({
+  initialAds,
+  initialError,
+  favoriteIds = [],
+}: HomePageClientProps) {
   const searchParams = useSearchParams()
   const pathname = usePathname()
   const router = useRouter()
@@ -1217,6 +1223,7 @@ export default function HomePageClient({ initialAds, initialError }: HomePageCli
                       key={ad.id}
                       listing={ad}
                       currentUserId={currentUserId}
+                      isFavorited={favoriteIds.includes(ad.id)}
                     />
                   ))}
                 </div>
