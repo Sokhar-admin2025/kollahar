@@ -332,6 +332,46 @@ export async function getUserListings(userId: string): Promise<ServiceResult<Lis
 }
 
 /**
+ * Hämta en användares aktiva annonser (status = 'active'). För t.ex. publika säljprofiler.
+ * RLS: "Public read active ads" tillåter läsning.
+ */
+export async function getActiveListingsByUserId(userId: string): Promise<ServiceResult<Listing[]>> {
+  if (!userId || userId.trim().length === 0) {
+    return { success: false, error: 'Ogiltigt användar-id.' }
+  }
+
+  try {
+    const supabase = await createClient()
+
+    const { data, error } = await supabase
+      .from('listings')
+      .select('*')
+      .eq('user_id', userId.trim())
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('getActiveListingsByUserId failed', error)
+      return {
+        success: false,
+        error: 'Kunde inte hämta annonser.',
+      }
+    }
+
+    return {
+      success: true,
+      data: (data ?? []) as Listing[],
+    }
+  } catch (err) {
+    console.error('getActiveListingsByUserId unexpected error', err)
+    return {
+      success: false,
+      error: 'Ett oväntat fel uppstod vid hämtning av annonser.',
+    }
+  }
+}
+
+/**
  * Hämta användarens favorit-annonser (full Listing-objekt). För Dashboard-fliken "Sparade annonser".
  */
 export async function getFavoriteListings(userId: string): Promise<ServiceResult<Listing[]>> {

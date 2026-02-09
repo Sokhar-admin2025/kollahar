@@ -171,10 +171,12 @@ export default function LoginPageContent() {
         // Reset needsOtpVerification om login lyckas
         setNeedsOtpVerification(false)
 
-        // 2. Allt OK → släpp in användaren
+        // 2. Allt OK → släpp in användaren (redirect till next om det fanns, t.ex. /profil/[id])
         setMessage({ text: 'Inloggning lyckades. Skickar dig vidare...', type: 'success' })
+        const nextUrl = searchParams.get('next')
+        const safeNext = nextUrl && nextUrl.startsWith('/') && !nextUrl.startsWith('//') ? nextUrl : null
         setTimeout(() => {
-          router.push('/?logged_in=returning')
+          router.push(safeNext ?? '/?logged_in=returning')
           router.refresh()
         }, 1000)
       } catch (err) {
@@ -433,6 +435,7 @@ export default function LoginPageContent() {
   }
 
   const t = DASHBOARD_TEXTS.auth
+  const reason = searchParams.get('reason')
 
   return (
     <div className="flex min-h-screen flex-col bg-brand-beige">
@@ -450,7 +453,16 @@ export default function LoginPageContent() {
           >
             ← Tillbaka till annonserna
           </button>
-        
+
+          {reason === 'private_profile' && (
+            <div
+              className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800"
+              role="alert"
+            >
+              Du måste logga in för att se privata säljprofiler.
+            </div>
+          )}
+
         <div className="space-y-4 rounded-xl border p-8 shadow-md bg-white text-brand-text">
           {/* Tabs */}
           <div className="flex border-b border-gray-200 mb-6">

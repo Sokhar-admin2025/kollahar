@@ -8,6 +8,15 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ### ✨ Tillagt
 
+#### Publika säljprofiler (/profil/[id])
+- **Typer** (`lib/types.ts`): Ny `Profile` med `account_type`, `website`, `is_company_verified`, `org_number`, `created_at` (optional så att det fungerar innan migration).
+- **Migration** (`supabase/migrations/20260207100000_profiles_public_seller_fields.sql`): Kolumner på `profiles`: `created_at`, `account_type` (default 'private'), `website`, `is_company_verified`, `org_number`.
+- **Profile-service** (`lib/features/profiles/profile-service.ts`): `getPublicProfile(userId)` hämtar profildata; `getProfileStats(userId)` returnerar antal sålda och uppdelning per kategori (endast kategorier med count > 0).
+- **Listing-service** (`lib/features/listings/listing-service.ts`): `getActiveListingsByUserId(userId)` hämtar användarens aktiva annonser för profilsidan.
+- **Profilsida** (`app/profil/[id]/page.tsx`): Åtkomst: företagsprofil visas för alla; privat profil kräver inloggning – annars redirect till `/login?reason=private_profile&next=/profil/[id]`. UI: avatar (eller första bokstaven), namn, BadgeCheck vid verifierat företag, "Medlem sedan [år]" (från `created_at`), webbplatslänk, statistik (tidigare försäljningar + per kategori), grid med aktiva annonser (ListingCard).
+- **Login** (`app/login/LoginPageContent.tsx`): Banner när `reason=private_profile`: "Du måste logga in för att se privata säljprofiler." Efter lyckad inloggning: om `next` finns och är säker (relativ sökväg) redirect till `next`, annars till startsida.
+- **Annonssida** (`app/annons/[id]/page.tsx`): Säljarkortet (avatar + namn) är klickbart länk till `/profil/[user_id]`. BadgeCheck visas bredvid säljarens namn när `account_type === 'company'` och `is_company_verified`.
+
 #### Header: server-side auth (ingen flimmer)
 - **Layout** (`app/layout.tsx`): Rot-layouten är async och hämtar användaren med `createClient()` (server) + `auth.getUser()` samt `profile.otp_verified`. Skickar `initialUserId` och `initialIsVerified` till en klient-wrapper.
 - **LayoutWithHeader** (`app/components/layout/LayoutWithHeader.tsx`): Klientkomponent som renderar Header (med server-user) och children; använder `HeaderOptionsProvider` så att startsidan kan styra sökfält via context.

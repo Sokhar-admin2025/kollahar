@@ -11,7 +11,7 @@ import FavoriteButton from '@/app/components/FavoriteButton'
 import { createClient } from '@/lib/supabase/client'
 import type { Listing } from '@/app/types'
 import { getListingById } from '@/lib/features/listings/listing-service'
-import { MapPin, Loader2, ChevronLeft, ChevronRight, Calendar, Gauge, Fuel, Settings2, Car, Palette, Zap } from 'lucide-react'
+import { MapPin, Loader2, ChevronLeft, ChevronRight, Calendar, Gauge, Fuel, Settings2, Car, Palette, Zap, BadgeCheck } from 'lucide-react'
 import { getCategoryLabel, CATEGORY_GROUPS } from '@/lib/categories'
 
 const supabase = createClient()
@@ -32,6 +32,8 @@ interface SellerProfile {
   consent_marketing: boolean
   consent_analytics: boolean
   updated_at: string
+  account_type?: 'private' | 'company'
+  is_company_verified?: boolean
 }
 
 interface CurrentUser {
@@ -498,7 +500,10 @@ function ListingDetails() {
                 <div className="mb-4 pt-6 border-t border-gray-100">
                   <p className="text-xs font-bold text-brand-text/60 uppercase tracking-widest mb-3">Säljare</p>
                   
-                  <div className="flex items-center gap-4 bg-brand-beige p-3 rounded-xl border border-gray-200">
+                  <Link
+                    href={`/profil/${ad.user_id}`}
+                    className="flex items-center gap-4 bg-brand-beige p-3 rounded-xl border border-gray-200 hover:border-brand-green/30 transition"
+                  >
                     {/* Säljarens Bild */}
                     <div className="w-12 h-12 rounded-full bg-white border border-gray-200 overflow-hidden flex-shrink-0">
                       {sellerProfile?.avatar_url ? (
@@ -510,8 +515,13 @@ function ListingDetails() {
                     
                     {/* Säljarens Namn + Plats */}
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-bold text-brand-text truncate">
-                        {sellerProfile?.full_name || 'Anonym säljare'}
+                      <h4 className="font-bold text-brand-text truncate flex items-center gap-1.5 flex-wrap">
+                        <span className="truncate">{sellerProfile?.full_name || 'Anonym säljare'}</span>
+                        {sellerProfile?.account_type === 'company' && sellerProfile?.is_company_verified && (
+                          <span className="inline-flex text-brand-green flex-shrink-0" title="Verifierat företag">
+                            <BadgeCheck className="w-5 h-5" aria-hidden />
+                          </span>
+                        )}
                       </h4>
                       {sellerProfile?.location && (
                         <p className="mt-0.5 flex items-center gap-1 text-xs text-brand-text/80 truncate">
@@ -523,7 +533,7 @@ function ListingDetails() {
                         <p className="text-xs text-brand-text/60">Medlem på Kolla här!</p>
                       )}
                     </div>
-                  </div>
+                  </Link>
                 </div>
 
                 {/* Kontaktknapp (döljs när annonsen är såld/borttagen) */}

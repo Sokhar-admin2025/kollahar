@@ -148,6 +148,13 @@ CREATE TABLE public.profiles (
 - `avatar_url`: URL till profilbild (från `avatars` bucket)
 - `consent_marketing`: GDPR-samtycke för marknadsföring
 - `consent_analytics`: GDPR-samtycke för analytics
+- `created_at`: När profilen skapades (används för "Medlem sedan" på publika profiler)
+- `account_type`: `'private'` (standard) eller `'company'` – styr om profilsidan kräver inloggning
+- `website`: Företagswebb (valfritt)
+- `is_company_verified`: Verifieringsbricka för företag (BadgeCheck)
+- `org_number`: Organisationsnummer (valfritt)
+
+**Publika säljprofiler:** Se `lib/features/profiles/profile-service.ts` (`getPublicProfile`, `getProfileStats`) och sidan `/profil/[id]`.
 
 #### 3. `public.listings`
 
@@ -486,6 +493,7 @@ Migrations ligger i `supabase/migrations/`:
 - `20260116090000_create_favorites.sql`: Skapar favorites-tabellen och RLS policies
 - `20260205100000_listings_own_select_policy.sql`: Lägger till RLS-policy "Users can view all own listings" på `listings` så att inloggade användare kan se alla egna annonser (aktiva + sålda) i Dashboard.
 - `20260206100000_public_read_sold_listings.sql`: Lägger till RLS-policy "Public read sold listings" på `listings` så att besökare kan läsa sålda annonser (visas som "Såld" på annonssidan).
+- `20260207100000_profiles_public_seller_fields.sql`: Lägger till kolumner på `profiles`: `created_at`, `account_type`, `website`, `is_company_verified`, `org_number` (för publika säljprofiler).
 
 Utöver migrations finns även manuella setup-skript:
 

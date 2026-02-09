@@ -83,6 +83,8 @@ app/
 
 **Header & auth:** Header renderas i rot-layouten via `LayoutWithHeader`. Användaren hämtas på servern (`app/layout.tsx`) och skickas som `initialUserId`/`initialIsVerified` så att det inte flimrar mellan "Logga in" och profil. Sökfältet i headern styrs via `HeaderOptionsContext` när användaren är på startsidan.
 
+**Publika säljprofiler:** Sidan `/profil/[id]` (`app/profil/[id]/page.tsx`) visar säljarens profil (avatar/namn, BadgeCheck vid verifierat företag, "Medlem sedan", webbplats, statistik, aktiva annonser). Företagsprofiler är öppna för alla; privata kräver inloggning och redirectar till `/login?reason=private_profile&next=/profil/[id]`. Efter inloggning skickas användaren tillbaka till `next`. På annonssidan är säljarkortet en länk till `/profil/[user_id]` och verifierade företag får BadgeCheck bredvid namnet.
+
 ### Button Component
 
 **Plats:** `app/components/atoms/Button.tsx`
