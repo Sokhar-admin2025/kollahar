@@ -31,7 +31,7 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 - **Verify-sida** (`app/login/verify/VerifyPageContent.tsx`): Användar-id hämtas från `verifyOtp`-svaret (`otpData?.user?.id`); vid misslyckad profiluppdatering visas fel och ingen redirect.
 
 #### Build: TypeScript profil-sida
-- **Profilsida** (`app/profil/[id]/page.tsx`): Non-null assertion på `profileResult.data` efter guard så Vercel/TS-build lyckas (`profile` possibly undefined).
+- **Profilsida** (`app/profil/[id]/page.tsx`): Non-null assertion på `profileResult.data` efter guard; `stats` sätts alltid till definierad (defaultStats vid misslyckad/undefined statsResult.data) så `stats.byCategory` är säker.
 
 ---
 

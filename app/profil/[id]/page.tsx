@@ -34,7 +34,8 @@ export default async function PublicProfilePage({ params }: PageProps) {
     currentUserId = user.id
   }
 
-  const stats = statsResult.success ? statsResult.data : { totalSold: 0, byCategory: {} as Record<string, number> }
+  const defaultStats = { totalSold: 0, byCategory: {} as Record<string, number> }
+  const stats = statsResult.success && statsResult.data != null ? statsResult.data : defaultStats
   const activeListingsResult = await getActiveListingsByUserId(userId)
   const activeListings: Listing[] = activeListingsResult.success ? (activeListingsResult.data ?? []) : []
 
