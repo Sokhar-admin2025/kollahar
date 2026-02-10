@@ -22,7 +22,7 @@ export default async function PublicProfilePage({ params }: PageProps) {
   ])
 
   if (!profileResult.success || profileResult.data === null) notFound()
-  const profile = profileResult.data
+  const profile = profileResult.data!
 
   const accountType = profile.account_type ?? 'private'
   let currentUserId: string | null = null
