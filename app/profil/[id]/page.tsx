@@ -42,7 +42,9 @@ export default async function PublicProfilePage({ params }: PageProps) {
   const firstLetter = displayName.charAt(0).toUpperCase() || 'A'
   const dateForMemberSince = profile.created_at ?? profile.updated_at
   const memberSinceYear = dateForMemberSince ? new Date(dateForMemberSince).getFullYear() : null
-  const isCompanyVerified = profile.account_type === 'company' && profile.is_company_verified === true
+  const isCompany = profile.account_type === 'company'
+  const isCompanyVerified = isCompany && profile.is_company_verified === true
+  const showCompanyBadge = isCompany
   const website = profile.account_type === 'company' ? (profile.website?.trim() || null) : null
 
   const categoryLabels = Object.entries(stats.byCategory)
@@ -81,8 +83,8 @@ export default async function PublicProfilePage({ params }: PageProps) {
                 <h1 className="text-2xl font-display font-bold text-brand-text truncate">
                   {displayName}
                 </h1>
-                {isCompanyVerified && (
-                  <span className="inline-flex items-center text-brand-green" title="Verifierat företag">
+                {showCompanyBadge && (
+                  <span className="inline-flex items-center text-brand-green" title={isCompanyVerified ? 'Verifierat företag' : 'Företag'}>
                     <BadgeCheck className="w-6 h-6 flex-shrink-0" aria-hidden />
                   </span>
                 )}
@@ -90,8 +92,14 @@ export default async function PublicProfilePage({ params }: PageProps) {
               {memberSinceYear && (
                 <p className="text-sm text-brand-text/70 mt-1">Medlem sedan {memberSinceYear}</p>
               )}
-              {profile.location && (
-                <p className="text-sm text-brand-text/70 mt-0.5">{profile.location}</p>
+              {(profile.account_type === 'company'
+                ? [profile.zip_code, profile.city].filter(Boolean).join(' ') || profile.city || profile.address
+                : profile.location) && (
+                <p className="text-sm text-brand-text/70 mt-0.5">
+                  {profile.account_type === 'company'
+                    ? [profile.zip_code, profile.city].filter(Boolean).join(' ') || profile.city || profile.address
+                    : profile.location}
+                </p>
               )}
               {website && (
                 <a
@@ -107,6 +115,30 @@ export default async function PublicProfilePage({ params }: PageProps) {
             </div>
           </div>
         </div>
+
+        {/* Företagsinformation (endast företag) */}
+        {accountType === 'company' && (profile.bio || profile.org_number || profile.address || profile.zip_code || profile.city) && (
+          <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6 md:p-8 mb-6">
+            <h2 className="text-lg font-semibold text-brand-text border-b border-gray-200 pb-2 mb-4">Företagsinformation</h2>
+            {profile.org_number && (
+              <p className="text-sm text-brand-text/80 mb-2">
+                <span className="font-medium text-brand-text">Org.nummer:</span> {profile.org_number}
+              </p>
+            )}
+            {(profile.address || profile.zip_code || profile.city) && (
+              <p className="text-sm text-brand-text/80 mb-2">
+                <span className="font-medium text-brand-text">Adress:</span>{' '}
+                {[profile.address, profile.zip_code, profile.city].filter(Boolean).join(', ')}
+              </p>
+            )}
+            {profile.bio && (
+              <div className="mt-3">
+                <p className="text-sm font-medium text-brand-text mb-1">Företagspresentation</p>
+                <p className="text-sm text-brand-text/80 whitespace-pre-wrap">{profile.bio}</p>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Stats */}
         <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6 mb-6">

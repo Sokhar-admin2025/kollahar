@@ -19,6 +19,7 @@ export default function VerifyPageContent() {
   
   const email = searchParams.get('email') || ''
   const type = searchParams.get('type') || 'signup' // 'signup' eller 'login'
+  const fromUpgrade = searchParams.get('from') === 'upgrade'
   
   const [code, setCode] = useState<string[]>(['', '', '', '', '', ''])
   const [loading, setLoading] = useState(false)
@@ -58,7 +59,7 @@ export default function VerifyPageContent() {
   }, [])
 
   const handleVerify = useCallback(async () => {
-    const fullCode = code.join('')
+    const fullCode = code.join('').trim()
     
     if (fullCode.length !== 6) {
       setMessage({ text: DASHBOARD_TEXTS.auth.verify.errors.invalidCode, type: 'error' })
@@ -95,13 +96,25 @@ export default function VerifyPageContent() {
     }, VERIFY_TIMEOUT_MS)
 
     try {
-      // Verifiera OTP-koden. För email-OTP som skickas via signInWithOtp
-      // ska type vara 'magiclink' enligt Supabase-dokumentationen.
-      const { error } = await supabase.auth.verifyOtp({
+      // Robust OTP: först signup, vid fel fallback till email (olika flöden/resend kan ge olika typ)
+      let { data: otpData, error } = await supabase.auth.verifyOtp({
         email,
         token: fullCode,
-        type: 'magiclink',        
+        type: 'signup',
       })
+
+      if (error) {
+        console.log('Signup verification failed, trying email type...')
+        const res = await supabase.auth.verifyOtp({
+          email,
+          token: fullCode,
+          type: 'email',
+        })
+        if (!res.error) {
+          error = null
+          otpData = res.data
+        }
+      }
 
       // Rensa timeout om vi fick svar
       if (timeoutRef.current) {
@@ -111,60 +124,82 @@ export default function VerifyPageContent() {
 
       if (error) {
         const newAttempts = attemptsLeft - 1
-        
+        const wrongCodeMessage = 'Felaktig kod. Kontrollera och försök igen.'
         if (newAttempts <= 0) {
           setMessage({ 
-            text: DASHBOARD_TEXTS.auth.verify.errors.tooManyAttempts, 
+            text: DASHBOARD_TEXTS.auth.verify.errors.tooManyAttempts ?? wrongCodeMessage, 
             type: 'error' 
           })
           setAttemptsLeft(0)
-          // Rensa fält
           setCode(['', '', '', '', '', ''])
           inputRefs.current[0]?.focus()
-        } else if (error.message.includes('expired') || error.message.includes('invalid')) {
+        } else if (error.message?.toLowerCase().includes('expired') || error.message?.toLowerCase().includes('invalid') || error.message?.toLowerCase().includes('token')) {
           setMessage({ 
-            text: `${DASHBOARD_TEXTS.auth.verify.errors.invalidCode} ${DASHBOARD_TEXTS.auth.verify.attemptsLeft(newAttempts)}`, 
+            text: wrongCodeMessage + (newAttempts > 0 ? ` ${DASHBOARD_TEXTS.auth.verify.attemptsLeft?.(newAttempts) ?? `${newAttempts} försök kvar.`}` : ''), 
             type: 'error' 
           })
           setAttemptsLeft(newAttempts)
-          // Rensa fält
           setCode(['', '', '', '', '', ''])
           inputRefs.current[0]?.focus()
         } else {
           setMessage({ 
-            text: DASHBOARD_TEXTS.auth.verify.errors.generic, 
+            text: wrongCodeMessage, 
             type: 'error' 
           })
           setAttemptsLeft(newAttempts)
         }
         setLoading(false)
       } else {
-        // Lyckad verifiering: användaren är nu inloggad
+        // Lyckad OTP-verifiering: använd alltid user-id från verifyOtp-svaret (så vi inte missar pga timing/getUser())
+        const verifiedUserId = otpData?.user?.id ?? null
         setSuccessMessage('Koden godkänd! Loggar in...')
         setMessage({ text: DASHBOARD_TEXTS.auth.verify.success, type: 'success' })
 
-        try {
-          // Markera kontot som OTP-verifierat i profiles-tabellen
-          const {
-            data: { user },
-          } = await supabase.auth.getUser()
-
-          if (user?.id) {
-            await supabase
-              .from('profiles')
-              .update({ otp_verified: true })
-              .eq('id', user.id)
+        let signInError: Error | null = null
+        const storedPassword =
+          typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('signup_password_pending_verify') : null
+        if (storedPassword) {
+          try {
+            sessionStorage.removeItem('signup_password_pending_verify')
+          } catch {
+            /* ignore */
           }
-        } catch (updateErr) {
-          console.error('Kunde inte uppdatera otp_verified i profiles:', updateErr)
-          // Vi blockerar inte inloggningen här, men loggar felet för vidare analys
+          const signInRes = await supabase.auth.signInWithPassword({
+            email,
+            password: storedPassword,
+          })
+          signInError = signInRes.error
+        }
+        // Om vi inte hade lösenord använder vi sessionen från verifyOtp (redan satt)
+
+        if (signInError) {
+          setMessage({
+            text: signInError.message ?? 'Kunde inte logga in. Försök logga in manuellt med e-post och lösenord.',
+            type: 'error',
+          })
+          setLoading(false)
+          return
         }
 
-        // Hard navigation för omedelbar feedback
-        // Vid signup: markera som ny användare i URL-parametern
-        const loginParam = type === 'signup' ? 'new' : 'returning'
-        // Använd window.location.href för hard navigation istället för router.push
-        window.location.href = `/?logged_in=${loginParam}`
+        const userIdToUpdate = verifiedUserId ?? (await supabase.auth.getUser()).data.user?.id ?? null
+        if (userIdToUpdate) {
+          const { error: updateErr } = await supabase
+            .from('profiles')
+            .update({ otp_verified: true })
+            .eq('id', userIdToUpdate)
+          if (updateErr) {
+            console.error('Kunde inte uppdatera otp_verified i profiles:', updateErr)
+            setMessage({
+              text: 'Verifieringen lyckades men något gick fel. Försök logga in igen.',
+              type: 'error',
+            })
+            setLoading(false)
+            return
+          }
+        }
+
+        // Full sidladdning så session-cookien skickas med och dashboard ser användaren
+        window.location.href = '/dashboard'
       }
     } catch {
       // Rensa timeout vid fel
@@ -244,7 +279,7 @@ export default function VerifyPageContent() {
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          shouldCreateUser: type === 'signup',
+          shouldCreateUser: type === 'signup' && !fromUpgrade,
         }
       })
 

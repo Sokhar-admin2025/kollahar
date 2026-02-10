@@ -52,6 +52,10 @@ export async function getPublicProfile(userId: string): Promise<ServiceResult<Pr
       website: (row.website as string) ?? null,
       is_company_verified: Boolean(row.is_company_verified),
       org_number: (row.org_number as string) ?? null,
+      address: (row.address as string) ?? null,
+      zip_code: (row.zip_code as string) ?? null,
+      city: (row.city as string) ?? null,
+      bio: (row.bio as string) ?? null,
     }
 
     return { success: true, data: profile }

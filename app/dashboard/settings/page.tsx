@@ -11,6 +11,7 @@ import { AUTH_CONFIG } from '@/lib/constants'
 import Button from '@/app/components/atoms/Button'
 import LocationInput from '@/app/components/LocationInput'
 import { createClient } from '@/lib/supabase/client'
+import { validateDomainMatch } from '@/lib/utils'
 
 // Supabase-klient via delad SSR-kompatibel wrapper
 const supabase = createClient()
@@ -29,6 +30,25 @@ export default function SettingsPage() {
   const [fullName, setFullName] = useState('')
   const [location, setLocation] = useState('')
   const [avatarUrl, setAvatarUrl] = useState('')
+  const [accountType, setAccountType] = useState<'private' | 'company'>('private')
+  const [orgNumber, setOrgNumber] = useState('')
+  const [website, setWebsite] = useState('')
+  const [address, setAddress] = useState('')
+  const [zipCode, setZipCode] = useState('')
+  const [city, setCity] = useState('')
+  const [bio, setBio] = useState('')
+  const [contactPerson, setContactPerson] = useState('')
+
+  const [saveSuccessNotis, setSaveSuccessNotis] = useState(false)
+  const [upgradeSectionExpanded, setUpgradeSectionExpanded] = useState(false)
+
+  // Upgrade till företag (State A)
+  const [upgradeCompanyName, setUpgradeCompanyName] = useState('')
+  const [upgradeOrgNumber, setUpgradeOrgNumber] = useState('')
+  const [upgradeWebsite, setUpgradeWebsite] = useState('')
+  const [upgradeEmail, setUpgradeEmail] = useState('')
+  const [upgradeSaving, setUpgradeSaving] = useState(false)
+  const [upgradeMessage, setUpgradeMessage] = useState<{ text: string; type: 'error' | 'success' } | null>(null)
   
   // Consent / GDPR
   const [consentMarketing, setConsentMarketing] = useState(false)
@@ -61,15 +81,25 @@ export default function SettingsPage() {
         .single()
 
       if (data) {
-        setFullName(data.full_name || '')
+        const row = data as Record<string, unknown>
+        setFullName((row.full_name as string) || '')
 
         // Om location ser ut som en e-postadress (gammal data från website) → visa tomt fält
-        const rawLocation = data.location || ''
+        const rawLocation = (row.location as string) || ''
         const looksLikeEmail = /\S+@\S+\.\S+/.test(rawLocation)
         setLocation(looksLikeEmail ? '' : rawLocation)
-        setAvatarUrl(data.avatar_url || '')
-        setConsentMarketing(data.consent_marketing || false)
-        setConsentAnalytics(data.consent_analytics || false)
+        setAvatarUrl((row.avatar_url as string) || '')
+        setConsentMarketing(Boolean(row.consent_marketing))
+        setConsentAnalytics(Boolean(row.consent_analytics))
+        setAccountType((row.account_type as 'private' | 'company') || 'private')
+        setOrgNumber((row.org_number as string) || '')
+        setWebsite((row.website as string) || '')
+        setAddress((row.address as string) || '')
+        setZipCode((row.zip_code as string) || '')
+        const rawCity = (row.city as string) || ''
+        setCity(/\S+@\S+\.\S+/.test(rawCity) ? '' : rawCity)
+        setBio((row.bio as string) || '')
+        setContactPerson((row.contact_person as string) || '')
       }
       setLoading(false)
     }
@@ -82,22 +112,50 @@ export default function SettingsPage() {
     e.preventDefault()
     if (!userId) return
 
-    // Namn är obligatoriskt
-    if (!fullName.trim()) {
-      alert('Namn är obligatoriskt. Fyll i ditt namn eller företagsnamn innan du sparar.')
+    if (accountType === 'company') {
+      const zip = zipCode.trim() || null
+      const cityVal = city.trim() || null
+      const addr = address.trim() || null
+      const locationSync = [zip, cityVal].filter(Boolean).join(' ') || cityVal || addr
+      setSaving(true)
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          address: addr,
+          zip_code: zip,
+          city: cityVal,
+          bio: bio.trim() || null,
+          contact_person: contactPerson.trim() || null,
+          location: locationSync,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', userId)
+      setSaving(false)
+      if (error) {
+        alert('Kunde inte spara: ' + error.message)
+        console.error(error)
+      } else {
+        setSaveSuccessNotis(true)
+        setTimeout(() => setSaveSuccessNotis(false), 3000)
+        router.refresh()
+      }
       return
     }
 
+    // Privat: namn obligatoriskt, spara profil + consent (sätt aldrig e-post i location)
+    if (!fullName.trim()) {
+      alert('Namn är obligatoriskt. Fyll i ditt namn innan du sparar.')
+      return
+    }
+
+    const locationValue = /\S+@\S+\.\S+/.test(location) ? '' : location
     setSaving(true)
-    
-    // Vi använder "upsert" istället för "update".
-    // Det betyder: Uppdatera om den finns, skapa ny om den saknas.
     const { error } = await supabase
       .from('profiles')
       .upsert({
-        id: userId, // <--- VIKTIGT: Vi måste skicka med ID vid upsert
+        id: userId,
         full_name: fullName,
-        location,
+        location: locationValue,
         avatar_url: avatarUrl,
         consent_marketing: consentMarketing,
         consent_analytics: consentAnalytics,
@@ -112,6 +170,82 @@ export default function SettingsPage() {
     } else {
       alert(t.save.success)
       router.refresh()
+    }
+  }
+
+  // Upgrade privat → företag: byt e-post + sätt företagsdata, signOut, redirect
+  const upgradeDomainMismatch =
+    Boolean(upgradeEmail.trim() && upgradeWebsite.trim()) &&
+    !validateDomainMatch(upgradeEmail.trim(), upgradeWebsite.trim())
+
+  const handleUpgradeToCompany = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!userId || !email) return
+    if (!upgradeCompanyName.trim() || !upgradeOrgNumber.trim() || !upgradeWebsite.trim() || !upgradeEmail.trim()) {
+      setUpgradeMessage({ text: 'Fyll i alla fält: företagsnamn, orgnummer, webbplats och ny företags-e-post.', type: 'error' })
+      return
+    }
+    if (upgradeDomainMismatch) {
+      setUpgradeMessage({ text: 'E-postens domän måste matcha webbplatsens domän.', type: 'error' })
+      return
+    }
+    setUpgradeSaving(true)
+    setUpgradeMessage(null)
+    const newEmail = upgradeEmail.trim()
+    const siteNorm = upgradeWebsite.trim().replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0] || upgradeWebsite.trim()
+    const companyNameTrim = upgradeCompanyName.trim()
+    const orgTrim = upgradeOrgNumber.trim()
+    try {
+      const { error: updateError } = await supabase.auth.updateUser({
+        email: newEmail,
+        data: {
+          full_name: companyNameTrim,
+          org_number: orgTrim,
+          website: siteNorm,
+          account_type: 'company',
+        },
+      })
+      if (updateError) {
+        setUpgradeMessage({ text: updateError.message || 'Kunde inte uppdatera e-post.', type: 'error' })
+        setUpgradeSaving(false)
+        return
+      }
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          full_name: companyNameTrim,
+          org_number: orgTrim,
+          website: siteNorm,
+          account_type: 'company',
+          otp_verified: false,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', userId)
+      if (profileError) {
+        console.error(profileError)
+        setUpgradeMessage({ text: 'Profilen kunde inte uppdateras. Kontakta support.', type: 'error' })
+        setUpgradeSaving(false)
+        return
+      }
+      const { error: otpError } = await supabase.auth.signInWithOtp({
+        email: newEmail,
+        options: { shouldCreateUser: false },
+      })
+      if (otpError) {
+        setUpgradeMessage({
+          text: otpError.message?.includes('rate limit') ? 'För många försök. Försök igen senare.' : 'Kunde inte skicka verifieringskod till ny e-post. Försök igen.',
+          type: 'error',
+        })
+        setUpgradeSaving(false)
+        return
+      }
+      await supabase.auth.signOut()
+      router.push(`/login/verify?email=${encodeURIComponent(newEmail)}&type=signup&from=upgrade`)
+      router.refresh()
+    } catch (err) {
+      console.error(err)
+      setUpgradeMessage({ text: 'Ett oväntat fel uppstod.', type: 'error' })
+      setUpgradeSaving(false)
     }
   }
 
@@ -278,56 +412,146 @@ export default function SettingsPage() {
         {/* Formulär */}
         <form onSubmit={handleSave} className="bg-white p-8 rounded-xl shadow-md border border-gray-200 space-y-8">
             
-            {/* SEKTION: PROFIL */}
+            {/* SEKTION: PROFIL (privat) eller FÖRETAG (låsta + adress/bio) */}
             <div>
-                <h2 className="text-lg font-semibold text-brand-text mb-4 border-b pb-2 antialiased">{t.sections.profile}</h2>
+                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 mb-4 border-b pb-2">
+                  <h2 className="text-lg font-semibold text-brand-text antialiased">
+                    {accountType === 'company' ? 'Företagsinformation' : t.sections.profile}
+                  </h2>
+                  {accountType !== 'company' && email && (
+                    <span className="text-sm text-brand-text/70 antialiased">
+                      Inloggad som: &quot;{email}&quot;
+                    </span>
+                  )}
+                </div>
                 
-                {/* Avatar-uppladdning */}
-                <div className="flex items-center gap-6 mb-6">
-                    <div className="w-20 h-20 rounded-full bg-gray-200 overflow-hidden border border-gray-300 relative">
-                        {avatarUrl ? (
-                            <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
-                        ) : (
-                            <div className="w-full h-full flex items-center justify-center text-brand-text text-2xl">👤</div>
-                        )}
+                {accountType === 'company' ? (
+                  <>
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-brand-text mb-1 antialiased">Företagsnamn</label>
+                      <input type="text" value={fullName} readOnly className="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 text-gray-600 antialiased" />
                     </div>
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-brand-text mb-1 antialiased">Organisationsnummer</label>
+                      <input type="text" value={orgNumber} readOnly className="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 text-gray-600 antialiased" />
+                    </div>
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-brand-text mb-1 antialiased">Webbplats</label>
+                      <input type="text" value={website} readOnly className="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 text-gray-600 antialiased" />
+                    </div>
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-brand-text mb-1 antialiased">Adress <span className="text-xs text-brand-text/60">(valfritt)</span></label>
+                      <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Gatuadress" className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-brand-text antialiased" />
+                    </div>
+                    <div className="mb-4 grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-brand-text mb-1 antialiased">Postnummer</label>
+                        <input type="text" value={zipCode} onChange={(e) => setZipCode(e.target.value)} placeholder="123 45" className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-brand-text antialiased" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-brand-text mb-1 antialiased">Ort</label>
+                        <input type="text" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Stockholm" className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-brand-text antialiased" />
+                      </div>
+                    </div>
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-brand-text mb-1 antialiased">Företagspresentation <span className="text-xs text-brand-text/60">(valfritt)</span></label>
+                      <textarea value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Kort beskrivning av företaget" rows={3} className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-brand-text antialiased resize-y" />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* Avatar-uppladdning */}
+                    <div className="flex items-center gap-6 mb-6">
+                        <div className="w-20 h-20 rounded-full bg-gray-200 overflow-hidden border border-gray-300 relative">
+                            {avatarUrl ? (
+                                <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center text-brand-text text-2xl">👤</div>
+                            )}
+                        </div>
+                        <div>
+                            <label className={`cursor-pointer bg-white border border-gray-300 text-brand-text px-4 py-2 rounded-xl text-sm font-medium hover:bg-brand-beige transition shadow-sm ${compressingAvatar ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                                {compressingAvatar ? 'Bearbetar bild...' : t.form.avatar.changeBtn}
+                                <input type="file" className="hidden" accept="image/*" onChange={uploadAvatar} disabled={compressingAvatar} />
+                            </label>
+                        </div>
+                    </div>
+
+                    {/* Användarnamn / e-post (privat: skrivskyddad, eget fält – aldrig i Min plats) */}
+                    <div className="mb-4">
+                        <label className="block text-sm font-medium text-brand-text mb-1 antialiased">Användarnamn / e-post</label>
+                        <input
+                            type="text"
+                            value={email ?? ''}
+                            readOnly
+                            className="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 text-gray-600 antialiased"
+                            aria-readonly="true"
+                        />
+                    </div>
+
+                    {/* Namn-fält (privat: endast Namn) */}
+                    <div className="mb-4">
+                        <label className="block text-sm font-medium text-brand-text mb-1 antialiased">Namn</label>
+                        <input 
+                            type="text" 
+                            value={fullName}
+                            onChange={(e) => setFullName(e.target.value)}
+                            placeholder="Ditt namn"
+                            className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-brand-text antialiased"
+                        />
+                    </div>
+
+                    {/* Min plats (valfritt) – endast ort/plats, aldrig e-post */}
                     <div>
-                        <label className={`cursor-pointer bg-white border border-gray-300 text-brand-text px-4 py-2 rounded-xl text-sm font-medium hover:bg-brand-beige transition shadow-sm ${compressingAvatar ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                            {compressingAvatar ? 'Bearbetar bild...' : t.form.avatar.changeBtn}
-                            {/* Dolt fil-input fält */}
-                            <input type="file" className="hidden" accept="image/*" onChange={uploadAvatar} disabled={compressingAvatar} />
+                        <label className="block text-sm font-medium text-brand-text mb-1 antialiased">
+                          {t.form.location.label}{' '}
+                          <span className="text-xs text-brand-text/60">(Valfritt)</span>
                         </label>
+                        <LocationInput
+                          value={/\S+@\S+\.\S+/.test(location) ? '' : location}
+                          onChange={(val) => setLocation(/\S+@\S+\.\S+/.test(val) ? '' : val)}
+                          placeholder={t.form.location.placeholder}
+                          className="mt-1"
+                          autoComplete="off"
+                        />
                     </div>
-                </div>
-
-                {/* Namn-fält */}
-                <div className="mb-4">
-                    <label className="block text-sm font-medium text-brand-text mb-1 antialiased">{t.form.name.label}</label>
-                    <input 
-                        type="text" 
-                        value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
-                        placeholder={t.form.name.placeholder}
-                        className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-brand-text antialiased"
-                    />
-                </div>
-
-                {/* Plats / Hemvist (valfritt) */}
-                <div>
-                    <label className="block text-sm font-medium text-brand-text mb-1 antialiased">
-                      {t.form.location.label}{' '}
-                      <span className="text-xs text-brand-text/60">(Valfritt)</span>
-                    </label>
-                    <LocationInput
-                      value={location}
-                      onChange={setLocation}
-                      placeholder={t.form.location.placeholder}
-                      className="mt-1"
-                    />
-                </div>
+                  </>
+                )}
             </div>
 
-            {/* SEKTION: CONSENT / GDPR */}
+            {/* UPPGRADERA TILL FÖRETAG flyttas ned under Spara-knappen, se nedan */}
+
+            {/* SEKTION: ANVÄNDARUPPGIFTER (endast företag) */}
+            {accountType === 'company' && (
+              <div>
+                <h2 className="text-lg font-semibold text-brand-text mb-4 border-b pb-2 antialiased">Användaruppgifter</h2>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-brand-text mb-1 antialiased">Användarnamn / e-post</label>
+                    <input
+                      type="text"
+                      value={email ?? ''}
+                      readOnly
+                      className="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 text-gray-600 antialiased"
+                      aria-readonly="true"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-brand-text mb-1 antialiased">Kontaktperson <span className="text-xs text-brand-text/60">(valfritt)</span></label>
+                    <input
+                      type="text"
+                      value={contactPerson}
+                      onChange={(e) => setContactPerson(e.target.value)}
+                      placeholder="t.ex. Anna Andersson"
+                      className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-brand-text antialiased"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* SEKTION: CONSENT / GDPR (endast för privat) */}
+            {accountType !== 'company' && (
             <div>
                 <h2 className="text-lg font-semibold text-brand-text mb-4 border-b pb-2 flex items-center gap-2 antialiased">
                     {t.sections.privacy} 
@@ -358,6 +582,7 @@ export default function SettingsPage() {
                     </label>
                 </div>
             </div>
+            )}
 
             {/* SEKTION: BYT LÖSENORD */}
             <div>
@@ -438,10 +663,67 @@ export default function SettingsPage() {
 
             <hr />
 
+            {saveSuccessNotis && (
+              <div className="p-3 rounded-xl bg-green-100 text-green-800 text-sm text-center" role="status">
+                Ändringarna är sparade.
+              </div>
+            )}
+
             {/* Spara-knapp */}
             <Button type="submit" disabled={saving} className="w-full py-3 text-lg font-bold">
-                {saving ? t.save.loading : t.save.btn}
+                {saving ? t.save.loading : accountType === 'company' ? 'Spara ändringar' : t.save.btn}
             </Button>
+
+            {/* SEKTION: VILL DU SÄLJA SOM FÖRETAG? (endast privat, nedanför Spara, expanderas vid klick) */}
+            {accountType !== 'company' && (
+              <div className="border border-brand-green/30 rounded-xl overflow-hidden bg-brand-beige/30">
+                <button
+                  type="button"
+                  id="upgrade-heading"
+                  onClick={() => setUpgradeSectionExpanded((prev) => !prev)}
+                  className="w-full flex items-center justify-between gap-2 p-4 text-left hover:bg-brand-beige/50 transition"
+                  aria-expanded={upgradeSectionExpanded}
+                  aria-controls="upgrade-form"
+                >
+                  <span className="font-semibold text-brand-text antialiased">Vill du sälja som företag?</span>
+                  <span className="text-brand-green flex-shrink-0" aria-hidden>
+                    {upgradeSectionExpanded ? '−' : '+'}
+                  </span>
+                </button>
+                {upgradeSectionExpanded && (
+                  <div id="upgrade-form" className="px-6 pb-6 pt-0 space-y-4" role="group" aria-labelledby="upgrade-heading">
+                    <p className="text-sm text-brand-text/80">Fyll i uppgifterna nedan. Din inloggning byts till en företags-e-post som matchar webbplatsens domän. Du får en verifieringslänk och loggas ut – logga in igen med de nya uppgifterna efter verifiering.</p>
+                    <div>
+                      <label className="block text-sm font-medium text-brand-text mb-1 antialiased">Företagsnamn</label>
+                      <input type="text" value={upgradeCompanyName} onChange={(e) => setUpgradeCompanyName(e.target.value)} placeholder="t.ex. Min Firma AB" className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none text-brand-text antialiased" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-brand-text mb-1 antialiased">Organisationsnummer</label>
+                      <input type="text" value={upgradeOrgNumber} onChange={(e) => setUpgradeOrgNumber(e.target.value)} placeholder="t.ex. 556123-4567" className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none text-brand-text antialiased" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-brand-text mb-1 antialiased">Webbplats (domän)</label>
+                      <input type="text" value={upgradeWebsite} onChange={(e) => setUpgradeWebsite(e.target.value)} placeholder="t.ex. foretag.se" className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none text-brand-text antialiased" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-brand-text mb-1 antialiased">Ny företags-e-post</label>
+                      <input type="email" value={upgradeEmail} onChange={(e) => setUpgradeEmail(e.target.value)} placeholder="info@foretag.se" className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none text-brand-text antialiased" />
+                      {upgradeDomainMismatch && (
+                        <p className="text-xs text-red-600 mt-1" role="alert">E-postens domän måste matcha webbplatsens domän.</p>
+                      )}
+                    </div>
+                    {upgradeMessage && (
+                      <div className={`p-3 rounded text-sm ${upgradeMessage.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`} role="alert">
+                        {upgradeMessage.text}
+                      </div>
+                    )}
+                    <Button type="button" disabled={upgradeSaving} onClick={(e) => { e.preventDefault(); handleUpgradeToCompany(e as unknown as React.FormEvent); }} className="w-full">
+                      {upgradeSaving ? 'Skickar verifieringslänk...' : 'Byt till företagskonto'}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* DANGER ZONE: Radera konto */}
             <div className="mt-8 border border-red-200 bg-red-50 rounded-xl p-4 space-y-3">

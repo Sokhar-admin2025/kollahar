@@ -11,6 +11,8 @@ interface LocationInputProps {
   required?: boolean
   className?: string
   hasError?: boolean
+  /** Sätt till "off" på inställningssidan så webbläsaren inte fyller i e-post i platsfältet */
+  autoComplete?: 'on' | 'off' | 'address-level2'
 }
 
 export default function LocationInput({
@@ -20,6 +22,7 @@ export default function LocationInput({
   required = false,
   className = '',
   hasError = false,
+  autoComplete = 'address-level2',
 }: LocationInputProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [showSuggestions, setShowSuggestions] = useState(false)
@@ -123,8 +126,8 @@ export default function LocationInput({
         <input
           ref={inputRef}
           type="text"
-          name="location"               // Hjälp browsern förstå att detta är en plats, inte e-post
-          autoComplete="address-level2" // Hint till Chrome: detta är en ort/kommun, inte användarnamn
+          name="location"
+          autoComplete={autoComplete}
           value={displayValue}
           onChange={handleInputChange}
           onFocus={handleInputFocus}

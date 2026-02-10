@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { AUTH_CONFIG } from '@/lib/constants'
 import { DASHBOARD_TEXTS } from '@/app/lib/content'
+import { validateDomainMatch } from '@/lib/utils'
 import { Eye, EyeOff } from 'lucide-react'
 
 // Kopplingen till Supabase
@@ -64,6 +66,13 @@ export default function LoginPageContent() {
   const [message, setMessage] = useState<{ text: string; type: 'error' | 'success' } | null>(null)
   const [needsOtpVerification, setNeedsOtpVerification] = useState(false)
   const [sendingOtp, setSendingOtp] = useState(false)
+
+  // Registrering: [Privat] vs [Företag]
+  const [signupSubTab, setSignupSubTab] = useState<'private' | 'company'>('private')
+  const [companyName, setCompanyName] = useState('')
+  const [orgNumber, setOrgNumber] = useState('')
+  const [companyWebsite, setCompanyWebsite] = useState('')
+  const [termsAccepted, setTermsAccepted] = useState(false)
 
   // Uppdatera URL när tab ändras (endast när activeTab faktiskt ändras)
   useEffect(() => {
@@ -144,20 +153,14 @@ export default function LoginPageContent() {
             : true // fallback: lås inte ute gamla/anonyma användare
 
         if (!otpVerified) {
-          // Användaren har inte slutfört 6-siffrig verifiering → blockera login
-          // Gör signOut och vänta på att det är klart för att säkerställa att headern inte visar profilikonen
+          // Kontot är inte OTP-verifierat – blockera inloggning, kräv 6-siffrig kod
           try {
             const { error: signOutError } = await supabase.auth.signOut()
-            if (signOutError) {
-              // Om signOut misslyckas, försök igen
-              await supabase.auth.signOut()
-            }
-            // Vänta en kort stund för att säkerställa att signOut är helt klart
+            if (signOutError) await supabase.auth.signOut()
             await new Promise(resolve => setTimeout(resolve, 100))
           } catch (err) {
             console.warn('Kunde inte signa ut efter otp-verifieringskontroll:', err)
           }
-
           setNeedsOtpVerification(true)
           setMessage({
             text:
@@ -168,17 +171,15 @@ export default function LoginPageContent() {
           return
         }
 
-        // Reset needsOtpVerification om login lyckas
         setNeedsOtpVerification(false)
 
-        // 2. Allt OK → släpp in användaren (redirect till next om det fanns, t.ex. /profil/[id])
         setMessage({ text: 'Inloggning lyckades. Skickar dig vidare...', type: 'success' })
         const nextUrl = searchParams.get('next')
         const safeNext = nextUrl && nextUrl.startsWith('/') && !nextUrl.startsWith('//') ? nextUrl : null
+        const target = safeNext ?? '/?logged_in=returning'
         setTimeout(() => {
-          router.push(safeNext ?? '/?logged_in=returning')
-          router.refresh()
-        }, 1000)
+          window.location.href = target
+        }, 800)
       } catch (err) {
         console.error('Kunde inte verifiera OTP-status vid login:', err)
         setMessage({
@@ -359,7 +360,110 @@ export default function LoginPageContent() {
       return
     }
 
-    // 4. Redirect till verifieringssidan
+    // 4. Spara lösenord tillfälligt så verify-sidan kan göra force login efter OTP
+    try {
+      sessionStorage.setItem('signup_password_pending_verify', password)
+    } catch {
+      /* ignore */
+    }
+    router.push(`/login/verify?email=${encodeURIComponent(cleanEmail)}&type=signup`)
+  }
+
+  const handleCompanySignUp = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault()
+
+    if (!companyName.trim() || !orgNumber.trim() || !companyWebsite.trim() || !email.trim() || !password) {
+      setMessage({ text: 'Fyll i alla fält.', type: 'error' })
+      return
+    }
+    if (!termsAccepted) {
+      setMessage({ text: 'Du måste godkänna villkoren.', type: 'error' })
+      return
+    }
+    if (!isValidEmail(email)) {
+      setMessage({ text: DASHBOARD_TEXTS.auth.signup.errors.invalidEmail ?? 'Ogiltig e-postadress.', type: 'error' })
+      return
+    }
+    if (password.length < AUTH_CONFIG.MIN_PASSWORD_LENGTH) {
+      setMessage({
+        text: DASHBOARD_TEXTS.auth.signup.passwordMinLength(AUTH_CONFIG.MIN_PASSWORD_LENGTH),
+        type: 'error',
+      })
+      return
+    }
+    if (!validateDomainMatch(email.trim(), companyWebsite.trim())) {
+      setMessage({
+        text: 'E-postens domän måste matcha webbplatsens domän (t.ex. user@företag.se och företag.se).',
+        type: 'error',
+      })
+      return
+    }
+
+    setLoading(true)
+    setMessage(null)
+    const cleanEmail = email.trim()
+
+    try {
+      await supabase.auth.signOut()
+      await new Promise(resolve => setTimeout(resolve, 50))
+    } catch {
+      /* ignore */
+    }
+
+    const { error: signUpError } = await supabase.auth.signUp({
+      email: cleanEmail,
+      password,
+      options: {
+        data: {
+          full_name: companyName.trim(),
+          org_number: orgNumber.trim(),
+          website: companyWebsite.trim().replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0] || companyWebsite.trim(),
+          account_type: 'company',
+        },
+      },
+    })
+
+    if (signUpError) {
+      const msg = String(signUpError.message || '').toLowerCase()
+      if (msg.includes('already registered') || msg.includes('user already registered')) {
+        setMessage({ text: DASHBOARD_TEXTS.auth.signup.errors.emailExists ?? 'E-postadressen används redan.', type: 'error' })
+      } else if (msg.includes('password')) {
+        setMessage({ text: DASHBOARD_TEXTS.auth.signup.errors.weakPassword ?? 'Lösenordet är för svagt.', type: 'error' })
+      } else if (msg.includes('email')) {
+        setMessage({ text: DASHBOARD_TEXTS.auth.signup.errors.invalidEmail ?? 'Ogiltig e-post.', type: 'error' })
+      } else {
+        setMessage({ text: signUpError.message ?? DASHBOARD_TEXTS.auth.signup.errors.generic, type: 'error' })
+      }
+      setLoading(false)
+      return
+    }
+
+    try {
+      await supabase.auth.signOut()
+      await new Promise(resolve => setTimeout(resolve, 100))
+    } catch {
+      /* ignore */
+    }
+
+    const { error: otpError } = await supabase.auth.signInWithOtp({
+      email: cleanEmail,
+      options: { shouldCreateUser: false },
+    })
+
+    if (otpError) {
+      setMessage({
+        text: otpError.message?.includes('rate limit') ? 'För många försök. Försök igen senare.' : 'Kunde inte skicka verifieringskod. Försök igen.',
+        type: 'error',
+      })
+      setLoading(false)
+      return
+    }
+
+    try {
+      sessionStorage.setItem('signup_password_pending_verify', password)
+    } catch {
+      /* ignore */
+    }
     router.push(`/login/verify?email=${encodeURIComponent(cleanEmail)}&type=signup`)
   }
 
@@ -410,6 +514,11 @@ export default function LoginPageContent() {
         text: 'Ny verifieringskod skickad! Kontrollera din e-post.',
         type: 'success',
       })
+      try {
+        if (password) sessionStorage.setItem('signup_password_pending_verify', password)
+      } catch {
+        /* ignore */
+      }
       setTimeout(() => {
         router.push(`/login/verify?email=${encodeURIComponent(cleanEmail)}&type=signup`)
       }, 1000)
@@ -428,6 +537,8 @@ export default function LoginPageContent() {
     if (e.key === 'Enter' && !loading && !sendingOtp) {
       if (activeTab === 'login') {
         handleSignIn()
+      } else if (activeTab === 'signup' && signupSubTab === 'company') {
+        handleCompanySignUp()
       } else {
         handleSignUp()
       }
@@ -436,6 +547,14 @@ export default function LoginPageContent() {
 
   const t = DASHBOARD_TEXTS.auth
   const reason = searchParams.get('reason')
+  const isCompanySignup = activeTab === 'signup' && signupSubTab === 'company'
+  const companyDomainMismatch =
+    isCompanySignup &&
+    Boolean(email.trim() && companyWebsite.trim()) &&
+    !validateDomainMatch(email.trim(), companyWebsite.trim())
+  const companySubmitDisabled =
+    isCompanySignup &&
+    (companyDomainMismatch || !termsAccepted || !companyName.trim() || !orgNumber.trim() || !companyWebsite.trim())
 
   return (
     <div className="flex min-h-screen flex-col bg-brand-beige">
@@ -460,6 +579,15 @@ export default function LoginPageContent() {
               role="alert"
             >
               Du måste logga in för att se privata säljprofiler.
+            </div>
+          )}
+
+          {searchParams.get('upgrade') === 'email_sent' && (
+            <div
+              className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800"
+              role="status"
+            >
+              Verifieringslänk skickad till din nya e-post! Logga in med dina nya uppgifter efter verifiering.
             </div>
           )}
 
@@ -500,12 +628,87 @@ export default function LoginPageContent() {
             </button>
           </div>
 
+          {/* Signup: underflikar Privat / Företag */}
+          {activeTab === 'signup' && (
+            <div className="flex border-b border-gray-100 mb-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setSignupSubTab('private')
+                  setMessage(null)
+                }}
+                className={`flex-1 pb-2 text-center text-sm font-medium transition-colors ${
+                  signupSubTab === 'private' ? 'text-brand-green border-b-2 border-brand-green' : 'text-gray-500 hover:text-brand-text'
+                }`}
+              >
+                Privat
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setSignupSubTab('company')
+                  setMessage(null)
+                }}
+                className={`flex-1 pb-2 text-center text-sm font-medium transition-colors ${
+                  signupSubTab === 'company' ? 'text-brand-green border-b-2 border-brand-green' : 'text-gray-500 hover:text-brand-text'
+                }`}
+              >
+                Företag
+              </button>
+            </div>
+          )}
+
           {/* Form */}
           <form 
-            onSubmit={activeTab === 'login' ? handleSignIn : handleSignUp}
+            onSubmit={
+              activeTab === 'login'
+                ? handleSignIn
+                : isCompanySignup
+                  ? handleCompanySignUp
+                  : handleSignUp
+            }
             onKeyDown={handleKeyDown}
             className="space-y-4"
           >
+            {/* Företag: Företagsnamn, Orgnr, Webbplats */}
+            {isCompanySignup && (
+              <>
+                <div className="space-y-2">
+                  <label htmlFor="company-name" className="text-sm font-medium block">Företagsnamn</label>
+                  <input
+                    id="company-name"
+                    type="text"
+                    value={companyName}
+                    onChange={(e) => { setCompanyName(e.target.value); setMessage(null) }}
+                    placeholder="t.ex. Min Firma AB"
+                    className="w-full rounded-xl border border-gray-300 p-3 focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none text-brand-text"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="org-number" className="text-sm font-medium block">Organisationsnummer</label>
+                  <input
+                    id="org-number"
+                    type="text"
+                    value={orgNumber}
+                    onChange={(e) => { setOrgNumber(e.target.value); setMessage(null) }}
+                    placeholder="t.ex. 556123-4567"
+                    className="w-full rounded-xl border border-gray-300 p-3 focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none text-brand-text"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="company-website" className="text-sm font-medium block">Webbplats (domän)</label>
+                  <input
+                    id="company-website"
+                    type="text"
+                    value={companyWebsite}
+                    onChange={(e) => { setCompanyWebsite(e.target.value); setMessage(null) }}
+                    placeholder="t.ex. foretag.se eller www.foretag.se"
+                    className="w-full rounded-xl border border-gray-300 p-3 focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none text-brand-text"
+                  />
+                </div>
+              </>
+            )}
+
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-medium block">
                 {t.login.email}
@@ -525,6 +728,11 @@ export default function LoginPageContent() {
                 aria-label={t.login.email}
                 aria-required="true"
               />
+              {companyDomainMismatch && (
+                <p className="text-xs text-red-600" role="alert">
+                  E-postens domän måste matcha webbplatsens domän.
+                </p>
+              )}
             </div>
             
             <div className="space-y-2">
@@ -565,6 +773,27 @@ export default function LoginPageContent() {
                 </p>
               )}
             </div>
+
+            {/* Företag: godkänn villkor */}
+            {isCompanySignup && (
+              <div className="flex items-start gap-2">
+                <input
+                  id="terms"
+                  type="checkbox"
+                  checked={termsAccepted}
+                  onChange={(e) => { setTermsAccepted(e.target.checked); setMessage(null) }}
+                  className="mt-1 rounded border-gray-300 text-brand-green focus:ring-brand-green"
+                  aria-describedby="terms-desc"
+                />
+                <label htmlFor="terms" id="terms-desc" className="text-sm text-brand-text">
+                  Jag godkänner{' '}
+                  <Link href="/villkor" className="text-brand-green hover:underline" target="_blank" rel="noopener noreferrer">
+                    villkoren
+                  </Link>
+                  .
+                </label>
+              </div>
+            )}
 
             {/* Glömt lösenord - endast vid inloggning */}
             {activeTab === 'login' && (
@@ -666,7 +895,7 @@ export default function LoginPageContent() {
             {/* Submit-knapp */}
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || (isCompanySignup ? companySubmitDisabled : false)}
               className="w-full rounded-xl bg-brand-green p-3 text-white font-medium hover:bg-brand-green/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-md focus:outline-none focus:ring-2 focus:ring-brand-green focus:ring-offset-2"
             >
               {loading 

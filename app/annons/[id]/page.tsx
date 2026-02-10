@@ -34,6 +34,12 @@ interface SellerProfile {
   updated_at: string
   account_type?: 'private' | 'company'
   is_company_verified?: boolean
+  address?: string | null
+  zip_code?: string | null
+  city?: string | null
+  website?: string | null
+  bio?: string | null
+  org_number?: string | null
 }
 
 interface CurrentUser {
@@ -236,6 +242,12 @@ function ListingDetails() {
     if (images.length === 0) return
     setActiveImageIndex((prev) => (prev + 1) % images.length)
   }
+
+  const sellerDisplayLocation = sellerProfile
+    ? sellerProfile.account_type === 'company'
+      ? [sellerProfile.zip_code, sellerProfile.city].filter(Boolean).join(' ') || sellerProfile.city || sellerProfile.address || null
+      : sellerProfile.location
+    : null
 
   return (
     <div className="min-h-screen bg-brand-beige flex flex-col">
@@ -495,7 +507,7 @@ function ListingDetails() {
                 </div>
               )}
 
-              {/* --- NYTT: SÄLJARKORT --- */}
+              {/* --- SÄLJARKORT --- */}
               <div className="mt-auto">
                 <div className="mb-4 pt-6 border-t border-gray-100">
                   <p className="text-xs font-bold text-brand-text/60 uppercase tracking-widest mb-3">Säljare</p>
@@ -504,7 +516,6 @@ function ListingDetails() {
                     href={`/profil/${ad.user_id}`}
                     className="flex items-center gap-4 bg-brand-beige p-3 rounded-xl border border-gray-200 hover:border-brand-green/30 transition"
                   >
-                    {/* Säljarens Bild */}
                     <div className="w-12 h-12 rounded-full bg-white border border-gray-200 overflow-hidden flex-shrink-0">
                       {sellerProfile?.avatar_url ? (
                         <img src={sellerProfile.avatar_url} alt="Säljare" className="w-full h-full object-cover" />
@@ -512,24 +523,22 @@ function ListingDetails() {
                         <div className="w-full h-full flex items-center justify-center text-gray-300 text-xl">👤</div>
                       )}
                     </div>
-                    
-                    {/* Säljarens Namn + Plats */}
                     <div className="flex-1 min-w-0">
                       <h4 className="font-bold text-brand-text truncate flex items-center gap-1.5 flex-wrap">
                         <span className="truncate">{sellerProfile?.full_name || 'Anonym säljare'}</span>
-                        {sellerProfile?.account_type === 'company' && sellerProfile?.is_company_verified && (
-                          <span className="inline-flex text-brand-green flex-shrink-0" title="Verifierat företag">
+                        {sellerProfile?.account_type === 'company' && (
+                          <span className="inline-flex text-brand-green flex-shrink-0" title={sellerProfile?.is_company_verified ? 'Verifierat företag' : 'Företag'}>
                             <BadgeCheck className="w-5 h-5" aria-hidden />
                           </span>
                         )}
                       </h4>
-                      {sellerProfile?.location && (
+                      {sellerDisplayLocation && (
                         <p className="mt-0.5 flex items-center gap-1 text-xs text-brand-text/80 truncate">
                           <MapPin className="w-3.5 h-3.5 text-brand-green flex-shrink-0" strokeWidth={2.5} />
-                          <span>{sellerProfile.location}</span>
+                          <span>{sellerDisplayLocation}</span>
                         </p>
                       )}
-                      {!sellerProfile?.location && (
+                      {!sellerDisplayLocation && sellerProfile && (
                         <p className="text-xs text-brand-text/60">Medlem på Kolla här!</p>
                       )}
                     </div>

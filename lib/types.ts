@@ -17,4 +17,14 @@ export interface Profile {
   is_company_verified?: boolean
   /** Orgnummer – null om privat eller ej ifyllt */
   org_number?: string | null
+  /** Gatuadress (valfritt) */
+  address?: string | null
+  /** Postnummer */
+  zip_code?: string | null
+  /** Ort */
+  city?: string | null
+  /** Kort beskrivning (t.ex. företagsbio) */
+  bio?: string | null
+  /** Kontaktperson (t.ex. för företagskonto) */
+  contact_person?: string | null
 }

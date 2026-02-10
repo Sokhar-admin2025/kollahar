@@ -6,6 +6,32 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ## [Unreleased] (Local Development)
 
+### 🔧 Ändrat / Buggfixar (senaste)
+
+#### Chatt: inga dubbletter av meddelanden
+- **InboxClient** (`app/components/InboxClient.tsx`): Optimistisk uppdatering vid skickat meddelande borttagen – meddelanden visas enbart när Realtime levererar dem. Åtgärdar bugg där egna meddelanden syntes två gånger (temp + Realtime). Vid send-fel återställs texten i fältet.
+
+#### Företag: badge och företagsinformation
+- **Profilsida** (`app/profil/[id]/page.tsx`): Badge (BadgeCheck) visas för alla företagskonton (`account_type === 'company'`). Ny sektion "Företagsinformation" för företag: org.nummer, adress, företagspresentation (bio).
+- **Annonssida** (`app/annons/[id]/page.tsx`): Säljarkortet visar företags-badge för alla företag (ej endast vid `is_company_verified`).
+
+#### Upgrade privat → företag: verifiering krävs
+- **Inställningar** (`app/dashboard/settings/page.tsx`): Vid upgrade sätts `otp_verified: false` i profilen; OTP skickas till ny e-post (`signInWithOtp`); användaren redirectas till `/login/verify?email=...&from=upgrade`. Inloggning blockeras tills ny e-post verifierats.
+- **Verify-sida** (`app/login/verify/VerifyPageContent.tsx`): Använder användar-id från `verifyOtp`-svaret så `otp_verified` alltid sätts; vid "Skicka ny kod" används `shouldCreateUser: false` när `from=upgrade`.
+- **Header** (`app/components/organisms/Header.tsx`): Vid `otp_verified === false` görs en refetch efter 400 ms innan utloggning, så att race efter verify-sidan undviks.
+
+#### Inställningar: e-post aldrig i Min plats
+- **Inställningar** (`app/dashboard/settings/page.tsx`): Eget skrivskyddat fält "Användarnamn / e-post" för privatkonto. "Min plats" använder `LocationInput` med `autoComplete="off"` så webbläsaren inte fyller i e-post.
+- **LocationInput** (`app/components/LocationInput.tsx`): Ny prop `autoComplete` (t.ex. `"off"` på inställningssidan).
+
+#### Skapa/uppdatera annons: attributes inte null
+- **Listing-service** (`lib/features/listings/listing-service.ts`): `createListing` och `updateListing` skickar `attributes: data.attributes ?? {}` istället för `null` så att NOT NULL-kolumnen i `listings` inte orsakar fel.
+
+#### Verify efter inloggning: otp_verified sätts tillförlitligt
+- **Verify-sida** (`app/login/verify/VerifyPageContent.tsx`): Användar-id hämtas från `verifyOtp`-svaret (`otpData?.user?.id`); vid misslyckad profiluppdatering visas fel och ingen redirect.
+
+---
+
 ### ✨ Tillagt
 
 #### Publika säljprofiler (/profil/[id])

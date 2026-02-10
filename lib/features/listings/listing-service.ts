@@ -222,7 +222,7 @@ export async function createListing(
         location: data.location.trim(),
         category: data.category,
         images: data.images ?? [],
-        attributes: data.attributes ?? null,
+        attributes: data.attributes ?? {},
         user_id: userId,
         status: 'active',
       })
@@ -270,7 +270,7 @@ export async function updateListing(
         location: data.location.trim(),
         category: data.category,
         images: data.images ?? [],
-        attributes: data.attributes ?? null,
+        attributes: data.attributes ?? {},
       })
       .eq('id', data.id)
       .eq('user_id', userId)

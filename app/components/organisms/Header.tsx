@@ -47,9 +47,8 @@ export default function Header({
   const t = DASHBOARD_TEXTS
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const syncUser = async (session: { user: { id: string } } | null) => {
       const userId = session?.user?.id ?? null
-
       if (userId) {
         try {
           const { data: profile } = await supabase
@@ -57,24 +56,29 @@ export default function Header({
             .select('otp_verified')
             .eq('id', userId)
             .single()
-
-          const otpVerified =
-            profile && typeof profile.otp_verified === 'boolean'
-              ? profile.otp_verified
-              : true
-
+          let otpVerified =
+            profile && typeof profile.otp_verified === 'boolean' ? profile.otp_verified : true
+          if (!otpVerified) {
+            await new Promise((r) => setTimeout(r, 400))
+            const { data: profileRefetch } = await supabase
+              .from('profiles')
+              .select('otp_verified')
+              .eq('id', userId)
+              .single()
+            otpVerified =
+              profileRefetch && typeof profileRefetch.otp_verified === 'boolean'
+                ? profileRefetch.otp_verified
+                : true
+          }
           setIsVerified(otpVerified)
-
           if (!otpVerified) {
             await supabase.auth.signOut()
             setCurrentUserId(null)
             setIsVerified(true)
             return
           }
-
           setCurrentUserId(userId)
-        } catch (err) {
-          console.warn('Kunde inte kontrollera OTP-status vid auth state change:', err)
+        } catch {
           setIsVerified(true)
           setCurrentUserId(userId)
         }
@@ -82,6 +86,12 @@ export default function Header({
         setCurrentUserId(null)
         setIsVerified(true)
       }
+    }
+
+    supabase.auth.getSession().then(({ data: { session } }) => syncUser(session))
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      syncUser(session)
     })
 
     return () => {

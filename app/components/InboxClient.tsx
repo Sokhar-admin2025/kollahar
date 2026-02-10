@@ -113,23 +113,16 @@ export default function InboxClient({
     if (isListingClosed(selectedConversation)) return
 
     setSending(true)
+    const contentToSend = newMessage.trim()
+    setNewMessage('')
     try {
-      const result = await sendMessageAction(selectedConversation.id, newMessage)
-      if (result.success) {
-        const tempMsg: Message = {
-          id: 'temp-' + Date.now(),
-          conversation_id: selectedConversation.id,
-          sender_id: userId,
-          content: newMessage.trim(),
-          is_read: false,
-          created_at: new Date().toISOString(),
-        }
-        setMessages((prev) => [...prev, tempMsg])
-        setNewMessage('')
-      } else {
+      const result = await sendMessageAction(selectedConversation.id, contentToSend)
+      if (!result.success) {
+        setNewMessage(contentToSend)
         alert(result.error ?? 'Kunde inte skicka meddelande')
       }
     } catch {
+      setNewMessage(contentToSend)
       alert('Kunde inte skicka meddelande')
     } finally {
       setSending(false)
