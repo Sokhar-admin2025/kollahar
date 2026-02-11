@@ -16,7 +16,10 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    return NextResponse.json({ data: result.data ?? [] })
+    return NextResponse.json({
+      data: result.data ?? [],
+      totalCount: result.totalCount ?? (result.data ?? []).length,
+    })
   } catch (err) {
     console.error('API /api/listings error', err)
     return NextResponse.json(

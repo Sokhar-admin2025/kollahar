@@ -4,6 +4,7 @@ export interface Listing {
   title: string;
   description: string;
   price: number;
+  bortskankes?: boolean;
   location: string;
   category: string;
   attributes?: Record<string, unknown>;
@@ -27,6 +28,7 @@ export interface Conversation {
     title: string;
     images: string[];
     price?: number;
+    bortskankes?: boolean;
     status?: 'active' | 'sold' | 'deleted';
     deleted_at?: string | null;
   };

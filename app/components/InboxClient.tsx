@@ -273,9 +273,9 @@ export default function InboxClient({
                             {selectedConversation.listing?.title || 'Okänd annons'}
                           </Link>
                         </h3>
-                        {selectedConversation.listing?.price != null && (
+                        {(selectedConversation.listing?.bortskankes || selectedConversation.listing?.price != null) && (
                           <p className="text-xs text-brand-text mt-0.5 antialiased">
-                            {selectedConversation.listing.price.toLocaleString('sv-SE')} kr
+                            {selectedConversation.listing.bortskankes ? 'Bortskänkes' : `${selectedConversation.listing.price!.toLocaleString('sv-SE')} kr`}
                           </p>
                         )}
                       </div>

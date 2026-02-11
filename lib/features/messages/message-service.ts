@@ -41,7 +41,7 @@ export async function getMyConversations(userId: string): Promise<Conversation[]
     .from('conversations')
     .select(`
       *,
-      listing:listings (title, images, price, status, deleted_at)
+      listing:listings (title, images, price, bortskankes, status, deleted_at)
     `)
     .or(`buyer_id.eq.${userId},seller_id.eq.${userId}`)
     .order('updated_at', { ascending: false })

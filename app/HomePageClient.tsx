@@ -23,6 +23,8 @@ const PAGE_SIZE = 24
 
 interface HomePageClientProps {
   initialAds: Listing[]
+  /** Totalt antal annonser som matchar filter (för "Visar X av Y annonser") */
+  initialTotalCount?: number
   initialError?: string | null
   /** Favorit-IDs från servern (en fetch för hela listan, undviker N+1) */
   favoriteIds?: string[]
@@ -30,6 +32,7 @@ interface HomePageClientProps {
 
 export default function HomePageClient({
   initialAds,
+  initialTotalCount,
   initialError,
   favoriteIds = [],
 }: HomePageClientProps) {
@@ -38,6 +41,7 @@ export default function HomePageClient({
   const router = useRouter()
 
   const [ads, setAds] = useState<Listing[]>(initialAds)
+  const [totalCount, setTotalCount] = useState<number | undefined>(initialTotalCount)
   const [loading, setLoading] = useState(false)
   const [loadingMore, setLoadingMore] = useState(false)
   const [hasMore, setHasMore] = useState(initialAds.length === PAGE_SIZE)
@@ -68,6 +72,7 @@ export default function HomePageClient({
   const [searchSubmitted, setSearchSubmitted] = useState(false)
   const [priceMin, setPriceMin] = useState(() => searchParams.get('minPrice') || '')
   const [priceMax, setPriceMax] = useState(() => searchParams.get('maxPrice') || '')
+  const [bortskankesOnly, setBortskankesOnly] = useState(() => searchParams.get('bortskankes') === '1')
   const [locationFilter, setLocationFilter] = useState<LocationFilterValue>(() => {
     const fullCounties = searchParams.getAll('county')
     const munParams = searchParams.getAll('mun')
@@ -99,6 +104,7 @@ export default function HomePageClient({
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [isDesktopFilterOpen, setIsDesktopFilterOpen] = useState(false)
   const [showMoreFilters, setShowMoreFilters] = useState(false)
+  const [listViewEnabled, setListViewEnabled] = useState(false)
 
   const t = DASHBOARD_TEXTS
   const isCarsCategory = selectedCategory === 'cars'
@@ -210,6 +216,9 @@ export default function HomePageClient({
     if (priceMax) {
       params.set('maxPrice', priceMax)
     }
+    if (bortskankesOnly) {
+      params.set('bortskankes', '1')
+    }
     if (yearFrom) {
       params.set('minYear', yearFrom)
     }
@@ -233,7 +242,7 @@ export default function HomePageClient({
 
     const newUrl = params.toString() ? `/?${params.toString()}` : '/'
     window.history.replaceState({}, '', newUrl)
-  }, [searchQuery, selectedCategory, priceMin, priceMax, yearFrom, yearTo, maxMileage, sort, locationFilter])
+  }, [searchQuery, selectedCategory, priceMin, priceMax, bortskankesOnly, yearFrom, yearTo, maxMileage, sort, locationFilter])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -290,6 +299,7 @@ export default function HomePageClient({
     setSelectedCategory('all')
     setPriceMin('')
     setPriceMax('')
+    setBortskankesOnly(false)
     setLocationFilter({ fullCounties: [], partialMunicipalities: [] })
     resetCarFilters()
   }
@@ -324,6 +334,7 @@ export default function HomePageClient({
       query: searchQuery.trim() || undefined,
       category: selectedCategory !== 'all' ? selectedCategory : undefined,
       location,
+      bortskankes: bortskankesOnly || undefined,
       minPrice: minPrice !== undefined && !Number.isNaN(minPrice) ? minPrice : undefined,
       maxPrice: maxPrice !== undefined && !Number.isNaN(maxPrice) ? maxPrice : undefined,
       minYear: minYear !== undefined && !Number.isNaN(minYear) ? minYear : undefined,
@@ -363,10 +374,12 @@ export default function HomePageClient({
         if (!res.ok) {
           setServerError(json?.error ?? 'Kunde inte hämta annonser just nu.')
           setAds([])
+          setTotalCount(undefined)
           setHasMore(false)
         } else {
           const data = (json?.data ?? []) as Listing[]
           setAds(data)
+          setTotalCount(json?.totalCount ?? data.length)
           setHasMore(data.length === PAGE_SIZE)
         }
       } catch (err) {
@@ -374,6 +387,7 @@ export default function HomePageClient({
         console.error('Refetch listings failed', err)
         setServerError('Kunde inte hämta annonser just nu. Försök igen senare.')
         setAds([])
+        setTotalCount(undefined)
         setHasMore(false)
       } finally {
         if (!cancelled) setLoading(false)
@@ -389,6 +403,7 @@ export default function HomePageClient({
     sort,
     priceMin,
     priceMax,
+    bortskankesOnly,
     locationFilter,
     yearFrom,
     yearTo,
@@ -421,7 +436,12 @@ export default function HomePageClient({
         return
       }
       const newListings = (json?.data ?? []) as Listing[]
-      setAds((prev) => [...prev, ...newListings])
+      setAds((prev) => {
+        const existingIds = new Set(prev.map((a) => a.id))
+        const uniqueNew = newListings.filter((a) => !existingIds.has(a.id))
+        return [...prev, ...uniqueNew]
+      })
+      if (json?.totalCount != null) setTotalCount(json.totalCount)
       setHasMore(newListings.length === PAGE_SIZE)
     } catch (err) {
       console.error('Load more listings failed', err)
@@ -468,6 +488,9 @@ export default function HomePageClient({
             ),
           }))
         }
+        break
+      case 'bortskankes':
+        setBortskankesOnly(false)
         break
       case 'priceMin':
         setPriceMin('')
@@ -532,6 +555,17 @@ export default function HomePageClient({
       </div>
 
       <div className="space-y-6">
+        {/* Bortskänkes */}
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={bortskankesOnly}
+            onChange={(e) => setBortskankesOnly(e.target.checked)}
+            className="w-4 h-4 text-brand-green rounded focus:ring-brand-green"
+          />
+          <span className="text-sm font-medium text-brand-text antialiased">Visa endast bortskänkes</span>
+        </label>
+
         {/* Plats */}
         <div>
           <label className="block text-sm font-medium text-brand-text mb-2 antialiased">
@@ -962,10 +996,50 @@ export default function HomePageClient({
           </div>
 
           <div className="flex justify-between items-end gap-3 mb-3">
-            <h3 className="text-2xl font-display text-brand-green">{t.landing.listings.header}</h3>
+            <div className="flex flex-wrap items-baseline gap-2 min-w-0">
+              <h3 className="text-2xl font-display text-brand-green">{t.landing.listings.header}</h3>
+              <span className="text-sm text-brand-text/70">
+                {(() => {
+                  const x = filteredAds.length
+                  const hasMultiLocation =
+                    locationFilter.fullCounties.length + locationFilter.partialMunicipalities.length > 1
+                  if (hasMultiLocation || totalCount == null) {
+                    return `Visar ${x} ${x === 1 ? 'annons' : 'annonser'}`
+                  }
+                  return `Visar ${x} av ${totalCount} annonser`
+                })()}
+              </span>
+            </div>
             <div className="flex items-center gap-3 shrink-0">
-              <span className="text-sm text-brand-text/70">{filteredAds.length} träffar</span>
-
+              <div className="hidden md:flex items-center gap-1.5">
+                <span className="text-xs text-brand-text/70">Listvy</span>
+                <button
+                  type="button"
+                  onClick={() => setListViewEnabled(false)}
+                  className={`px-2 py-1 text-xs rounded-l-lg border transition-colors ${
+                    !listViewEnabled
+                      ? 'bg-brand-green text-white border-brand-green'
+                      : 'bg-white text-brand-text/70 border-gray-300 hover:bg-gray-50'
+                  }`}
+                  aria-pressed={!listViewEnabled}
+                  aria-label="Listvy av"
+                >
+                  Av
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setListViewEnabled(true)}
+                  className={`px-2 py-1 text-xs rounded-r-lg border transition-colors ${
+                    listViewEnabled
+                      ? 'bg-brand-green text-white border-brand-green'
+                      : 'bg-white text-brand-text/70 border-gray-300 hover:bg-gray-50'
+                  }`}
+                  aria-pressed={listViewEnabled}
+                  aria-label="Listvy på"
+                >
+                  På
+                </button>
+              </div>
               <select
                 value={sort ?? 'newest'}
                 onChange={(e) =>
@@ -1038,6 +1112,15 @@ export default function HomePageClient({
               )
             })}
 
+            {bortskankesOnly && (
+              <button
+                type="button"
+                onClick={() => removeFilterChip('bortskankes', '')}
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-brand-green/20 text-brand-green text-xs font-medium hover:bg-brand-green/30 transition"
+              >
+                Bortskänkes <span aria-hidden>×</span>
+              </button>
+            )}
             {priceMin && (
               <button
                 type="button"
@@ -1168,6 +1251,7 @@ export default function HomePageClient({
             {(selectedCategory !== 'all' ||
               locationFilter.fullCounties.length > 0 ||
               locationFilter.partialMunicipalities.length > 0 ||
+              bortskankesOnly ||
               priceMin ||
               priceMax ||
               (isCarsCategory &&
@@ -1218,13 +1302,21 @@ export default function HomePageClient({
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-                  {filteredAds.map((ad) => (
+                <div
+                  className={
+                    listViewEnabled
+                      ? 'flex flex-col rounded-xl border border-gray-100 overflow-hidden bg-white shadow-sm'
+                      : 'grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3'
+                  }
+                >
+                  {filteredAds.map((ad, index) => (
                     <ListingCard
                       key={ad.id}
                       listing={ad}
                       currentUserId={currentUserId}
                       isFavorited={favoriteIds.includes(ad.id)}
+                      layout={listViewEnabled ? 'list' : 'grid'}
+                      listIndex={index}
                     />
                   ))}
                 </div>

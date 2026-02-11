@@ -1,7 +1,10 @@
 import { z } from 'zod'
 
-// Kategorier kan användas i appen (t.ex. för dropdown); validering här är bara min 1 tecken
-export const insertListingSchema = z.object({
+const priceRefine = (data: { bortskankes?: boolean; price: number }) =>
+  data.bortskankes || data.price >= 1
+
+// Bas-objekt för insert och update (ZodObject så att .extend() fungerar)
+const listingBaseSchema = z.object({
   title: z
     .string()
     .min(3, { message: 'Rubriken måste vara minst 3 tecken.' })
@@ -12,9 +15,9 @@ export const insertListingSchema = z.object({
     .min(10, { message: 'Beskrivningen måste vara minst 10 tecken.' })
     .max(5000),
 
-  price: z.coerce
-    .number()
-    .min(0, { message: 'Priset kan inte vara negativt.' }),
+  price: z.coerce.number(),
+
+  bortskankes: z.boolean().optional().default(false),
 
   category: z
     .string()
@@ -28,9 +31,17 @@ export const insertListingSchema = z.object({
   attributes: z.record(z.any()).optional(),
 })
 
-export const updateListingSchema = insertListingSchema.extend({
-  id: z.string().uuid(),
+export const insertListingSchema = listingBaseSchema.refine(priceRefine, {
+  message: 'Priset måste vara minst 1 kr om annonsen inte är bortskänkes.',
+  path: ['price'],
 })
+
+export const updateListingSchema = listingBaseSchema
+  .extend({ id: z.string().uuid() })
+  .refine(priceRefine, {
+    message: 'Priset måste vara minst 1 kr om annonsen inte är bortskänkes.',
+    path: ['price'],
+  })
 
 export type InsertListingInput = z.infer<typeof insertListingSchema>
 export type UpdateListingInput = z.infer<typeof updateListingSchema>

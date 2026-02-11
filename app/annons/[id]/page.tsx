@@ -337,7 +337,7 @@ function ListingDetails() {
               </div>
 
               <div className="text-4xl font-bold text-brand-green mb-8">
-                {ad.price} kr
+                {ad.bortskankes ? 'Bortskänkes' : `${ad.price} kr`}
               </div>
 
               <div className="prose prose-sm text-brand-text mb-8 flex-grow">

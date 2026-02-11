@@ -6,6 +6,17 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ## [Unreleased] (Local Development)
 
+### ✨ Tillagt
+
+#### Bortskänkes (gratisannonser)
+- **Migration** (`supabase/migrations/20260211100000_add_bortskankes_to_listings.sql`): Ny kolumn `bortskankes boolean NOT NULL DEFAULT false` på `listings`. När true sparas pris som 0; i UI visas "Bortskänkes" istället för pris.
+- **Skapa/redigera annons** (`CreateListingForm`): Checkbox "Bortskänkes" under Pris; vid ikryssad gråmarkeras prisfältet och inaktiveras (användaren kan ej fylla i pris). Validering: pris minst 1 kr när ej bortskänkes.
+- **Visning**: ListingCard, annonsdetaljsida, Dashboard (aktiva + historik), Inbox (chattheader) visar "Bortskänkes" istället för pris när `bortskankes` är true.
+- **Filter**: Checkbox "Visa endast bortskänkes" i filterpanelen; kombineras med kategori, plats och sök.
+- **Sortering**: Vid pris lågt→högt hamnar bortskänkes (pris 0) först; vid högt→lågt sist.
+
+---
+
 ### 🔧 Ändrat / Buggfixar (senaste)
 
 #### Chatt: inga dubbletter av meddelanden

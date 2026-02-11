@@ -11,6 +11,7 @@ type HomePageSearchParams = {
   location?: string | string[]
   minPrice?: string | string[]
   maxPrice?: string | string[]
+  bortskankes?: string | string[]
   minYear?: string | string[]
   maxYear?: string | string[]
   maxMileage?: string | string[]
@@ -31,6 +32,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const maxYearParam = searchParams?.maxYear
   const maxMileageParam = searchParams?.maxMileage
   const sortParam = searchParams?.sort
+  const bortskankesParam = searchParams?.bortskankes
 
   const toStringOrUndefined = (value: string | string[] | undefined): string | undefined => {
     if (!value) return undefined
@@ -44,10 +46,12 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     return Number.isNaN(num) ? undefined : num
   }
 
+  const bortskankes = toStringOrUndefined(bortskankesParam) === '1'
   const filters: ListingSearchFilters = {
     query: toStringOrUndefined(qParam),
     category: toStringOrUndefined(categoryParam) || 'all',
     location: toStringOrUndefined(locationParam),
+    bortskankes: bortskankes || undefined,
     minPrice: toNumberOrUndefined(minPriceParam),
     maxPrice: toNumberOrUndefined(maxPriceParam),
     minYear: toNumberOrUndefined(minYearParam),
@@ -67,12 +71,14 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   ])
 
   const initialAds = listingsResult.success ? listingsResult.data ?? [] : []
+  const initialTotalCount = listingsResult.success ? listingsResult.totalCount ?? initialAds.length : undefined
   const initialError = listingsResult.success ? null : listingsResult.error ?? 'Kunde inte hämta annonser just nu.'
   const favoriteIds = favoriteIdsResult.success && favoriteIdsResult.data ? favoriteIdsResult.data : []
 
   return (
     <HomePageClient
       initialAds={initialAds}
+      initialTotalCount={initialTotalCount}
       initialError={initialError}
       favoriteIds={favoriteIds}
     />

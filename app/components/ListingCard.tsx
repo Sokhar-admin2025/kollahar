@@ -10,6 +10,7 @@ interface Listing {
   id: string;
   title: string;
   price: number;
+  bortskankes?: boolean;
   location: string;
   images: string[];
   category: string;
@@ -24,6 +25,22 @@ interface ListingCardProps {
   /** Om true visas hjärtat som fyllt (ingen N+1: skicka från servern t.ex. favoriteIds.includes(listing.id)) */
   isFavorited?: boolean
   onFavoriteRemoved?: (listingId: string) => void
+  /** 'grid' = kortvy (default), 'list' = radvy med bild till vänster */
+  layout?: 'grid' | 'list'
+  /** Index för alternerande radbakgrund i listvy */
+  listIndex?: number
+}
+
+function formatRelativeDate(dateStr: string): string {
+  const d = new Date(dateStr)
+  const now = new Date()
+  const diff = now.getTime() - d.getTime()
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+  if (days === 0) return 'Idag'
+  if (days === 1) return 'Igår'
+  if (days < 7) return `${days} dagar sedan`
+  if (days < 30) return `${Math.floor(days / 7)} vecka sedan`
+  return d.toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' })
 }
 
 export default function ListingCard({
@@ -31,9 +48,11 @@ export default function ListingCard({
   currentUserId,
   isFavorited: isFavoritedProp,
   onFavoriteRemoved,
+  layout = 'grid',
+  listIndex = 0,
 }: ListingCardProps) {
-  // Formatera pris snyggt
-  const formattedPrice = new Intl.NumberFormat('sv-SE', {
+  const isBortskankes = Boolean(listing.bortskankes)
+  const formattedPrice = isBortskankes ? 'Bortskänkes' : new Intl.NumberFormat('sv-SE', {
     style: 'currency',
     currency: 'SEK',
     maximumFractionDigits: 0,
@@ -78,6 +97,115 @@ export default function ListingCard({
   // Kontrollera om skick är extremt (Ny eller Renoveringsobjekt/Defekt) - endast för icke-fordon
   const carCondition = !isVehicleCategory && typeof attributes.condition === 'string' ? attributes.condition : null;
   const isExtremeCondition = carCondition === 'Ny' || carCondition === 'Defekt';
+
+  if (layout === 'list') {
+    const isEvenRow = listIndex % 2 === 0
+    return (
+      <div
+        className={`group overflow-hidden border-b border-gray-100 last:border-b-0 transition-colors ${
+          isEvenRow ? 'bg-white' : 'bg-gray-50/60'
+        } hover:bg-brand-beige/30`}
+      >
+        <div
+          className="grid items-center gap-x-3 py-2 px-3 text-left
+            grid-cols-[56px_minmax(0,1fr)_0_0_0_100px_48px]
+            md:grid-cols-[56px_minmax(0,1fr)_0_6rem_0_100px_48px]
+            lg:grid-cols-[56px_minmax(0,1fr)_5rem_6rem_0_100px_48px]
+            xl:grid-cols-[56px_minmax(0,1fr)_5rem_6rem_5rem_100px_48px]
+            md:gap-x-4"
+        >
+          {/* Bild */}
+          <Link href={`/annons/${listing.id}`} className="block col-start-1">
+            <div className="relative w-14 h-14 rounded-md overflow-hidden bg-brand-beige">
+              {listing.images && listing.images[0] ? (
+                <Image
+                  src={listing.images[0]}
+                  alt={listing.title}
+                  fill
+                  className="object-cover group-hover:scale-105 transition-transform duration-300"
+                  quality={75}
+                  sizes="56px"
+                />
+              ) : (
+                <div className="flex items-center justify-center h-full text-gray-400 text-[10px]">
+                  —
+                </div>
+              )}
+            </div>
+          </Link>
+
+          {/* Titel + specs */}
+          <Link href={`/annons/${listing.id}`} className="min-w-0 col-start-2">
+            <div className="flex flex-col min-w-0 gap-0.5">
+              <h3 className="text-sm font-medium text-brand-text line-clamp-1 group-hover:text-brand-green transition-colors antialiased">
+                {listing.title}
+              </h3>
+              {(carSpecsString || !isVehicleCategory) && (
+                <div className="flex items-center gap-2 flex-wrap">
+                  {isCarsCategory && carSpecsString && (
+                    <span className="text-[11px] font-medium text-brand-text/60 antialiased">{carSpecsString}</span>
+                  )}
+                  {!isVehicleCategory && isExtremeCondition && carCondition && (
+                    <span
+                      className={`text-[10px] px-1 py-0.5 rounded font-medium ${
+                        carCondition === 'Ny' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'
+                      }`}
+                    >
+                      {carCondition}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          </Link>
+
+          {/* Kategori – lg+ */}
+          <Link href={`/annons/${listing.id}`} className="hidden lg:block overflow-hidden min-w-0 col-start-3">
+            <span className="text-[11px] font-medium text-brand-text/60 antialiased truncate block">
+              {getCategoryLabel(listing.category)}
+            </span>
+          </Link>
+
+          {/* Plats – md+ */}
+          <Link href={`/annons/${listing.id}`} className="hidden md:flex items-center overflow-hidden min-w-0 gap-0.5 col-start-4">
+            <MapPin className="w-3 h-3 shrink-0 text-brand-text/50" />
+            <span className="text-[11px] font-medium text-brand-text/60 truncate antialiased">{displayLocation}</span>
+          </Link>
+
+          {/* Datum – xl+ */}
+          <Link href={`/annons/${listing.id}`} className="hidden xl:block overflow-hidden min-w-0 col-start-5">
+            <span className="text-[11px] font-medium text-brand-text/50 antialiased">
+              {formatRelativeDate(listing.created_at)}
+            </span>
+          </Link>
+
+          {/* Pris / Bortskänkes – egen kolumn med utrymme före favorit */}
+          <Link href={`/annons/${listing.id}`} className="overflow-hidden min-w-0 col-start-6">
+            {isBortskankes ? (
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-brand-green/15 text-brand-green font-medium inline-block">
+                Bortskänkes
+              </span>
+            ) : (
+              <span className="text-sm font-semibold text-brand-green antialiased">{formattedPrice}</span>
+            )}
+          </Link>
+
+          {/* Favorit – egen kolumn, ingen överlappning */}
+          <div className="flex justify-center col-start-7 pl-1">
+            {!isOwner ? (
+              <FavoriteButton
+                listingId={listing.id}
+                isFavorited={isFavoritedProp}
+                onFavoriteRemoved={onFavoriteRemoved}
+              />
+            ) : (
+              <span className="w-9" aria-hidden />
+            )}
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="group relative bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 border border-gray-100 overflow-hidden flex flex-col h-full">

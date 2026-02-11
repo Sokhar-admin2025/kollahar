@@ -1,5 +1,6 @@
 'use server'
 
+import { withErrorRef } from '@/lib/error-ref'
 import { createClient } from '@/lib/supabase/server'
 import type { ServiceResult } from '@/lib/types/result'
 import type { Listing } from '@/app/types'
@@ -9,6 +10,8 @@ export interface ListingSearchFilters {
   query?: string
   category?: string
   location?: string
+  /** Visa endast bortskänkes-annonser */
+  bortskankes?: boolean
   minPrice?: number
   maxPrice?: number
   minYear?: number
@@ -44,12 +47,17 @@ export async function getListings(
 
     let query = supabase
       .from('listings')
-      .select('*')
+      .select('*', { count: 'exact' })
       .eq('status', 'active')
 
     // Kategori
     if (filters.category && filters.category !== 'all') {
       query = query.eq('category', filters.category)
+    }
+
+    // Bortskänkes
+    if (filters.bortskankes === true) {
+      query = query.eq('bortskankes', true)
     }
 
     // Prisintervall
@@ -133,7 +141,7 @@ export async function getListings(
     // Pagination
     query = query.range(offset, offset + limit - 1)
 
-    const { data, error } = await query
+    const { data, error, count } = await query
 
     if (error) {
       console.error('getListings failed', error)
@@ -146,6 +154,7 @@ export async function getListings(
     return {
       success: true,
       data: (data ?? []) as Listing[],
+      totalCount: count ?? (data ?? []).length,
     }
   } catch (err) {
     console.error('getListings unexpected error', err)
@@ -213,40 +222,68 @@ export async function createListing(
   try {
     const supabase = await createClient()
 
-    const { data: row, error } = await supabase
+    const isBortskankes = Boolean(data.bortskankes)
+    const insertPayload = {
+      title: data.title.trim(),
+      description: data.description.trim(),
+      price: isBortskankes ? 0 : data.price,
+      location: data.location.trim(),
+      category: data.category,
+      images: data.images ?? [],
+      attributes: data.attributes ?? {},
+      user_id: userId,
+      status: 'active',
+    } as Record<string, unknown>
+    insertPayload.bortskankes = isBortskankes
+
+    let row: { id: string } | null = null
+    let error: { message?: string; code?: string } | null = null
+    const res = await supabase
       .from('listings')
-      .insert({
-        title: data.title.trim(),
-        description: data.description.trim(),
-        price: data.price,
-        location: data.location.trim(),
-        category: data.category,
-        images: data.images ?? [],
-        attributes: data.attributes ?? {},
-        user_id: userId,
-        status: 'active',
-      })
+      .insert(insertPayload)
       .select('id')
       .single()
+    row = res.data
+    error = res.error
 
     if (error) {
-      console.error('createListing failed', error)
-      return {
-        success: false,
-        error: 'Kunde inte skapa annons. Försök igen senare.',
+      const isMissingColumn = String(error.message || '').toLowerCase().includes('bortskankes') &&
+        (String(error.message || '').toLowerCase().includes('does not exist') || String(error.code || '') === '42703')
+      if (isMissingColumn) {
+        delete insertPayload.bortskankes
+        const retry = await supabase.from('listings').insert(insertPayload).select('id').single()
+        if (retry.error) {
+          console.error('createListing retry failed', retry.error)
+          return {
+            success: false,
+            error: 'Kör migration (supabase db push) för att aktivera bortskänkes. Annars kan du skapa annonser utan bortskänkes.',
+          }
+        }
+        row = retry.data
+      } else {
+        const msg = String(error.message ?? '')
+        if (msg.toUpperCase().includes('MAX_LIMIT_REACHED')) {
+          return {
+            success: false,
+            error: withErrorRef('Tyvärr kan vi inte skapa din annons just nu. Försök igen om en stund.', error),
+          }
+        }
+        return {
+          success: false,
+          error: withErrorRef(msg || 'Kunde inte skapa annons. Försök igen senare.', error),
+        }
       }
     }
 
     if (!row?.id) {
-      return { success: false, error: 'Kunde inte skapa annons.' }
+      return { success: false, error: withErrorRef('Kunde inte skapa annons.', new Error('No row id returned')) }
     }
 
     return { success: true, data: { id: row.id } }
   } catch (err) {
-    console.error('createListing unexpected error', err)
     return {
       success: false,
-      error: 'Ett oväntat fel uppstod vid skapande av annons.',
+      error: withErrorRef('Ett oväntat fel uppstod vid skapande av annons.', err),
     }
   }
 }
@@ -261,12 +298,14 @@ export async function updateListing(
   try {
     const supabase = await createClient()
 
+    const isBortskankes = Boolean(data.bortskankes)
     const { error } = await supabase
       .from('listings')
       .update({
         title: data.title.trim(),
         description: data.description.trim(),
-        price: data.price,
+        price: isBortskankes ? 0 : data.price,
+        bortskankes: isBortskankes,
         location: data.location.trim(),
         category: data.category,
         images: data.images ?? [],
@@ -276,19 +315,17 @@ export async function updateListing(
       .eq('user_id', userId)
 
     if (error) {
-      console.error('updateListing failed', error)
       return {
         success: false,
-        error: 'Kunde inte uppdatera annons. Försök igen senare.',
+        error: withErrorRef('Kunde inte uppdatera annons. Försök igen senare.', error),
       }
     }
 
     return { success: true, data: { id: data.id } }
   } catch (err) {
-    console.error('updateListing unexpected error', err)
     return {
       success: false,
-      error: 'Ett oväntat fel uppstod vid uppdatering av annons.',
+      error: withErrorRef('Ett oväntat fel uppstod vid uppdatering av annons.', err),
     }
   }
 }

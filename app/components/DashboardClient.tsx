@@ -239,7 +239,7 @@ export default function DashboardClient({
                           </div>
                         </div>
                         <div className="flex items-center justify-between">
-                          <p className="text-brand-text text-sm font-semibold antialiased">{ad.price} kr</p>
+                          <p className="text-brand-text text-sm font-semibold antialiased">{ad.bortskankes ? 'Bortskänkes' : `${ad.price} kr`}</p>
                           <span className="inline-block px-2 py-1 text-xs rounded bg-green-100 text-green-800">
                             {t.listing.activeLabel}
                           </span>
@@ -280,7 +280,7 @@ export default function DashboardClient({
                             {ad.title}
                           </td>
                           <td className="px-4 md:px-6 py-4 text-brand-text antialiased whitespace-nowrap">
-                            {ad.price} kr
+                            {ad.bortskankes ? 'Bortskänkes' : `${ad.price} kr`}
                           </td>
                           <td className="px-4 md:px-6 py-4 text-brand-text antialiased whitespace-nowrap">
                             {ad.deleted_at ? new Date(ad.deleted_at).toLocaleDateString() : '-'}

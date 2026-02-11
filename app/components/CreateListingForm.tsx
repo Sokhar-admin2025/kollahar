@@ -11,6 +11,7 @@ import LocationInput from './LocationInput'
 import type { Listing } from '../types'
 import { CATEGORY_GROUPS } from '@/lib/categories'
 import { createListingAction, updateListingAction } from '@/app/actions/listing-actions'
+import { withErrorRef } from '@/lib/error-ref'
 import CarMakeModelFields from './CarMakeModelFields'
 import YearInput from './YearInput'
 import { CAR_COLORS } from '@/lib/car-colors'
@@ -30,6 +31,7 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [price, setPrice] = useState('')
+  const [bortskankes, setBortskankes] = useState(false)
   const [location, setLocation] = useState('')
   const [category, setCategory] = useState('')
   const [condition, setCondition] = useState('')
@@ -77,7 +79,8 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
     if (initialData) {
       setTitle(initialData.title)
       setDescription(initialData.description)
-      setPrice(initialData.price.toString())
+      setPrice(initialData.bortskankes ? '' : initialData.price.toString())
+      setBortskankes(Boolean(initialData.bortskankes))
       setLocation(initialData.location)
       setCategory(initialData.category || '')
       setExistingImageUrls(initialData.images || [])
@@ -253,10 +256,12 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
       const vehiclesGroup = CATEGORY_GROUPS.find(group => group.id === 'vehicles')
       const isVehicleCategory = vehiclesGroup?.children.some(child => child.id === category) ?? false
 
-      // Pris: om tomt eller ogiltigt blir NaN, sätt -1 så Zod fångar det
-      const priceWithoutSpaces = price.replace(/\s/g, '')
-      let priceNum = parseInt(priceWithoutSpaces, 10)
-      if (isNaN(priceNum)) priceNum = -1
+      // Pris: vid bortskänkes = 0; annars krävs minst 1 kr
+      const priceNum = bortskankes ? 0 : (() => {
+        const priceWithoutSpaces = price.replace(/\s/g, '')
+        const n = parseInt(priceWithoutSpaces, 10)
+        return isNaN(n) ? -1 : n
+      })()
 
       // Klientvalidering av bilfält – visa fel som röd text istället för alert
       if (isCarsCategory) {
@@ -313,7 +318,16 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
           )
           uploadedImageUrls.push(...uploadResults)
         } catch (uploadError: unknown) {
-          throw new Error('Bilduppladdning misslyckades')
+          const err = uploadError as { message?: string }
+          const msg = String(err?.message ?? '')
+          const userMsg = msg.toUpperCase().includes('MAX_LIMIT_REACHED')
+            ? 'Det gick inte att ladda upp bilderna. Ta bort några äldre bilder eller annonser och försök igen.'
+            : 'Bilduppladdning misslyckades. Försök igen.'
+          setErrors({ _form: [withErrorRef(userMsg, uploadError)] })
+          setUploading(false)
+          setLoading(false)
+          window.scrollTo({ top: 0, behavior: 'smooth' })
+          return
         }
       }
 
@@ -346,6 +360,7 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
         title: title.trim(),
         description: description.trim(),
         price: priceNum,
+        bortskankes,
         location: location.trim(),
         category,
         images: allImageUrls,
@@ -380,8 +395,7 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
       router.refresh()
       onSuccess?.()
     } catch (error: unknown) {
-      console.error('Error saving listing:', error)
-      setErrors({ _form: ['Ett oväntat fel inträffade.'] })
+      setErrors({ _form: [withErrorRef('Ett oväntat fel inträffade. Försök igen senare.', error)] })
     } finally {
       setLoading(false)
       setUploading(false)
@@ -473,21 +487,36 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
 
         {/* Pris */}
         <div>
-          <label className={`block text-sm font-medium mb-1 antialiased ${getFieldError('price') ? 'text-red-600' : 'text-brand-text'}`}>
-            {t.form.price.label} <span className="text-red-500">*</span>
+          <label className={`block text-sm font-medium mb-1 antialiased ${!bortskankes && getFieldError('price') ? 'text-red-600' : 'text-brand-text'}`}>
+            {t.form.price.label} {!bortskankes && <span className="text-red-500">*</span>}
           </label>
           <input
             type="text"
             inputMode="numeric"
-            required
-            aria-invalid={!!getFieldError('price')}
+            required={!bortskankes}
+            disabled={bortskankes}
+            aria-invalid={!bortskankes && !!getFieldError('price')}
             aria-describedby={getFieldError('price') ? 'price-error' : undefined}
-            className={`w-full p-3 border rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-brand-text antialiased [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${getFieldError('price') ? 'border-red-500 focus:ring-red-500/30 focus:border-red-500' : 'border-gray-300'}`}
-            placeholder={t.form.price.placeholder}
-            value={price ? formatPrice(price) : ''}
-            onChange={(e) => { handlePriceChange(e); clearFieldError('price') }}
+            className={`w-full p-3 border rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-brand-text antialiased [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${bortskankes ? 'bg-gray-100 border-gray-200 text-gray-500 cursor-not-allowed' : getFieldError('price') ? 'border-red-500 focus:ring-red-500/30 focus:border-red-500' : 'border-gray-300'}`}
+            placeholder={bortskankes ? '' : t.form.price.placeholder}
+            value={bortskankes ? '' : (price ? formatPrice(price) : '')}
+            onChange={(e) => { if (!bortskankes) { handlePriceChange(e); clearFieldError('price') } }}
             onBlur={handlePriceBlur}
           />
+          <label className="flex items-center gap-2 mt-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={bortskankes}
+              onChange={(e) => {
+                const checked = e.target.checked
+                setBortskankes(checked)
+                if (checked) setPrice('')
+                clearFieldError('price')
+              }}
+              className="w-4 h-4 text-brand-green rounded focus:ring-brand-green"
+            />
+            <span className="text-sm text-brand-text antialiased">Bortskänkes</span>
+          </label>
           {getFieldError('price') && (
             <p id="price-error" className="text-sm text-red-600 mt-1 antialiased" role="alert">
               {getFieldError('price')}
