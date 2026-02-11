@@ -8,6 +8,21 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ### ✨ Tillagt
 
+#### Miljöer: Dev / Preview / Production
+- **`docs/ENVIRONMENTS.md`**: Guide för tre miljöer – Dev (local), Preview (Vercel PR), Production (live). Tabeller, steg-för-steg, Vercel env vars.
+- **`.env.example`**: Mall med `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`.
+- **`docs/GO_LIVE_CHECKLIST.md`**: Ny sektion "Miljöer" högst upp med checklista.
+- **`README.md`**, **`docs/00-START_HERE.md`**: Referenser till `.env.example` och `docs/ENVIRONMENTS.md`.
+
+#### Listvy + "Visar X av Y annonser"
+- **Listvy-toggle**: Knappar "Av" | "På" till vänster om Sortera – växlar mellan kortvy och radvy.
+- **ListingCard** (`layout="list"`): Kompakt radvy med bild, titel, specs, kategori, plats, datum, pris. Kolumnlayout (grid), alternerande radfärg, font-medium för läsbarhet.
+- **Visar X av Y annonser**: `getListings` returnerar `totalCount` (Supabase `count: 'exact'`). Texten visas efter "Senaste annonserna". Vid flera platser: "Visar X annonser".
+
+#### Felkod för användarrapportering
+- **`lib/error-ref.ts`**: `createErrorRef()`, `withErrorRef()` – kort felkod (t.ex. E7K3M9) visas för användare, loggas för utvecklare.
+- **Listing-service**, **CreateListingForm**: Användarfel inkluderar "(Felkod: XYZ)" så användare kan ange vid support.
+
 #### Bortskänkes (gratisannonser)
 - **Migration** (`supabase/migrations/20260211100000_add_bortskankes_to_listings.sql`): Ny kolumn `bortskankes boolean NOT NULL DEFAULT false` på `listings`. När true sparas pris som 0; i UI visas "Bortskänkes" istället för pris.
 - **Skapa/redigera annons** (`CreateListingForm`): Checkbox "Bortskänkes" under Pris; vid ikryssad gråmarkeras prisfältet och inaktiveras (användaren kan ej fylla i pris). Validering: pris minst 1 kr när ej bortskänkes.
@@ -18,6 +33,16 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 ---
 
 ### 🔧 Ändrat / Buggfixar (senaste)
+
+#### Bilfilter Färg: dropdown istället för fritext
+- **HomePageClient**: Färg-filtret använder nu samma lista som skapa annons – `CAR_COLORS` + "Annan" (dropdown).
+
+#### Visa fler annonser: inga duplicerade nycklar
+- **HomePageClient** (`handleLoadMore`): Deduplicerar nya annonser mot befintliga (`existingIds`) innan append, förhindrar React "duplicate key"-fel.
+
+#### Listvy: pris/favorit överlappning + kolumnlayout
+- **ListingCard** (list layout): Grid med fasta kolumner, pris och favorit i egna kolumner (ingen överlappning).
+- **ListingCard**: Sekundär text (kategori, plats, datum, specs) har `font-medium` för bättre läsbarhet.
 
 #### Chatt: inga dubbletter av meddelanden
 - **InboxClient** (`app/components/InboxClient.tsx`): Optimistisk uppdatering vid skickat meddelande borttagen – meddelanden visas enbart när Realtime levererar dem. Åtgärdar bugg där egna meddelanden syntes två gånger (temp + Realtime). Vid send-fel återställs texten i fältet.

@@ -9,6 +9,17 @@ Detta är en checklista för åtgärder som ska göras **precis innan eller vid 
 
 ---
 
+## 🌍 Miljöer (Dev / Preview / Production)
+
+**Se `docs/ENVIRONMENTS.md`** för fullständig guide.
+
+- [ ] **Dev (Local)** – `.env.local` konfigurerad, appen kör lokalt
+- [ ] **Preview (Vercel)** – Environment Variables satta för Preview-miljö
+- [ ] **Production (Vercel)** – Environment Variables satta för Production-miljö
+- [ ] **Inga dev-nycklar** i Production
+
+---
+
 ## 🔐 Säkerhet & Databas
 
 ### RLS (Row Level Security) Verifiering

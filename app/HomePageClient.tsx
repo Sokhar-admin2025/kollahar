@@ -16,6 +16,7 @@ import CarMakeModelCombobox from './components/CarMakeModelCombobox'
 import LocationFilter, { type LocationFilterValue } from './components/LocationFilter'
 import { PriceInput } from '@/components/listings/filters/price-input'
 import { formatCurrency, getPriceOptions, parsePrice } from '@/lib/features/listings/utils/price-utils'
+import { CAR_COLORS } from '@/lib/car-colors'
 import type { ListingSearchFilters } from '@/lib/features/listings/listing-service'
 
 const supabase = createClient()
@@ -788,13 +789,17 @@ export default function HomePageClient({
               {/* Färg */}
               <div>
                 <label className="block text-sm font-medium text-brand-text mb-2 antialiased">Färg</label>
-                <input
-                  type="text"
-                  placeholder="Alla färger"
-                  className="w-full p-3 border border-gray-300 rounded-xl text-brand-text placeholder:text-gray-400 antialiased"
+                <select
+                  className="w-full p-3 border border-gray-300 rounded-xl bg-white text-brand-text antialiased"
                   value={colorFilter}
                   onChange={(e) => setColorFilter(e.target.value)}
-                />
+                >
+                  <option value="">Alla färger</option>
+                  {CAR_COLORS.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                  <option value="Annan">Annan</option>
+                </select>
               </div>
 
               {/* Effekt */}

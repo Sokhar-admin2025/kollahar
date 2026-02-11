@@ -49,11 +49,11 @@ Välkommen till Kollahär! Detta är din guide för att komma igång med projekt
 
 2. **Konfigurera miljövariabler**
    
-   Skapa en `.env.local` fil i root:
-   ```env
-   NEXT_PUBLIC_SUPABASE_URL=din_supabase_url
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=din_anon_key
+   Kopiera `.env.example` till `.env.local` och fyll i dina värden:
+   ```bash
+   cp .env.example .env.local
    ```
+   Se `docs/ENVIRONMENTS.md` för Dev/Preview/Production-setup.
 
 3. **Starta utvecklingsservern**
    ```bash

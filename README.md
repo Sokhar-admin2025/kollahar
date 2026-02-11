@@ -1,8 +1,21 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Kolla här! – Marknadsplats
+
+En modern marknadsplats (Blocket-stil) byggd med Next.js, Supabase och Tailwind.
+
+## Miljöer
+
+| Miljö | Beskrivning |
+|-------|-------------|
+| **Dev** | Lokal utveckling (`npm run dev`) |
+| **Preview** | Vercel Preview (PR-deployments) |
+| **Production** | Live webbplats |
+
+Se `docs/ENVIRONMENTS.md` för konfiguration av Dev/Preview/Production.
 
 ## Getting Started
 
-First, run the development server:
+1. Kopiera `.env.example` till `.env.local` och fyll i Supabase-variabler
+2. Kör utvecklingsservern:
 
 ```bash
 npm run dev
