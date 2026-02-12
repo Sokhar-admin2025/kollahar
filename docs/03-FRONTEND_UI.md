@@ -59,6 +59,14 @@ Använder Tailwind's standard spacing scale:
 - `shadow-lg`: Stora skuggor
 - `shadow-xl`: Extra stora skuggor
 
+### Sentry (fel- och prestandaövervakning)
+
+- **Konfiguration:** `sentry.client.config.ts`, `sentry.server.config.ts`, `sentry.edge.config.ts`
+- **Next.js:** `withSentryConfig` i `next.config.ts`; tunnel `/monitoring` för att undvika ad-blockers
+- **Instrumentation:** `instrumentation.ts` (server/edge), `instrumentation-client.ts` (client)
+- **Global fel:** `app/global-error.tsx` fångar okända fel och skickar till Sentry
+- **Exempel:** `/sentry-example-page` och `/api/sentry-example-api` för att verifiera att Sentry fungerar
+
 ## 🧩 Komponenter
 
 ### Atomic Design Struktur
