@@ -9,7 +9,7 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 ### ✨ Tillagt
 
 #### Miljöer: Dev / Preview / Production
-- **`docs/ENVIRONMENTS.md`**: Guide för tre miljöer – Dev (local), Preview (Vercel PR), Production (live). Tabeller, steg-för-steg, Vercel env vars.
+- **`docs/ENVIRONMENTS.md`**: Guide för tre miljöer – Dev (local), Preview (Vercel PR), Production (live). Tabeller, steg-för-steg, Vercel env vars. Ny sektion "Deploy – hur och när" med git-flöde för Preview vs Production.
 - **`.env.example`**: Mall med `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`.
 - **`docs/GO_LIVE_CHECKLIST.md`**: Ny sektion "Miljöer" högst upp med checklista.
 - **`README.md`**, **`docs/00-START_HERE.md`**: Referenser till `.env.example` och `docs/ENVIRONMENTS.md`.
@@ -43,6 +43,10 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 #### Listvy: pris/favorit överlappning + kolumnlayout
 - **ListingCard** (list layout): Grid med fasta kolumner, pris och favorit i egna kolumner (ingen överlappning).
 - **ListingCard**: Sekundär text (kategori, plats, datum, specs) har `font-medium` för bättre läsbarhet.
+
+#### Favicon i produktion
+- **`public/icon.png`**, **`public/favicon.ico`**: Kopierade från app/ så favicon serveras korrekt från public/.
+- **`app/layout.tsx`**: Metadata icons uppdaterad – favicon.ico + icon.png för bättre webbläsarstöd.
 
 #### Chatt: inga dubbletter av meddelanden
 - **InboxClient** (`app/components/InboxClient.tsx`): Optimistisk uppdatering vid skickat meddelande borttagen – meddelanden visas enbart när Realtime levererar dem. Åtgärdar bugg där egna meddelanden syntes två gånger (temp + Realtime). Vid send-fel återställs texten i fältet.

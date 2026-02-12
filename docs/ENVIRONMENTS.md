@@ -89,6 +89,70 @@ Preview-deployments skapas automatiskt vid varje PR/push till icke-main-branches
 
 ---
 
+## Deploy – hur och när
+
+### Dev ( lokal)
+Ingen deploy – kör lokalt:
+```bash
+npm run dev
+```
+Koden körs på din dator med `.env.local`.
+
+---
+
+### Preview (Vercel)
+Deploy sker automatiskt när du pushar till en branch som inte är `main`:
+
+1. Skapa en branch och pusha:
+   ```bash
+   git checkout -b feature/min-funktion
+   git add .
+   git commit -m "feat: min funktion"
+   git push origin feature/min-funktion
+   ```
+
+2. Skapa en PR i GitHub/GitLab – Vercel bygger en Preview-deployment.
+
+3. Öppna Preview-URL:en i Vercel (via PR-kommentar eller Dashboard).
+
+**Manuell preview-deploy:**
+```bash
+vercel
+# eller
+vercel --prebuilt
+```
+
+---
+
+### Production (Live)
+Deploy sker automatiskt när du mergear till `main`:
+
+1. Merge din PR till `main`:
+   ```bash
+   git checkout main
+   git merge feature/min-funktion
+   git push origin main
+   ```
+
+2. Vercel bygger och deployar till Production.
+
+**Manuell prod-deploy:**
+```bash
+vercel --prod
+```
+
+---
+
+### Sammanfattning
+
+| Åtgärd | Resultat |
+|--------|----------|
+| `git push` till branch (t.ex. `feature/xyz`) | Preview-deploy |
+| Merge till `main` eller `git push main` | Production-deploy |
+| `npm run dev` | Lokal Dev (ingen deploy) |
+
+---
+
 ## Översikt: Vercel Environment Variables
 
 I Vercel kan du sätta olika värden per miljö:
