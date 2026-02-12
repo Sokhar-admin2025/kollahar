@@ -4,7 +4,7 @@ Alla betydande ändringar i projektet dokumenteras här.
 
 Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/), och projektet följer [Semantic Versioning](https://semver.org/lang/sv/).
 
-## [Unreleased] (Local Development)
+## [Unreleased]
 
 ### ✨ Tillagt
 
@@ -45,8 +45,9 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 - **ListingCard**: Sekundär text (kategori, plats, datum, specs) har `font-medium` för bättre läsbarhet.
 
 #### Favicon i produktion
-- **`public/icon.png`**, **`public/favicon.ico`**: Kopierade från app/ så favicon serveras korrekt från public/.
-- **`app/layout.tsx`**: Metadata icons uppdaterad – favicon.ico + icon.png för bättre webbläsarstöd.
+- **`app/icon.png`**, **`public/icon.png`** – borttagna.
+- **`public/favicon.png`** – KOLLA HÄR-logotypen används som favicon.
+- **`app/layout.tsx`**: Metadata icons pekar på `/favicon.png`.
 
 #### Chatt: inga dubbletter av meddelanden
 - **InboxClient** (`app/components/InboxClient.tsx`): Optimistisk uppdatering vid skickat meddelande borttagen – meddelanden visas enbart när Realtime levererar dem. Åtgärdar bugg där egna meddelanden syntes två gånger (temp + Realtime). Vid send-fel återställs texten i fältet.

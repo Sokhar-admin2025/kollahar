@@ -148,7 +148,7 @@ Detta är en checklista för åtgärder som ska göras **precis innan eller vid 
 - [ ] **Metadata är korrekt konfigurerad**
   - [ ] Title och description i `app/layout.tsx` är korrekta
   - [ ] Open Graph tags är konfigurerade
-  - [ ] Favicon laddas korrekt
+  - [x] Favicon laddas korrekt (public/favicon.png)
 
 - [ ] **Sitemap & Robots.txt**
   - [ ] Sitemap genereras korrekt (om implementerad)
@@ -286,5 +286,5 @@ Detta är en checklista för åtgärder som ska göras **precis innan eller vid 
 
 ---
 
-**Senast uppdaterad:** 2026-01-28  
+**Senast uppdaterad:** 2026-02-12  
 **Nästa granskning:** Vid lansering
