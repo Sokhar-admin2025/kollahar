@@ -159,11 +159,12 @@ Detta är en checklista för åtgärder som ska göras **precis innan eller vid 
 ## 📊 Monitoring & Hälsa
 
 ### Error Tracking
-- [ ] **Installera Sentry (För att fånga buggar och krascher i produktion)**
-  - Kör kommandot `npx @sentry/wizard@latest -i nextjs` och skapa konto på sentry.io
-  - [ ] Sentry är konfigurerat och fungerar i produktion
-  - [ ] Error alerts är uppsatta
-  - [ ] Source maps är konfigurerade för bättre debugging
+- [x] **Sentry installerat** (`@sentry/nextjs`, konfiguration: `sentry.*.config.ts`, `instrumentation.ts`, `global-error.tsx`)
+- [ ] **Sentry i produktion**
+  - [ ] `NEXT_PUBLIC_SENTRY_DSN` och eventuella auth token satta i Vercel
+  - [ ] Verifiera att fel rapporteras (t.ex. via `/sentry-example-page`)
+  - [ ] Error alerts är uppsatta i Sentry
+  - [ ] Source maps laddas upp vid build (automatiskt med `withSentryConfig`)
 
 ### Analytics & Monitoring
 - [ ] **Analytics-integration** (om implementerad)

@@ -26,11 +26,13 @@ Välkommen till Kollahär! Detta är din guide för att komma igång med projekt
 | **Supabase** | ^2.87.3 | Backend (Auth, Database, Storage) |
 | **Tailwind CSS** | ^4 | Styling |
 | **Lucide React** | ^0.561.0 | Ikoner |
+| **Sentry** | ^10.38.0 | Fel- och prestandaövervakning |
 
 ### Viktiga Paket
 
 - `@supabase/ssr`: För korrekt cookie-hantering i Next.js
 - `@supabase/auth-helpers-nextjs`: Auth-hjälpfunktioner
+- `@sentry/nextjs`: Felrapportering, tracing, session replay
 - `next/image`: Optimerad bildhantering
 
 ## 🏃 Hur Man Startar Lokalt
@@ -80,12 +82,14 @@ kollahar/
 │   ├── components/         # React-komponenter
 │   │   ├── atoms/         # Små, återanvändbara komponenter (Button)
 │   │   └── organisms/     # Större komponenter (Footer)
+│   ├── context/           # React Context (HeaderOptions, FavoritLoginToast)
 │   ├── dashboard/         # Användardashboard
 │   │   ├── create/        # Skapa ny annons
 │   │   ├── edit/[id]/     # Redigera annons
 │   │   ├── favorites/     # Sparade favoriter (separat sida)
 │   │   ├── messages/      # Meddelanden/chatt
 │   │   └── settings/      # Användarinställningar
+│   │       └── password/  # Lösenordshantering (byt/glömt)
 │   ├── lib/               # Hjälpfunktioner & konfiguration
 │   ├── login/             # Inloggningssida
 │   ├── services/          # Service-lager (API-anrop)

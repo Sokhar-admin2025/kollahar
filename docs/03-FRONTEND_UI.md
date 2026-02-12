@@ -21,6 +21,9 @@ bg-brand-green      /* Grön bakgrund */
 text-brand-green    /* Grön text */
 bg-brand-beige      /* Beige bakgrund */
 text-brand-text     /* Primär text */
+
+/* Toastar (amber) */
+bg-amber-600        /* Varning/info-toast (t.ex. favorit kräver inloggning) */
 ```
 
 ### Typografi
@@ -65,7 +68,8 @@ Komponenter är organiserade enligt Atomic Design:
 ```
 app/
 ├── context/
-│   └── HeaderOptionsContext.tsx   # Context för header-sök (startsidan)
+│   ├── HeaderOptionsContext.tsx   # Context för header-sök (startsidan)
+│   └── FavoritLoginToastContext.tsx  # Toast "Logga in för att spara favoriter" för oinloggade
 ├── components/
 │   ├── atoms/
 │   │   └── Button.tsx
@@ -81,7 +85,7 @@ app/
 └── ...
 ```
 
-**Header & auth:** Header renderas i rot-layouten via `LayoutWithHeader`. Användaren hämtas på servern (`app/layout.tsx`) och skickas som `initialUserId`/`initialIsVerified` så att det inte flimrar mellan "Logga in" och profil. Sökfältet i headern styrs via `HeaderOptionsContext` när användaren är på startsidan.
+**Header & auth:** Header renderas i rot-layouten via `LayoutWithHeader`. Användaren hämtas på servern (`app/layout.tsx`) och skickas som `initialUserId`/`initialIsVerified` så att det inte flimrar mellan "Logga in" och profil. Sökfältet i headern styrs via `HeaderOptionsContext` när användaren är på startsidan. `FavoritLoginToastProvider` är också i `LayoutWithHeader` och visar toast vid favorit-klick som oinloggad.
 
 **Publika säljprofiler:** Sidan `/profil/[id]` (`app/profil/[id]/page.tsx`) visar säljarens profil (avatar/namn, BadgeCheck vid verifierat företag, "Medlem sedan", webbplats, statistik, aktiva annonser). Företagsprofiler är öppna för alla; privata kräver inloggning och redirectar till `/login?reason=private_profile&next=/profil/[id]`. Efter inloggning skickas användaren tillbaka till `next`. På annonssidan är säljarkortet en länk till `/profil/[user_id]` och verifierade företag får BadgeCheck bredvid namnet.
 
@@ -177,8 +181,9 @@ interface ListingCardProps {
 **Funktionalitet:**
 - Optimistic update (byt färg direkt)
 - Kollar favorit-status vid mount
-- Toggle favorit i Supabase
+- Toggle favorit i Supabase via `toggleFavoriteAction`
 - Rollback vid fel
+- **Oinloggade:** Vid klick visas toast "Logga in för att spara favoriter." (amber-600) via `FavoritLoginToastContext` – ingen server-anrop
 
 **Styling:**
 - Vit bakgrund med backdrop-blur
@@ -435,10 +440,21 @@ interface CreateListingFormProps {
 │  [Stort vitt sökfält]              │
 │  [Kategoriknappar]                 │
 ├─────────────────────────────────────┤
+│  Listvy-bar                         │
+│  [Senaste annonserna]  [Sortera] [Filter] │
+│  <xl: Sortera-menyn (dropdown)     │
+│   xl+: Listvy Av/På | Säljare 3-toggle | Sortera | Filter>
+├─────────────────────────────────────┤
 │  Annons-Galleri                     │
 │  [Grid med ListingCard]            │
 └─────────────────────────────────────┘
 ```
+
+**Listvy-bar (ovanför listan):**
+- **Filter:** Alltid synlig, öppnar filterpanel (md+) eller mobil-drawer (sm). Endast en Filter-knapp.
+- **Sortera-menyn (viewport < xl):** Dropdown med Sortering (Senaste, Äldsta, Pris), Listvy (Av/På), Säljare (Alla/Privat/Företag). Position: `left-0` för att inte flyga ut till vänster.
+- **Vid xl+:** Full inline-layout med Listvy-toggle, Säljare-toggle (Alla/Privat/Företag), Sortera-dropdown, Filter.
+- **Säljare-toggle:** Filtrerar på `profiles.account_type`; URL-parametrar `?seller=private` | `?seller=company`.
 
 **Hero Section:**
 - **Bakgrundsbild med overlay**: Mörk bakgrundsbild (`bg-gray-900`) med gradient overlay

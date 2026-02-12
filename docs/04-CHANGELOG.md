@@ -8,6 +8,29 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ### ✨ Tillagt
 
+_(Inga nya tillägg ännu)_
+
+---
+
+## [1.3.0] - 2026-02-04
+
+### ✨ Tillagt
+
+#### Sentry fel- och prestandaövervakning
+- **@sentry/nextjs** ^10.38.0: Felrapportering, performance tracing, session replay.
+- **Konfiguration:** `sentry.client.config.ts`, `sentry.server.config.ts`, `sentry.edge.config.ts` + `next.config.ts` med `withSentryConfig`.
+- **Tunnel:** `/monitoring` för att undvika ad-blockers på client-side rapportering.
+- **instrumentation.ts:** Server/edge-registrering; `onRequestError` för request-fel.
+- **app/global-error.tsx:** Fångar okända fel och skickar till Sentry.
+- **Exempel:** `/sentry-example-page` och `/api/sentry-example-api` för att verifiera att Sentry fungerar.
+- **.gitignore:** `.env.sentry-build-plugin` tillagd.
+
+---
+
+## [1.2.0] - 2026-02-04
+
+### ✨ Tillagt
+
 #### Favorit-toast för oinloggade
 - **FavoriteButton:** När oinloggad användare klickar på hjärtat visas en toast med "Logga in för att spara favoriter." (amber-600, samma placering som Välkommen-toast).
 - **FavoritLoginToastContext:** Nytt context med provider i LayoutWithHeader; FavoriteButton använder `showFavoritLoginToast()` vid klick utan inloggning.
