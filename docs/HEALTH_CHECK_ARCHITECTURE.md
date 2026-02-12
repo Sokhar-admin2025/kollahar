@@ -39,7 +39,8 @@ middleware.ts               # Route protection, session refresh
 - **Filer:** `app/login/page.tsx` → `app/login/LoginPageContent.tsx` (client).  
 - Inloggning: `supabase.auth.signInWithPassword({ email, password })`.  
 - Registrering: `supabase.auth.signUp({ email, password })` med e-postbekräftelse; användaren skickas till `/login/verify` för OTP.  
-- Lösenordsåterställning: `app/reset-password/page.tsx` med `supabase.auth.updateUser({ password })` (efter t.ex. magic link).  
+- Lösenordsåterställning: `app/reset-password/page.tsx` med `supabase.auth.updateUser({ password })` (efter t.ex. magic link).
+- **Lösenordssida (inloggade)**: `app/dashboard/settings/password/page.tsx` – Glömt lösenord (skicka reset-länk) + Byt lösenord (nuvarande + nytt).  
 - Tvingat lösenordsbyte: middleware läser `profiles.force_password_change` och redirectar till `/reset-password` om satt.  
 - **UX:** På `/reset-password` visas header som utloggad (Header.tsx: `showAsLoggedOut`), så användaren inte upplevs som inloggad under lösenordsåterställning.
 - **Chatt:** Inbox visar "Annonsrubrik – med (namn)"; tre-punkts-menyn med "Radera chatt" (soft delete via `user_hidden_conversations`).

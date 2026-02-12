@@ -8,6 +8,34 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ### ✨ Tillagt
 
+#### Favorit-toast för oinloggade
+- **FavoriteButton:** När oinloggad användare klickar på hjärtat visas en toast med "Logga in för att spara favoriter." (amber-600, samma placering som Välkommen-toast).
+- **FavoritLoginToastContext:** Nytt context med provider i LayoutWithHeader; FavoriteButton använder `showFavoritLoginToast()` vid klick utan inloggning.
+
+#### Listvy-bar responsiv: Filter alltid synlig + Sortera-menyn
+- **Filter-knapp:** Alltid synlig på alla skärmstorlekar. Vid tight viewport försvinner den inte längre.
+- **En Filter-knapp:** Hero-Filter-knappen borttagen på mobil – endast baren ovanför listan har Filter.
+- **Sortera-menyn (xl):** Vid viewport < 1280px visas en "Sortera"-knapp som öppnar en dropdown med: Sorteringsval (Senaste, Äldsta, Pris), Listvy (Av/På), Säljare (Alla/Privat/Företag).
+- **Sortera-menyn position:** `left-0` + `max-w-[calc(100vw-2rem)]` så menyn inte flyger ut till vänster på smal viewport.
+- **Vid xl+:** Full inline-layout med Listvy, Säljare, Sortera-dropdown och Filter.
+- **Desktop-filter:** Visas från md (768px) istället för lg.
+
+#### Säljartyp-toggle (Alla | Privat | Företag)
+- **I listvy-baren:** 3-alternativs toggle bredvid Listvy och Sortera – Alla, Privat, Företag. Synlig på xl+. Inte i filterpanelen.
+- **URL:** `?seller=private` | `?seller=company`
+- **Filter-chip:** "Företag" eller "Privat" visas när aktivt, klickbar för att ta bort.
+- **Listing-service:** `sellerType` i getListings filtrerar mot profiles.account_type.
+
+#### Företag tydligare i listvy och detaljsida
+- **ListingCard**: Visar "Företag i (location)" för företagsannonser istället för enbart plats. MapPin-ikon borttagen. Privat: endast plats.
+- **Annonsdetalj header**: "Företag i (location)" för företag, utan plats-pin.
+- **Säljarkort**: MapPin borttagen. Vid plats: "Företag i X" för företag. Utan plats: "Företag på Kolla här!" för företag, "Medlem på Kolla här!" för privat.
+- **Listing-service**: getListings, getUserListings, getActiveListingsByUserId, getFavoriteListings hämtar nu seller_type (account_type) från profiles.
+
+#### Lösenordssida för inloggade användare
+- **`/dashboard/settings/password`**: Ny sida för lösenordshantering. Två sektioner: (1) **Glömt lösenord** – skicka återställningslänk till e-post (pre-fylld med inloggad e-post); (2) **Byt lösenord** – nuvarande + nytt + bekräfta. Skyddad av dashboard-middleware.
+- **Inställningar**: Länk "Hantera lösenord" ersätter inline-formuläret.
+
 #### Inbox: namn, tre-punkts-menyn, Radera chatt (soft delete)
 - **Vänster lista + höger header:** Visar "Annonsrubrik – med (namn)" (motpartens namn från profiles).
 - **Tre-punkts-menyn:** I höger panelens header; öppnar dropdown med "Radera chatt".

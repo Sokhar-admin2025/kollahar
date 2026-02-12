@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Heart } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { toggleFavoriteAction } from '@/app/actions/favorite-actions'
+import { useFavoritLoginToast } from '@/app/context/FavoritLoginToastContext'
 
 const supabase = createClient()
 
@@ -19,6 +20,7 @@ export default function FavoriteButton({
   isFavorited: isFavoritedProp,
   onFavoriteRemoved,
 }: FavoriteButtonProps) {
+  const { showFavoritLoginToast } = useFavoritLoginToast()
   const [fetchedFavorited, setFetchedFavorited] = useState<boolean | null>(null)
   const [optimisticFavorited, setOptimisticFavorited] = useState<boolean | null>(null)
 
@@ -47,6 +49,12 @@ export default function FavoriteButton({
   const handleToggle = async (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      showFavoritLoginToast()
+      return
+    }
 
     const previous = optimisticFavorited !== null ? optimisticFavorited : isFavoritedProp ?? false
     setOptimisticFavorited(!previous)

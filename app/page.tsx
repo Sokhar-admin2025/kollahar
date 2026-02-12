@@ -12,6 +12,7 @@ type HomePageSearchParams = {
   minPrice?: string | string[]
   maxPrice?: string | string[]
   bortskankes?: string | string[]
+  seller?: string | string[]
   minYear?: string | string[]
   maxYear?: string | string[]
   maxMileage?: string | string[]
@@ -33,6 +34,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const maxMileageParam = searchParams?.maxMileage
   const sortParam = searchParams?.sort
   const bortskankesParam = searchParams?.bortskankes
+  const sellerParam = searchParams?.seller
 
   const toStringOrUndefined = (value: string | string[] | undefined): string | undefined => {
     if (!value) return undefined
@@ -47,11 +49,15 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   }
 
   const bortskankes = toStringOrUndefined(bortskankesParam) === '1'
+  const sellerParamVal = toStringOrUndefined(sellerParam)
+  const sellerType = (sellerParamVal === 'private' || sellerParamVal === 'company' ? sellerParamVal : 'all') as 'all' | 'private' | 'company'
+
   const filters: ListingSearchFilters = {
     query: toStringOrUndefined(qParam),
     category: toStringOrUndefined(categoryParam) || 'all',
     location: toStringOrUndefined(locationParam),
     bortskankes: bortskankes || undefined,
+    sellerType: sellerType !== 'all' ? sellerType : undefined,
     minPrice: toNumberOrUndefined(minPriceParam),
     maxPrice: toNumberOrUndefined(maxPriceParam),
     minYear: toNumberOrUndefined(minYearParam),

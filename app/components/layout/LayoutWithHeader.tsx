@@ -1,6 +1,7 @@
 'use client'
 
 import { HeaderOptionsProvider } from '@/app/context/HeaderOptionsContext'
+import { FavoritLoginToastProvider } from '@/app/context/FavoritLoginToastContext'
 import Header from '@/app/components/organisms/Header'
 
 interface LayoutWithHeaderProps {
@@ -16,8 +17,10 @@ export default function LayoutWithHeader({
 }: LayoutWithHeaderProps) {
   return (
     <HeaderOptionsProvider>
-      <Header initialUserId={initialUserId} initialIsVerified={initialIsVerified} />
-      {children}
+      <FavoritLoginToastProvider>
+        <Header initialUserId={initialUserId} initialIsVerified={initialIsVerified} />
+        {children}
+      </FavoritLoginToastProvider>
     </HeaderOptionsProvider>
   )
 }

@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { MapPin } from 'lucide-react';
 import FavoriteButton from './FavoriteButton';
 import { getCategoryLabel, CATEGORY_GROUPS } from '@/lib/categories';
 
@@ -17,6 +16,7 @@ interface Listing {
   created_at: string;
   user_id?: string;
   attributes?: Record<string, unknown>;
+  seller_type?: 'private' | 'company';
 }
 
 interface ListingCardProps {
@@ -65,10 +65,13 @@ export default function ListingCard({
   const isVehicleCategory = vehiclesGroup?.children.some(child => child.id === listing.category) ?? false
   
   // Extrahera bara kommunen från location (t.ex. "Täby, Stockholms län" → "Täby")
-  // Om location innehåller komma, ta första delen (kommunen), annars visa hela strängen
-  const displayLocation = listing.location.includes(',') 
+  const displayLocation = listing.location.includes(',')
     ? listing.location.split(',')[0].trim()
     : listing.location
+  const isCompany = listing.seller_type === 'company'
+  const locationLabel = displayLocation
+    ? (isCompany ? `Företag i ${displayLocation}` : displayLocation)
+    : (isCompany ? 'Företag' : '')
   
   // Bil-specifik data (defensiv kodning)
   const isCarsCategory = listing.category === 'cars';
@@ -167,10 +170,11 @@ export default function ListingCard({
           </Link>
 
           {/* Plats – md+ */}
-          <Link href={`/annons/${listing.id}`} className="hidden md:flex items-center overflow-hidden min-w-0 gap-0.5 col-start-4">
-            <MapPin className="w-3 h-3 shrink-0 text-brand-text/50" />
-            <span className="text-[11px] font-medium text-brand-text/60 truncate antialiased">{displayLocation}</span>
-          </Link>
+          {locationLabel && (
+            <Link href={`/annons/${listing.id}`} className="hidden md:block overflow-hidden min-w-0 col-start-4">
+              <span className="text-[11px] font-medium text-brand-text/60 truncate antialiased">{locationLabel}</span>
+            </Link>
+          )}
 
           {/* Datum – xl+ */}
           <Link href={`/annons/${listing.id}`} className="hidden xl:block overflow-hidden min-w-0 col-start-5">
@@ -275,10 +279,11 @@ export default function ListingCard({
               {formattedPrice}
             </p>
             {/* Plats */}
-            <div className="flex items-center text-brand-text/70 text-xs gap-0.5">
-              <MapPin className="w-3.5 h-3.5 text-brand-text/70" />
-              <span className="truncate max-w-[100px] antialiased">{displayLocation}</span>
-            </div>
+            {locationLabel && (
+              <div className="text-brand-text/70 text-xs">
+                <span className="truncate max-w-[100px] antialiased">{locationLabel}</span>
+              </div>
+            )}
           </div>
         </div>
       </Link>

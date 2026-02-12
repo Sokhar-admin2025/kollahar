@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Search, X, SlidersHorizontal, ChevronDown, ChevronUp } from 'lucide-react'
+import { Search, X, SlidersHorizontal, ChevronDown, ChevronUp, ArrowUpDown } from 'lucide-react'
 
 import { DASHBOARD_TEXTS } from './lib/content'
 import ListingCard from './components/ListingCard'
@@ -74,6 +74,10 @@ export default function HomePageClient({
   const [priceMin, setPriceMin] = useState(() => searchParams.get('minPrice') || '')
   const [priceMax, setPriceMax] = useState(() => searchParams.get('maxPrice') || '')
   const [bortskankesOnly, setBortskankesOnly] = useState(() => searchParams.get('bortskankes') === '1')
+  const [sellerType, setSellerType] = useState<'all' | 'private' | 'company'>(() => {
+    const s = searchParams.get('seller')
+    return s === 'private' || s === 'company' ? s : 'all'
+  })
   const [locationFilter, setLocationFilter] = useState<LocationFilterValue>(() => {
     const fullCounties = searchParams.getAll('county')
     const munParams = searchParams.getAll('mun')
@@ -106,6 +110,8 @@ export default function HomePageClient({
   const [isDesktopFilterOpen, setIsDesktopFilterOpen] = useState(false)
   const [showMoreFilters, setShowMoreFilters] = useState(false)
   const [listViewEnabled, setListViewEnabled] = useState(false)
+  const [isSortMenuOpen, setIsSortMenuOpen] = useState(false)
+  const sortMenuRef = useRef<HTMLDivElement>(null)
 
   const t = DASHBOARD_TEXTS
   const isCarsCategory = selectedCategory === 'cars'
@@ -220,6 +226,9 @@ export default function HomePageClient({
     if (bortskankesOnly) {
       params.set('bortskankes', '1')
     }
+    if (sellerType && sellerType !== 'all') {
+      params.set('seller', sellerType)
+    }
     if (yearFrom) {
       params.set('minYear', yearFrom)
     }
@@ -243,7 +252,7 @@ export default function HomePageClient({
 
     const newUrl = params.toString() ? `/?${params.toString()}` : '/'
     window.history.replaceState({}, '', newUrl)
-  }, [searchQuery, selectedCategory, priceMin, priceMax, bortskankesOnly, yearFrom, yearTo, maxMileage, sort, locationFilter])
+  }, [searchQuery, selectedCategory, priceMin, priceMax, bortskankesOnly, sellerType, yearFrom, yearTo, maxMileage, sort, locationFilter])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -301,11 +310,25 @@ export default function HomePageClient({
     setPriceMin('')
     setPriceMax('')
     setBortskankesOnly(false)
+    setSellerType('all')
     setLocationFilter({ fullCounties: [], partialMunicipalities: [] })
     resetCarFilters()
   }
 
   const isFirstFilterMount = useRef(true)
+
+  // Stäng Sortera-menyn vid klick utanför
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (sortMenuRef.current && !sortMenuRef.current.contains(e.target as Node)) {
+        setIsSortMenuOpen(false)
+      }
+    }
+    if (isSortMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [isSortMenuOpen])
 
   /** Bygger serverfilter från aktuellt state (samma logik som page.tsx). */
   const buildFilters = (offset: number): ListingSearchFilters => {
@@ -336,6 +359,7 @@ export default function HomePageClient({
       category: selectedCategory !== 'all' ? selectedCategory : undefined,
       location,
       bortskankes: bortskankesOnly || undefined,
+      sellerType: sellerType !== 'all' ? sellerType : undefined,
       minPrice: minPrice !== undefined && !Number.isNaN(minPrice) ? minPrice : undefined,
       maxPrice: maxPrice !== undefined && !Number.isNaN(maxPrice) ? maxPrice : undefined,
       minYear: minYear !== undefined && !Number.isNaN(minYear) ? minYear : undefined,
@@ -405,6 +429,7 @@ export default function HomePageClient({
     priceMin,
     priceMax,
     bortskankesOnly,
+    sellerType,
     locationFilter,
     yearFrom,
     yearTo,
@@ -492,6 +517,9 @@ export default function HomePageClient({
         break
       case 'bortskankes':
         setBortskankesOnly(false)
+        break
+      case 'seller':
+        setSellerType('all')
         break
       case 'priceMin':
         setPriceMin('')
@@ -895,16 +923,6 @@ export default function HomePageClient({
               </button>
             </form>
 
-            <div className="flex items-center justify-center md:hidden">
-              <button
-                type="button"
-                onClick={() => setIsFilterOpen(true)}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-gray-300 bg-white text-brand-text text-sm font-medium shadow-sm hover:bg-brand-beige"
-              >
-                <SlidersHorizontal className="w-4 h-4" aria-hidden="true" />
-                Filter
-              </button>
-            </div>
           </div>
         </div>
       </div>
@@ -958,14 +976,14 @@ export default function HomePageClient({
       <main id="search-results" className="w-full max-w-7xl mx-auto px-4 py-3 flex-grow relative">
         {isDesktopFilterOpen && (
           <div
-            className="hidden lg:block fixed inset-0 bg-black/40 z-40 transition-opacity"
+            className="hidden md:block fixed inset-0 bg-black/40 z-40 transition-opacity"
             onClick={() => setIsDesktopFilterOpen(false)}
             aria-hidden
           />
         )}
 
         <aside
-          className={`hidden lg:block fixed inset-y-0 left-0 h-full w-[350px] bg-white shadow-2xl border-r border-gray-200 z-50 transition-transform duration-300 ease-in-out ${
+          className={`hidden md:block fixed inset-y-0 left-0 h-full w-[350px] bg-white shadow-2xl border-r border-gray-200 z-50 transition-transform duration-300 ease-in-out ${
             isDesktopFilterOpen ? 'translate-x-0' : '-translate-x-full'
           }`}
           aria-label="Filterpanel"
@@ -1000,7 +1018,7 @@ export default function HomePageClient({
             }
           </div>
 
-          <div className="flex justify-between items-end gap-3 mb-3">
+          <div className="flex flex-wrap justify-between items-end gap-3 mb-3">
             <div className="flex flex-wrap items-baseline gap-2 min-w-0">
               <h3 className="text-2xl font-display text-brand-green">{t.landing.listings.header}</h3>
               <span className="text-sm text-brand-text/70">
@@ -1015,55 +1033,206 @@ export default function HomePageClient({
                 })()}
               </span>
             </div>
-            <div className="flex items-center gap-3 shrink-0">
-              <div className="hidden md:flex items-center gap-1.5">
-                <span className="text-xs text-brand-text/70">Listvy</span>
+            <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+              {/* Sortera-menyn (tight viewports): dropdown med sortering, listvy, säljare */}
+              <div className="xl:hidden relative" ref={sortMenuRef}>
                 <button
                   type="button"
-                  onClick={() => setListViewEnabled(false)}
-                  className={`px-2 py-1 text-xs rounded-l-lg border transition-colors ${
-                    !listViewEnabled
-                      ? 'bg-brand-green text-white border-brand-green'
-                      : 'bg-white text-brand-text/70 border-gray-300 hover:bg-gray-50'
-                  }`}
-                  aria-pressed={!listViewEnabled}
-                  aria-label="Listvy av"
+                  onClick={() => setIsSortMenuOpen(!isSortMenuOpen)}
+                  className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-gray-300 bg-white text-brand-text text-sm font-medium shadow-sm hover:bg-gray-50 transition-colors"
+                  aria-label="Sortera och visa"
+                  aria-expanded={isSortMenuOpen}
+                  aria-haspopup="true"
                 >
-                  Av
+                  <ArrowUpDown className="w-4 h-4" aria-hidden />
+                  Sortera
+                  <ChevronDown className={`w-4 h-4 transition-transform ${isSortMenuOpen ? 'rotate-180' : ''}`} aria-hidden />
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setListViewEnabled(true)}
-                  className={`px-2 py-1 text-xs rounded-r-lg border transition-colors ${
-                    listViewEnabled
-                      ? 'bg-brand-green text-white border-brand-green'
-                      : 'bg-white text-brand-text/70 border-gray-300 hover:bg-gray-50'
-                  }`}
-                  aria-pressed={listViewEnabled}
-                  aria-label="Listvy på"
-                >
-                  På
-                </button>
+                {isSortMenuOpen && (
+                  <div className="absolute left-0 top-full mt-1 w-64 max-w-[calc(100vw-2rem)] py-2 rounded-xl border border-gray-200 bg-white shadow-lg z-50">
+                    <div className="px-3 py-2 border-b border-gray-100">
+                      <span className="text-xs font-medium text-brand-text/70">Sortering</span>
+                      <div className="mt-1.5 space-y-0.5">
+                        {(['newest', 'oldest', 'price_asc', 'price_desc'] as const).map((opt) => (
+                          <button
+                            key={opt}
+                            type="button"
+                            onClick={() => {
+                              setSort(opt)
+                            }}
+                            className={`block w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
+                              sort === opt
+                                ? 'bg-brand-green/10 text-brand-green font-medium'
+                                : 'text-brand-text hover:bg-gray-100'
+                            }`}
+                          >
+                            {opt === 'newest' && 'Senaste'}
+                            {opt === 'oldest' && 'Äldsta'}
+                            {opt === 'price_asc' && 'Pris (lägst först)'}
+                            {opt === 'price_desc' && 'Pris (högst först)'}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="px-3 py-2 border-b border-gray-100">
+                      <span className="text-xs font-medium text-brand-text/70">Listvy</span>
+                      <div className="mt-1.5 flex gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setListViewEnabled(false)}
+                          className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                            !listViewEnabled ? 'bg-brand-green text-white' : 'bg-gray-100 text-brand-text hover:bg-gray-200'
+                          }`}
+                        >
+                          Av
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setListViewEnabled(true)}
+                          className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                            listViewEnabled ? 'bg-brand-green text-white' : 'bg-gray-100 text-brand-text hover:bg-gray-200'
+                          }`}
+                        >
+                          På
+                        </button>
+                      </div>
+                    </div>
+                    <div className="px-3 py-2">
+                      <span className="text-xs font-medium text-brand-text/70">Säljare</span>
+                      <div className="mt-1.5 flex gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setSellerType('all')}
+                          className={`flex-1 px-2 py-2 rounded-lg text-sm font-medium transition-colors ${
+                            sellerType === 'all' ? 'bg-brand-green text-white' : 'bg-gray-100 text-brand-text hover:bg-gray-200'
+                          }`}
+                        >
+                          Alla
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setSellerType('private')}
+                          className={`flex-1 px-2 py-2 rounded-lg text-sm font-medium transition-colors ${
+                            sellerType === 'private' ? 'bg-brand-green text-white' : 'bg-gray-100 text-brand-text hover:bg-gray-200'
+                          }`}
+                        >
+                          Privat
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setSellerType('company')}
+                          className={`flex-1 px-2 py-2 rounded-lg text-sm font-medium transition-colors ${
+                            sellerType === 'company' ? 'bg-brand-green text-white' : 'bg-gray-100 text-brand-text hover:bg-gray-200'
+                          }`}
+                        >
+                          Företag
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
-              <select
-                value={sort ?? 'newest'}
-                onChange={(e) =>
-                  setSort(e.target.value as ListingSearchFilters['sort'])
-                }
-                className="hidden md:inline-block text-sm border border-gray-300 rounded-xl bg-white px-3 py-1 text-brand-text antialiased"
-                aria-label="Sortera annonser"
-              >
-                <option value="newest">Senaste</option>
-                <option value="oldest">Äldsta</option>
-                <option value="price_asc">Pris (lägst först)</option>
-                <option value="price_desc">Pris (högst först)</option>
-              </select>
 
+              {/* Full bred inline (vid xl+) */}
+              <div className="hidden xl:flex items-center gap-3">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs text-brand-text/70">Listvy</span>
+                  <button
+                    type="button"
+                    onClick={() => setListViewEnabled(false)}
+                    className={`px-2 py-1 text-xs rounded-l-lg border transition-colors ${
+                      !listViewEnabled
+                        ? 'bg-brand-green text-white border-brand-green'
+                        : 'bg-white text-brand-text/70 border-gray-300 hover:bg-gray-50'
+                    }`}
+                    aria-pressed={!listViewEnabled}
+                    aria-label="Listvy av"
+                  >
+                    Av
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setListViewEnabled(true)}
+                    className={`px-2 py-1 text-xs rounded-r-lg border transition-colors ${
+                      listViewEnabled
+                        ? 'bg-brand-green text-white border-brand-green'
+                        : 'bg-white text-brand-text/70 border-gray-300 hover:bg-gray-50'
+                    }`}
+                    aria-pressed={listViewEnabled}
+                    aria-label="Listvy på"
+                  >
+                    På
+                  </button>
+                </div>
+                <div className="flex items-center gap-1.5" role="group" aria-label="Säljare">
+                  <span className="text-xs text-brand-text/70">Säljare</span>
+                  <div className="flex">
+                    <button
+                      type="button"
+                      onClick={() => setSellerType('all')}
+                      className={`px-2 py-1 text-xs border rounded-l-lg transition-colors ${
+                        sellerType === 'all'
+                          ? 'bg-brand-green text-white border-brand-green'
+                          : 'bg-white text-brand-text/70 border-gray-300 hover:bg-gray-50'
+                      }`}
+                      aria-pressed={sellerType === 'all'}
+                      aria-label="Alla säljare"
+                    >
+                      Alla
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSellerType('private')}
+                      className={`px-2 py-1 text-xs border rounded-none border-l-0 transition-colors ${
+                        sellerType === 'private'
+                          ? 'bg-brand-green text-white border-brand-green'
+                          : 'bg-white text-brand-text/70 border-gray-300 hover:bg-gray-50'
+                      }`}
+                      aria-pressed={sellerType === 'private'}
+                      aria-label="Endast privatpersoner"
+                    >
+                      Privat
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSellerType('company')}
+                      className={`px-2 py-1 text-xs border rounded-r-lg border-l-0 transition-colors ${
+                        sellerType === 'company'
+                          ? 'bg-brand-green text-white border-brand-green'
+                          : 'bg-white text-brand-text/70 border-gray-300 hover:bg-gray-50'
+                      }`}
+                      aria-pressed={sellerType === 'company'}
+                      aria-label="Endast företag"
+                    >
+                      Företag
+                    </button>
+                  </div>
+                </div>
+                <select
+                  value={sort ?? 'newest'}
+                  onChange={(e) => setSort(e.target.value as ListingSearchFilters['sort'])}
+                  className="text-sm border border-gray-300 rounded-xl bg-white px-3 py-1 text-brand-text antialiased"
+                  aria-label="Sortera annonser"
+                >
+                  <option value="newest">Senaste</option>
+                  <option value="oldest">Äldsta</option>
+                  <option value="price_asc">Pris (lägst först)</option>
+                  <option value="price_desc">Pris (högst först)</option>
+                </select>
+              </div>
+
+              {/* Filter-knapp: alltid synlig */}
               <button
                 type="button"
-                onClick={() => setIsDesktopFilterOpen(!isDesktopFilterOpen)}
-                className="hidden lg:inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-green text-white text-sm font-medium shadow-sm hover:bg-brand-green/90 transition-colors"
-                aria-label={isDesktopFilterOpen ? 'Stäng filter' : 'Öppna filter'}
+                onClick={() => {
+                  if (typeof window !== 'undefined' && window.innerWidth < 768) {
+                    setIsFilterOpen(true)
+                  } else {
+                    setIsDesktopFilterOpen((prev) => !prev)
+                  }
+                }}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-green text-white text-sm font-medium shadow-sm hover:bg-brand-green/90 transition-colors shrink-0"
+                aria-label={isDesktopFilterOpen || isFilterOpen ? 'Stäng filter' : 'Öppna filter'}
               >
                 <SlidersHorizontal className="w-4 h-4" aria-hidden />
                 Filter
@@ -1124,6 +1293,15 @@ export default function HomePageClient({
                 className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-brand-green/20 text-brand-green text-xs font-medium hover:bg-brand-green/30 transition"
               >
                 Bortskänkes <span aria-hidden>×</span>
+              </button>
+            )}
+            {sellerType !== 'all' && (
+              <button
+                type="button"
+                onClick={() => removeFilterChip('seller', '')}
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-brand-green/20 text-brand-green text-xs font-medium hover:bg-brand-green/30 transition"
+              >
+                {sellerType === 'company' ? 'Företag' : 'Privat'} <span aria-hidden>×</span>
               </button>
             )}
             {priceMin && (
@@ -1257,6 +1435,7 @@ export default function HomePageClient({
               locationFilter.fullCounties.length > 0 ||
               locationFilter.partialMunicipalities.length > 0 ||
               bortskankesOnly ||
+              sellerType !== 'all' ||
               priceMin ||
               priceMax ||
               (isCarsCategory &&

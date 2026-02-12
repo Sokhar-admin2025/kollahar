@@ -7,7 +7,6 @@ import imageCompression from 'browser-image-compression'
 import { Loader2 } from 'lucide-react'
 
 import { DASHBOARD_TEXTS } from '@/app/lib/content'
-import { AUTH_CONFIG } from '@/lib/constants'
 import Button from '@/app/components/atoms/Button'
 import LocationInput from '@/app/components/LocationInput'
 import { createClient } from '@/lib/supabase/client'
@@ -246,84 +245,6 @@ export default function SettingsPage() {
       console.error(err)
       setUpgradeMessage({ text: 'Ett oväntat fel uppstod.', type: 'error' })
       setUpgradeSaving(false)
-    }
-  }
-
-  // 3. Byt lösenord (nuvarande + nytt)
-  const [currentPassword, setCurrentPassword] = useState('')
-  const [newPassword, setNewPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [passwordLoading, setPasswordLoading] = useState(false)
-  const [passwordMessage, setPasswordMessage] = useState<{ text: string; type: 'error' | 'success' } | null>(null)
-
-  const handleChangePassword = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!email) return
-
-    // Grundvalidering
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      setPasswordMessage({ text: t.password.errors.required, type: 'error' })
-      return
-    }
-
-    if (newPassword.length < AUTH_CONFIG.MIN_PASSWORD_LENGTH) {
-      setPasswordMessage({ text: t.password.errors.minLength(AUTH_CONFIG.MIN_PASSWORD_LENGTH), type: 'error' })
-      return
-    }
-
-    if (newPassword !== confirmPassword) {
-      setPasswordMessage({ text: t.password.errors.mismatch, type: 'error' })
-      return
-    }
-
-    if (newPassword === currentPassword) {
-      setPasswordMessage({ text: t.password.errors.sameAsOld, type: 'error' })
-      return
-    }
-
-    setPasswordLoading(true)
-    setPasswordMessage(null)
-
-    try {
-      // 1. Verifiera nuvarande lösenord via silent login
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password: currentPassword,
-      })
-
-      if (signInError) {
-        setPasswordMessage({ text: t.password.errors.currentInvalid, type: 'error' })
-        setPasswordLoading(false)
-        return
-      }
-
-      // 2. Uppdatera lösenordet
-      const { error: updateError } = await supabase.auth.updateUser({
-        password: newPassword,
-      })
-
-      if (updateError) {
-        const msg = String(updateError.message || '').toLowerCase()
-        if (msg.includes('new password should be different from the old password')) {
-          setPasswordMessage({ text: t.password.errors.sameAsOld, type: 'error' })
-        } else {
-          console.error('Kunde inte uppdatera lösenord:', updateError)
-          setPasswordMessage({ text: t.password.errors.generic, type: 'error' })
-        }
-        setPasswordLoading(false)
-        return
-      }
-
-      // 3. Success
-      setPasswordMessage({ text: t.password.success, type: 'success' })
-      setCurrentPassword('')
-      setNewPassword('')
-      setConfirmPassword('')
-    } catch (err) {
-      console.error('Fel vid uppdatering av lösenord:', err)
-      setPasswordMessage({ text: t.password.errors.generic, type: 'error' })
-    } finally {
-      setPasswordLoading(false)
     }
   }
 
@@ -584,81 +505,21 @@ export default function SettingsPage() {
             </div>
             )}
 
-            {/* SEKTION: BYT LÖSENORD */}
+            {/* SEKTION: LÖSENORD — länk till dedikerad sida */}
             <div>
                 <h2 className="text-lg font-semibold text-brand-text mb-4 border-b pb-2 flex items-center gap-2 antialiased">
                     {t.sections.password}
                     <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">Säkerhet</span>
                 </h2>
                 <p className="text-sm text-brand-text/70 mb-4">
-                    {t.password.description}
+                    Glömt lösenord eller byta lösenord? Hantera allt på vår dedikerade lösenordssida.
                 </p>
-
-                <div className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-brand-text mb-1 antialiased">
-                            {t.password.currentLabel}
-                        </label>
-                        <input
-                            type="password"
-                            value={currentPassword}
-                            onChange={(e) => setCurrentPassword(e.target.value)}
-                            className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-brand-text antialiased"
-                            autoComplete="current-password"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-brand-text mb-1 antialiased">
-                            {t.password.newLabel}
-                        </label>
-                        <input
-                            type="password"
-                            value={newPassword}
-                            onChange={(e) => setNewPassword(e.target.value)}
-                            className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-brand-text antialiased"
-                            autoComplete="new-password"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-brand-text mb-1 antialiased">
-                            {t.password.confirmLabel}
-                        </label>
-                        <input
-                            type="password"
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
-                            className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-brand-text antialiased"
-                            autoComplete="new-password"
-                        />
-                    </div>
-
-                    {passwordMessage && (
-                      <div
-                        className={`p-3 rounded text-sm text-center ${
-                          passwordMessage.type === 'error'
-                            ? 'bg-red-100 text-red-700'
-                            : 'bg-green-100 text-green-700'
-                        }`}
-                        role="alert"
-                        aria-live="polite"
-                      >
-                        {passwordMessage.text}
-                      </div>
-                    )}
-
-                    <div className="pt-2">
-                        <Button
-                          type="button"
-                          onClick={handleChangePassword}
-                          disabled={passwordLoading}
-                          className="w-full"
-                        >
-                          {passwordLoading ? t.password.loading : t.password.submit}
-                        </Button>
-                    </div>
-                </div>
+                <Link
+                  href="/dashboard/settings/password"
+                  className="inline-flex items-center justify-center rounded-xl bg-brand-green px-6 py-3 text-white font-medium hover:bg-brand-green/90 focus:outline-none focus:ring-2 focus:ring-brand-green focus:ring-offset-2 transition"
+                >
+                  Hantera lösenord
+                </Link>
             </div>
 
             <hr />

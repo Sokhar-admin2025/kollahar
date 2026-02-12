@@ -11,7 +11,7 @@ import FavoriteButton from '@/app/components/FavoriteButton'
 import { createClient } from '@/lib/supabase/client'
 import type { Listing } from '@/app/types'
 import { getListingById } from '@/lib/features/listings/listing-service'
-import { MapPin, Loader2, ChevronLeft, ChevronRight, Calendar, Gauge, Fuel, Settings2, Car, Palette, Zap, BadgeCheck } from 'lucide-react'
+import { Loader2, ChevronLeft, ChevronRight, Calendar, Gauge, Fuel, Settings2, Car, Palette, Zap, BadgeCheck } from 'lucide-react'
 import { getCategoryLabel, CATEGORY_GROUPS } from '@/lib/categories'
 
 const supabase = createClient()
@@ -328,11 +328,19 @@ function ListingDetails() {
               
               <div className="mb-6">
                 <h1 className="text-3xl font-bold text-brand-green mb-2">{ad.title}</h1>
-                <div className="flex items-center text-brand-text/70 text-sm">
-                  <span className="mr-2">📍</span>
-                  {ad.location.includes(',') ? ad.location.split(',')[0].trim() : ad.location}
-                  <span className="mx-2">•</span>
-                  {new Date(ad.created_at).toLocaleDateString()}
+                <div className="flex items-center text-brand-text/70 text-sm flex-wrap gap-x-2">
+                  {(() => {
+                    const loc = ad.location.includes(',') ? ad.location.split(',')[0].trim() : ad.location
+                    const isCompany = sellerProfile?.account_type === 'company'
+                    const locationText = loc ? (isCompany ? `Företag i ${loc}` : loc) : null
+                    return locationText ? (
+                      <>
+                        <span>{locationText}</span>
+                        <span>•</span>
+                      </>
+                    ) : null
+                  })()}
+                  <span>{new Date(ad.created_at).toLocaleDateString()}</span>
                 </div>
               </div>
 
@@ -532,15 +540,15 @@ function ListingDetails() {
                           </span>
                         )}
                       </h4>
-                      {sellerDisplayLocation && (
-                        <p className="mt-0.5 flex items-center gap-1 text-xs text-brand-text/80 truncate">
-                          <MapPin className="w-3.5 h-3.5 text-brand-green flex-shrink-0" strokeWidth={2.5} />
-                          <span>{sellerDisplayLocation}</span>
+                      {sellerDisplayLocation ? (
+                        <p className="mt-0.5 text-xs text-brand-text/80 truncate">
+                          {sellerProfile?.account_type === 'company' ? `Företag i ${sellerDisplayLocation}` : sellerDisplayLocation}
                         </p>
-                      )}
-                      {!sellerDisplayLocation && sellerProfile && (
-                        <p className="text-xs text-brand-text/60">Medlem på Kolla här!</p>
-                      )}
+                      ) : sellerProfile ? (
+                        <p className="text-xs text-brand-text/60 mt-0.5">
+                          {sellerProfile.account_type === 'company' ? 'Företag på Kolla här!' : 'Medlem på Kolla här!'}
+                        </p>
+                      ) : null}
                     </div>
                   </Link>
                 </div>

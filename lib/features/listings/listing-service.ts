@@ -12,6 +12,8 @@ export interface ListingSearchFilters {
   location?: string
   /** Visa endast bortskänkes-annonser */
   bortskankes?: boolean
+  /** Säljartyp: all = alla, private = endast privatpersoner, company = endast företag */
+  sellerType?: 'all' | 'private' | 'company'
   minPrice?: number
   maxPrice?: number
   minYear?: number
@@ -45,10 +47,35 @@ export async function getListings(
     const offset = filters.offset ?? 0
     const limit = filters.limit ?? DEFAULT_LIMIT
 
+    // Säljartyp: hämta user_ids som matchar (company/private) innan huvudquery
+    let sellerUserIds: string[] | null = null
+    if (filters.sellerType && filters.sellerType !== 'all') {
+      const { data: profileRows } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('account_type', filters.sellerType === 'company' ? 'company' : 'private')
+      sellerUserIds = (profileRows ?? []).map((r: { id: string }) => r.id)
+      if (filters.sellerType === 'private') {
+        const { data: nullTypeRows } = await supabase
+          .from('profiles')
+          .select('id')
+          .is('account_type', null)
+        const nullIds = (nullTypeRows ?? []).map((r: { id: string }) => r.id)
+        sellerUserIds = [...sellerUserIds, ...nullIds]
+      }
+    }
+
     let query = supabase
       .from('listings')
       .select('*', { count: 'exact' })
       .eq('status', 'active')
+
+    if (sellerUserIds !== null) {
+      if (sellerUserIds.length === 0) {
+        return { success: true, data: [], totalCount: 0 }
+      }
+      query = query.in('user_id', sellerUserIds)
+    }
 
     // Kategori
     if (filters.category && filters.category !== 'all') {
@@ -151,10 +178,29 @@ export async function getListings(
       }
     }
 
+    const rows = (data ?? []) as (Listing & { user_id: string })[]
+    const userIds = [...new Set(rows.map((r) => r.user_id).filter(Boolean))]
+
+    let sellerTypeMap: Record<string, 'private' | 'company'> = {}
+    if (userIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, account_type')
+        .in('id', userIds)
+      ;(profiles ?? []).forEach((p: { id: string; account_type?: string }) => {
+        sellerTypeMap[p.id] = (p.account_type === 'company' ? 'company' : 'private') as 'private' | 'company'
+      })
+    }
+
+    const result: Listing[] = rows.map((r) => ({
+      ...r,
+      seller_type: sellerTypeMap[r.user_id] ?? 'private',
+    }))
+
     return {
       success: true,
-      data: (data ?? []) as Listing[],
-      totalCount: count ?? (data ?? []).length,
+      data: result,
+      totalCount: count ?? result.length,
     }
   } catch (err) {
     console.error('getListings unexpected error', err)
@@ -355,9 +401,21 @@ export async function getUserListings(userId: string): Promise<ServiceResult<Lis
       }
     }
 
+    const rows = (data ?? []) as (Listing & { user_id: string })[]
+    let sellerType: 'private' | 'company' = 'private'
+    if (rows.length > 0 && rows[0].user_id) {
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('account_type')
+        .eq('id', rows[0].user_id)
+        .maybeSingle()
+      sellerType = (prof as { account_type?: string } | null)?.account_type === 'company' ? 'company' : 'private'
+    }
+    const result: Listing[] = rows.map((r) => ({ ...r, seller_type: sellerType }))
+
     return {
       success: true,
-      data: (data ?? []) as Listing[],
+      data: result,
     }
   } catch (err) {
     console.error('getUserListings unexpected error', err)
@@ -395,9 +453,21 @@ export async function getActiveListingsByUserId(userId: string): Promise<Service
       }
     }
 
+    const rows = (data ?? []) as (Listing & { user_id: string })[]
+    let sellerType: 'private' | 'company' = 'private'
+    if (rows.length > 0 && rows[0].user_id) {
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('account_type')
+        .eq('id', rows[0].user_id)
+        .maybeSingle()
+      sellerType = (prof as { account_type?: string } | null)?.account_type === 'company' ? 'company' : 'private'
+    }
+    const result: Listing[] = rows.map((r) => ({ ...r, seller_type: sellerType }))
+
     return {
       success: true,
-      data: (data ?? []) as Listing[],
+      data: result,
     }
   } catch (err) {
     console.error('getActiveListingsByUserId unexpected error', err)
@@ -455,9 +525,22 @@ export async function getFavoriteListings(userId: string): Promise<ServiceResult
     const orderMap = new Map(ids.map((id, i) => [id, i]))
     const sorted = (listings ?? [])
       .filter((l) => orderMap.has(l.id))
-      .sort((a, b) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0))
+      .sort((a, b) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0)) as (Listing & { user_id: string })[]
 
-    return { success: true, data: sorted as Listing[] }
+    const userIds = [...new Set(sorted.map((l) => l.user_id).filter(Boolean))]
+    let sellerTypeMap: Record<string, 'private' | 'company'> = {}
+    if (userIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, account_type')
+        .in('id', userIds)
+      ;(profiles ?? []).forEach((p: { id: string; account_type?: string }) => {
+        sellerTypeMap[p.id] = p.account_type === 'company' ? 'company' : 'private'
+      })
+    }
+    const result: Listing[] = sorted.map((l) => ({ ...l, seller_type: sellerTypeMap[l.user_id] ?? 'private' }))
+
+    return { success: true, data: result }
   } catch (err) {
     console.error('getFavoriteListings unexpected error', err)
     return {
