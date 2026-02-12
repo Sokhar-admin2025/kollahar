@@ -36,11 +36,7 @@ export const metadata: Metadata = {
     type: 'website',
     siteName: 'Kolla här!',
   },
-  icons: {
-    icon: '/favicon.png',
-    shortcut: '/favicon.png',
-    apple: '/favicon.png',
-  },
+  // Ikon: app/icon.png (Next.js file convention)
 }
 
 export default async function RootLayout({

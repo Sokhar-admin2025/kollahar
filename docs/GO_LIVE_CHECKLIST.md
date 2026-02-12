@@ -148,7 +148,7 @@ Detta är en checklista för åtgärder som ska göras **precis innan eller vid 
 - [ ] **Metadata är korrekt konfigurerad**
   - [ ] Title och description i `app/layout.tsx` är korrekta
   - [ ] Open Graph tags är konfigurerade
-  - [x] Favicon laddas korrekt (public/favicon.png)
+  - [x] Favicon laddas korrekt (app/icon.png, Next.js file convention)
 
 - [ ] **Sitemap & Robots.txt**
   - [ ] Sitemap genereras korrekt (om implementerad)
