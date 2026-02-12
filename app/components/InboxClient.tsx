@@ -1,14 +1,14 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 
 import { DASHBOARD_TEXTS } from '@/app/lib/content'
 import type { Conversation, Message } from '@/app/types'
 import Button from '@/app/components/atoms/Button'
-import { sendMessageAction, markAsReadAction, getMessagesAction } from '@/app/actions/message-actions'
+import { sendMessageAction, markAsReadAction, getMessagesAction, hideConversationAction } from '@/app/actions/message-actions'
 import { createClient } from '@/lib/supabase/client'
-import { X } from 'lucide-react'
+import { X, MoreVertical } from 'lucide-react'
 
 const t = DASHBOARD_TEXTS.messages
 
@@ -36,6 +36,21 @@ export default function InboxClient({
   const [sending, setSending] = useState(false)
   const [newMessage, setNewMessage] = useState('')
   const [showInboxMobile, setShowInboxMobile] = useState(true)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [hidingConversation, setHidingConversation] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  // Stäng meny vid klick utanför
+  useEffect(() => {
+    if (!menuOpen) return
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false)
+      }
+    }
+    document.addEventListener('click', handleClickOutside)
+    return () => document.removeEventListener('click', handleClickOutside)
+  }, [menuOpen])
 
   // När användaren väljer en konversation: hämta meddelanden + markera som lästa
   useEffect(() => {
@@ -138,6 +153,35 @@ export default function InboxClient({
     setShowInboxMobile(true)
   }
 
+  const handleDeleteChat = async () => {
+    if (!selectedConversation) return
+    if (!confirm('Är du säker på att du vill radera denna chatt? Meddelandena går inte att återhämta.')) {
+      return
+    }
+    setHidingConversation(true)
+    try {
+      const result = await hideConversationAction(selectedConversation.id)
+      if (result.success) {
+        setConversations((prev) => prev.filter((c) => c.id !== selectedConversation.id))
+        setSelectedConversation(null)
+        setShowInboxMobile(true)
+        setMenuOpen(false)
+      } else {
+        alert(result.error ?? 'Kunde inte radera chatten')
+      }
+    } catch {
+      alert('Kunde inte radera chatten')
+    } finally {
+      setHidingConversation(false)
+    }
+  }
+
+  function formatChatTitle(conv: Conversation): string {
+    const title = conv.listing?.title || 'Okänd annons'
+    const name = conv.other_participant_name
+    return name ? `${title} – med ${name}` : title
+  }
+
   return (
     <div className="h-full min-h-0 flex flex-col overflow-hidden bg-brand-beige">
       {/* Fyll tillgängligt utrymme (layout har Footer under) – flex-1 så Chrome inte trycker ner skrivfältet */}
@@ -198,7 +242,7 @@ export default function InboxClient({
                           </div>
                           <div className="flex-1 min-w-0">
                             <h4 className="font-bold text-sm text-brand-text truncate antialiased">
-                              {conv.listing?.title || 'Okänd annons'}
+                              {formatChatTitle(conv)}
                             </h4>
                             <p className="text-xs text-brand-text flex items-center gap-2 antialiased">
                               {new Date(conv.created_at).toLocaleDateString('sv-SE', { year: 'numeric', month: '2-digit', day: '2-digit' })}
@@ -270,7 +314,7 @@ export default function InboxClient({
                             href={`/annons/${selectedConversation.listing_id}`}
                             className="hover:text-brand-green/80 transition"
                           >
-                            {selectedConversation.listing?.title || 'Okänd annons'}
+                            {formatChatTitle(selectedConversation)}
                           </Link>
                         </h3>
                         {(selectedConversation.listing?.bortskankes || selectedConversation.listing?.price != null) && (
@@ -280,14 +324,50 @@ export default function InboxClient({
                         )}
                       </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={handleBackToInboxMobile}
-                      className="md:hidden inline-flex items-center justify-center rounded-full p-1.5 text-brand-text hover:text-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green"
-                      aria-label="Stäng chatt och visa inkorg"
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <div className="relative" ref={menuRef}>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setMenuOpen((o) => !o)
+                          }}
+                          disabled={hidingConversation}
+                          className="inline-flex items-center justify-center rounded-full p-1.5 text-brand-text hover:text-brand-green hover:bg-brand-green/10 focus:outline-none focus:ring-2 focus:ring-brand-green"
+                          aria-label="Öppna chatthalternativ"
+                          aria-expanded={menuOpen}
+                        >
+                          <MoreVertical className="w-5 h-5" />
+                        </button>
+                        {menuOpen && (
+                          <div
+                            className="absolute right-0 top-full mt-1 py-1 bg-white rounded-lg shadow-lg border border-gray-200 min-w-[160px] z-50"
+                            role="menu"
+                          >
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleDeleteChat()
+                              }}
+                              disabled={hidingConversation}
+                              className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 focus:outline-none focus:bg-red-50"
+                              role="menuitem"
+                            >
+                              {hidingConversation ? 'Raderar...' : 'Radera chatt'}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleBackToInboxMobile}
+                        className="md:hidden inline-flex items-center justify-center rounded-full p-1.5 text-brand-text hover:text-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green"
+                        aria-label="Stäng chatt och visa inkorg"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+                    </div>
                   </div>
 
                   {/* Zon 2: Meddelandelista — ENDA stället som scrollar */}

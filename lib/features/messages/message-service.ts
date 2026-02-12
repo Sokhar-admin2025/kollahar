@@ -33,21 +33,58 @@ export async function createConversation(
   return data.id
 }
 
-/** Hämta alla konversationer för användaren med listing-info (inkl. status för såld/borttagen). */
+/** Hämta alla konversationer för användaren med listing-info och motpartens namn. Exkluderar dolda (soft delete). */
 export async function getMyConversations(userId: string): Promise<Conversation[]> {
   const supabase = await createClient()
 
-  const { data, error } = await supabase
+  const { data: hiddenRows } = await supabase
+    .from('user_hidden_conversations')
+    .select('conversation_id')
+    .eq('user_id', userId)
+  const hiddenIds = new Set((hiddenRows ?? []).map((r: { conversation_id: string }) => r.conversation_id))
+
+  let query = supabase
     .from('conversations')
-    .select(`
+    .select(
+      `
       *,
       listing:listings (title, images, price, bortskankes, status, deleted_at)
-    `)
+    `
+    )
     .or(`buyer_id.eq.${userId},seller_id.eq.${userId}`)
     .order('updated_at', { ascending: false })
 
+  if (hiddenIds.size > 0) {
+    query = query.not('id', 'in', `(${Array.from(hiddenIds).join(',')})`)
+  }
+
+  const { data: convs, error } = await query
   if (error) throw error
-  return (data ?? []) as Conversation[]
+
+  const convList = (convs ?? []) as (Conversation & { buyer_id: string; seller_id: string })[]
+  const userIds = new Set<string>()
+  convList.forEach((c) => {
+    userIds.add(c.buyer_id)
+    userIds.add(c.seller_id)
+  })
+
+  const { data: profiles } = await supabase
+    .from('profiles')
+    .select('id, full_name')
+    .in('id', Array.from(userIds))
+  const profileMap = new Map<string, string | null>()
+  ;(profiles ?? []).forEach((p: { id: string; full_name: string | null }) => {
+    profileMap.set(p.id, p.full_name?.trim() || null)
+  })
+
+  return convList.map((c) => {
+    const otherId = c.buyer_id === userId ? c.seller_id : c.buyer_id
+    const otherName = profileMap.get(otherId) ?? 'Användare'
+    return {
+      ...c,
+      other_participant_name: otherName,
+    } as Conversation
+  })
 }
 
 /** Hämta konversations-IDs som har olästa meddelanden för användaren (meddelanden inte skickade av userId). */
@@ -147,4 +184,19 @@ export async function sendMessage(
     .from('conversations')
     .update({ updated_at: new Date().toISOString() })
     .eq('id', conversationId)
+}
+
+/** Soft delete: dölj konversation för användaren (visas inte längre i inkorgen). */
+export async function hideConversation(
+  conversationId: string,
+  userId: string
+): Promise<void> {
+  const supabase = await createClient()
+
+  const { error } = await supabase.from('user_hidden_conversations').upsert(
+    { user_id: userId, conversation_id: conversationId },
+    { onConflict: 'user_id,conversation_id' }
+  )
+
+  if (error) throw error
 }

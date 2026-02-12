@@ -24,6 +24,8 @@ export interface Conversation {
   listing_id: string;
   buyer_id: string;
   seller_id: string;
+  /** Namn på den andra deltagaren (köpare eller säljare – den du chattar med). */
+  other_participant_name?: string | null;
   listing?: {
     title: string;
     images: string[];

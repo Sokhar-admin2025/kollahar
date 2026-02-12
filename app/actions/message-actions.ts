@@ -7,6 +7,7 @@ import {
   markConversationAsRead,
   getMessages,
   createConversation as createConversationService,
+  hideConversation as hideConversationService,
 } from '@/lib/features/messages/message-service'
 
 export type SendMessageResult = { success: true } | { success: false; error: string }
@@ -107,5 +108,29 @@ export async function createConversationAction(
   } catch (err) {
     console.error('createConversationAction error', err)
     return { success: false, error: 'Kunde inte starta chatten just nu.' }
+  }
+}
+
+export type HideConversationResult = { success: true } | { success: false; error: string }
+
+export async function hideConversationAction(
+  conversationId: string
+): Promise<HideConversationResult> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { success: false, error: 'Du måste vara inloggad.' }
+  }
+
+  try {
+    await hideConversationService(conversationId, user.id)
+    revalidatePath('/dashboard/messages')
+    return { success: true }
+  } catch (err) {
+    console.error('hideConversationAction error', err)
+    return { success: false, error: 'Kunde inte radera chatten.' }
   }
 }

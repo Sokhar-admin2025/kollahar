@@ -494,6 +494,7 @@ Migrations ligger i `supabase/migrations/`:
 - `20260205100000_listings_own_select_policy.sql`: Lägger till RLS-policy "Users can view all own listings" på `listings` så att inloggade användare kan se alla egna annonser (aktiva + sålda) i Dashboard.
 - `20260206100000_public_read_sold_listings.sql`: Lägger till RLS-policy "Public read sold listings" på `listings` så att besökare kan läsa sålda annonser (visas som "Såld" på annonssidan).
 - `20260207100000_profiles_public_seller_fields.sql`: Lägger till kolumner på `profiles`: `created_at`, `account_type`, `website`, `is_company_verified`, `org_number` (för publika säljprofiler).
+- `20260212100000_user_hidden_conversations.sql`: Skapar `user_hidden_conversations` för soft delete av chattar (användare kan dölja konversationer för sig själva).
 
 Utöver migrations finns även manuella setup-skript:
 

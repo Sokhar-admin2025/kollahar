@@ -1,6 +1,6 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Search, X, Menu } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -34,7 +34,11 @@ export default function Header({
   onClearSearch: onClearSearchProp,
 }: HeaderProps) {
   const router = useRouter()
+  const pathname = usePathname()
   const { options: headerOptions } = useHeaderOptions()
+
+  /** På reset-password visas header som utloggad trots session (UX: användaren ska inte se sig som inloggad) */
+  const showAsLoggedOut = pathname === '/reset-password'
 
   const showSearch = showSearchProp ?? headerOptions.showSearch ?? false
   const searchQuery = searchQueryProp ?? headerOptions.searchQuery ?? ''
@@ -100,6 +104,10 @@ export default function Header({
   }, [])
 
   const handleSellClick = async () => {
+    if (showAsLoggedOut) {
+      router.push('/login')
+      return
+    }
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
       // Kontrollera OTP-status innan navigation
@@ -132,6 +140,10 @@ export default function Header({
   }
 
   const handleDashboardClick = async () => {
+    if (showAsLoggedOut) {
+      router.push('/login')
+      return
+    }
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
       // Kontrollera OTP-status innan navigation
@@ -215,8 +227,8 @@ export default function Header({
 
         {/* Navigation / Actions */}
         <div className="flex items-center gap-2">
-          {/* Desktop: UserMenu för inloggad OCH verifierad, annars Logga in + Sälj-knapp */}
-          {currentUserId && isVerified ? (
+          {/* Desktop: UserMenu för inloggad OCH verifierad (ej på reset-password), annars Logga in + Sälj-knapp */}
+          {currentUserId && isVerified && !showAsLoggedOut ? (
             <div className="hidden md:flex items-center gap-3">
               <Button onClick={handleSellClick}>
                 {t.navigation.sellBtn}
@@ -243,7 +255,7 @@ export default function Header({
             type="button"
             onClick={handleDashboardClick}
             className="inline-flex md:hidden items-center justify-center h-10 w-10 rounded-full border border-brand-green/30 text-brand-green hover:bg-brand-green/10 focus:outline-none focus:ring-2 focus:ring-brand-green focus:ring-offset-2 focus:ring-offset-white"
-            aria-label={currentUserId && isVerified ? 'Öppna Min Dashboard' : 'Logga in'}
+            aria-label={currentUserId && isVerified && !showAsLoggedOut ? 'Öppna Min Dashboard' : 'Logga in'}
           >
             <Menu size={20} aria-hidden="true" />
           </button>

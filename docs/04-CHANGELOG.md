@@ -8,6 +8,11 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ### ✨ Tillagt
 
+#### Inbox: namn, tre-punkts-menyn, Radera chatt (soft delete)
+- **Vänster lista + höger header:** Visar "Annonsrubrik – med (namn)" (motpartens namn från profiles).
+- **Tre-punkts-menyn:** I höger panelens header; öppnar dropdown med "Radera chatt".
+- **Radera chatt:** Soft delete – chatten döljs för användaren (andra personen ser den kvar). Bekräftelsedialog innan radering. Migration `20260212100000_user_hidden_conversations.sql` skapar tabellen `user_hidden_conversations`.
+
 #### Miljöer: Dev / Preview / Production
 - **`docs/ENVIRONMENTS.md`**: Guide för tre miljöer – Dev (local), Preview (Vercel PR), Production (live). Tabeller, steg-för-steg, Vercel env vars. Ny sektion "Deploy – hur och när" med git-flöde för Preview vs Production.
 - **`.env.example`**: Mall med `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`.
@@ -43,6 +48,9 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 #### Listvy: pris/favorit överlappning + kolumnlayout
 - **ListingCard** (list layout): Grid med fasta kolumner, pris och favorit i egna kolumner (ingen överlappning).
 - **ListingCard**: Sekundär text (kategori, plats, datum, specs) har `font-medium` för bättre läsbarhet.
+
+#### Reset-password: visas inte som inloggad
+- **Header** (`app/components/organisms/Header.tsx`): På `/reset-password` visas header som utloggad (`showAsLoggedOut`), så användaren inte upplevs som inloggad under lösenordsåterställning. Knappar "Logga in" och "Sälj" navigerar till `/login`.
 
 #### Favicon i produktion
 - **`app/icon.png`**, **`app/apple-icon.png`** – Next.js file convention (KOLLA HÄR-logotypen). Ikoner genereras automatiskt av Next.js.
