@@ -10,6 +10,19 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 _(Inga nya tillägg ännu)_
 
+### 🔧 Ändrat / Buggfixar
+
+#### Mobil filter-drawer: "Visa resultat"-knappen alltid nårbar
+- **Problem:** På mobil hamnade knappen bakom webbläsarens nedre fält; användare kunde inte scrolla ned eller nå den.
+- **Åtgärd:** Drawer höjd minskad till 85dvh/85vh; extra padding-bottom (`calc(env(safe-area-inset-bottom)+5rem)`) på knappsektionen så den alltid ligger ovanför browser bar.
+- **Viewport:** `viewportFit: 'cover'` i layout för att aktivera safe-area-inset på enheter med notch.
+
+### 📋 Planerat
+
+- **Båt-specifika attribut:** Filter för längd i fot, båttyp m.m. (kategori Båtar)
+- **Cookie-banner compliance:** Uppdatera för Sentry Tracking/Replay (explicit samtycke)
+- **Städning:** Ta bort `/sentry-example-page` när Sentry-loggar är verifierade
+
 ---
 
 ## [1.3.0] - 2026-02-04

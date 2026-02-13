@@ -10,6 +10,36 @@ Detta dokument samlar alla planerade features, tekniska förbättringar och go-l
 
 ---
 
+## ✅ Post Go-Live (Slutfört)
+
+### Domän & Infrastruktur
+- ✅ Huvuddomän och Å-domän live med SSL (HTTPS)
+- ✅ Vercel-miljö synkad med GitHub för automatisk deploy
+
+### Säkerhet & Databas
+- ✅ RLS aktiverat i Supabase
+- ✅ Användardata och annonser skyddade (endast ägaren kan ändra sina egna inlägg)
+
+### Funktionalitet
+- ✅ Inloggning via Supabase Auth
+- ✅ Bilduppladdning till Storage verifierad och stabil
+
+### Monitorering
+- ✅ Sentry SaaS installerat och konfigurerat
+- ✅ Session Replay: "Se" krascher som video för snabbare buggfixar
+- ✅ Performance Tracing: Övervakar laddtider och flaskhalsar
+- ✅ Error Tunneling: Går runt ad-blockers för att inte missa felrapporter
+
+---
+
+## 📋 Kommande Actions (Todo)
+
+1. **Båt-specifika attribut** – Implementera filter för längd i fot, båttyp m.m. (kategori Båtar)
+2. **Compliance** – Uppdatera Cookie-banner (`CookieConsent`) för Sentry Tracking/Replay: nämn Sentry explicit, ev. separate consent för analytics/tracking innan Session Replay laddas
+3. **Städning** – Ta bort testsidan `/sentry-example-page` när loggarna är verifierade
+
+---
+
 ## 📋 Go-Live Checklist (Inför Publik Lansering)
 
 ### 🔐 Säkerhet & Autentisering

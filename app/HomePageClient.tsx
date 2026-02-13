@@ -859,10 +859,11 @@ export default function HomePageClient({
         </div>
       )}
 
+      {/* Rensa filter – endast i desktop-panelen; mobil har den i drawerns sticky bottom */}
       <button
         type="button"
         onClick={resetFilters}
-        className="w-full py-2 text-sm text-brand-green underline hover:text-brand-green/80 antialiased"
+        className="hidden md:block w-full py-2 text-sm text-brand-green underline hover:text-brand-green/80 antialiased"
       >
         Rensa filter
       </button>
@@ -927,14 +928,14 @@ export default function HomePageClient({
         </div>
       </div>
 
-      {/* Mobil filter-drawer */}
+      {/* Mobil filter-drawer – max-h och safe-area så "Visa resultat"-knappen alltid nårbar ovanför browser bar */}
       {isFilterOpen && (
         <div className="fixed inset-0 z-50 md:hidden">
           <div
             className="absolute inset-0 bg-black/40"
             onClick={() => setIsFilterOpen(false)}
           />
-          <div className="absolute right-0 top-0 h-[95vh] w-[90%] max-w-[95%] bg-white shadow-xl flex flex-col overflow-hidden">
+          <div className="absolute right-0 top-0 h-[85dvh] max-h-[85vh] w-[90%] max-w-[95%] bg-white shadow-xl flex flex-col overflow-hidden">
             <div className="shrink-0 p-4 border-b border-gray-200 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-brand-text">Filter</h3>
               <button
@@ -946,10 +947,10 @@ export default function HomePageClient({
                 <X className="w-5 h-5" aria-hidden="true" />
               </button>
             </div>
-            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4 pb-4">
+            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4 pb-4 overscroll-contain">
               {filterFields}
             </div>
-            <div className="shrink-0 border-t border-gray-200 p-4 bg-white flex flex-col gap-2">
+            <div className="shrink-0 border-t border-gray-200 p-4 bg-white flex flex-col gap-2 pb-[calc(env(safe-area-inset-bottom,0px)+5rem)]">
               <button
                 type="button"
                 onClick={() => {

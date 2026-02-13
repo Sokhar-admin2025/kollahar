@@ -7,83 +7,87 @@ Detta är en checklista för åtgärder som ska göras **precis innan eller vid 
 - Verifiera att alla kritiska punkter är genomförda innan publik lansering
 - Uppdatera checklistan när nya krav identifieras
 
+**Post Go-Live status:** Domän/SSL, Vercel, RLS, Auth, bilduppladdning och Sentry är klara. Se `docs/05-ROADMAP.md` → "Post Go-Live (Slutfört)" och "Kommande Actions".
+
+**Kvar:** Cross-browser/device-test, prestanda/Lighthouse, EAA-tillgänglighet, backup-strategi, dokumentation, post-launch övervakning.
+
 ---
 
 ## 🌍 Miljöer (Dev / Preview / Production)
 
 **Se `docs/ENVIRONMENTS.md`** för fullständig guide.
 
-- [ ] **Dev (Local)** – `.env.local` konfigurerad, appen kör lokalt
-- [ ] **Preview (Vercel)** – Environment Variables satta för Preview-miljö
-- [ ] **Production (Vercel)** – Environment Variables satta för Production-miljö
-- [ ] **Inga dev-nycklar** i Production
+- [x] **Dev (Local)** – `.env.local` konfigurerad, appen kör lokalt
+- [x] **Preview (Vercel)** – Environment Variables satta för Preview-miljö
+- [x] **Production (Vercel)** – Environment Variables satta för Production-miljö
+- [x] **Inga dev-nycklar** i Production
 
 ---
 
 ## 🔐 Säkerhet & Databas
 
 ### RLS (Row Level Security) Verifiering
-- [ ] **Kör alla RLS setup-filer i produktionsdatabasen**
-  - [ ] `supabase/setup_listings.sql` - Verifiera att RLS är aktiverat
-  - [ ] `supabase/setup_deletion_logs.sql` - Verifiera att RLS är aktiverat
-  - [ ] `supabase/setup_listing_images.sql` - Verifiera storage bucket RLS policies
-  - [ ] `supabase/setup_profiles.sql` - Verifiera att RLS är aktiverat
-  - [ ] `supabase/setup_conversations_messages.sql` - Verifiera att RLS är aktiverat
-  - [ ] `supabase/migrations/20260116090000_create_favorites.sql` - Verifiera att RLS är aktiverat
+- [x] **Kör alla RLS setup-filer i produktionsdatabasen**
+  - [x] `supabase/setup_listings.sql` - Verifiera att RLS är aktiverat
+  - [x] `supabase/setup_deletion_logs.sql` - Verifiera att RLS är aktiverat
+  - [x] `supabase/setup_listing_images.sql` - Verifiera storage bucket RLS policies
+  - [x] `supabase/setup_profiles.sql` - Verifiera att RLS är aktiverat
+  - [x] `supabase/setup_conversations_messages.sql` - Verifiera att RLS är aktiverat
+  - [x] `supabase/migrations/20260116090000_create_favorites.sql` - Verifiera att RLS är aktiverat
 
-- [ ] **Testa RLS policies manuellt i Supabase Dashboard**
-  - [ ] Verifiera att anonyma användare INTE kan läsa `deleted`/`sold` annonser
-  - [ ] Verifiera att användare INTE kan uppdatera andra användares annonser
-  - [ ] Verifiera att användare INTE kan läsa andra användares `deletion_logs`
-  - [ ] Verifiera att användare INTE kan läsa andra användares meddelanden
+- [x] **Testa RLS policies manuellt i Supabase Dashboard**
+  - [x] Verifiera att anonyma användare INTE kan läsa `deleted`/`sold` annonser
+  - [x] Verifiera att användare INTE kan uppdatera andra användares annonser
+  - [x] Verifiera att användare INTE kan läsa andra användares `deletion_logs`
+  - [x] Verifiera att användare INTE kan läsa andra användares meddelanden
 
-- [ ] **Granska RLS_AUDIT_REPORT.md** (`docs/RLS_AUDIT_REPORT.md`)
-  - [ ] Alla kritiska problem är åtgärdade
-  - [ ] Alla tabeller har RLS aktiverat
+- [x] **Granska RLS_AUDIT_REPORT.md** (`docs/RLS_AUDIT_REPORT.md`)
+  - [x] Alla kritiska problem är åtgärdade
+  - [x] Alla tabeller har RLS aktiverat
 
 ### Databas-migrationer
-- [ ] **Kör alla migrations i produktionsdatabasen**
-  - [ ] Verifiera att alla migrations har körts i korrekt ordning
-  - [ ] Kontrollera att inga migrations saknas
+- [x] **Kör alla migrations i produktionsdatabasen**
+  - [x] Verifiera att alla migrations har körts i korrekt ordning
+  - [x] Kontrollera att inga migrations saknas
 
-- [ ] **Verifiera databasstruktur**
-  - [ ] Alla tabeller finns (`profiles`, `listings`, `favorites`, `conversations`, `messages`, `deletion_logs`)
-  - [ ] Alla foreign keys är korrekt konfigurerade
-  - [ ] Alla triggers fungerar (t.ex. `handle_new_user()` för profiles)
+- [x] **Verifiera databasstruktur**
+  - [x] Alla tabeller finns (`profiles`, `listings`, `favorites`, `conversations`, `messages`, `deletion_logs`)
+  - [x] Alla foreign keys är korrekt konfigurerade
+  - [x] Alla triggers fungerar (t.ex. `handle_new_user()` för profiles)
 
 ---
 
 ## 🌐 Environment Variables & Konfiguration
 
 ### Vercel Environment Variables
-- [ ] **Dubbelkolla alla Environment Variables i Vercel**
-  - [ ] `NEXT_PUBLIC_SUPABASE_URL` - Korrekt produktions-URL
-  - [ ] `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Korrekt anon key för produktion
-  - [ ] `SUPABASE_SERVICE_ROLE_KEY` - Endast i server-miljö (INTE `NEXT_PUBLIC_`)
-  - [ ] Verifiera att inga development-nycklar finns i produktion
+- [x] **Dubbelkolla alla Environment Variables i Vercel**
+  - [x] `NEXT_PUBLIC_SUPABASE_URL` - Korrekt produktions-URL
+  - [x] `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Korrekt anon key för produktion
+  - [x] `SUPABASE_SERVICE_ROLE_KEY` - Endast i server-miljö (INTE `NEXT_PUBLIC_`)
+  - [x] Verifiera att inga development-nycklar finns i produktion
 
-- [ ] **Supabase-konfiguration**
-  - [ ] Verifiera att produktionsprojektet är korrekt konfigurerat
-  - [ ] Kontrollera att email-templates är uppsatta (OTP-verifiering)
-  - [ ] Verifiera att storage buckets är publika om de ska vara det
+- [x] **Supabase-konfiguration**
+  - [x] Verifiera att produktionsprojektet är korrekt konfigurerat
+  - [x] Kontrollera att email-templates är uppsatta (OTP-verifiering)
+  - [x] Verifiera att storage buckets är publika om de ska vara det
 
 ### API-nycklar & Tredjepartstjänster
-- [ ] **Verifiera alla API-nycklar**
-  - [ ] Alla nycklar är för produktion (inte development/test)
-  - [ ] Rate limits är konfigurerade korrekt
-  - [ ] Webhooks är konfigurerade (om tillämpligt)
+- [x] **Verifiera alla API-nycklar**
+  - [x] Alla nycklar är för produktion (inte development/test)
+  - [x] Rate limits är konfigurerade korrekt
+  - [x] Webhooks är konfigurerade (om tillämpligt)
 
 ---
 
 ## 🧪 Testing & Verifiering
 
 ### Funktionella Tester
-- [ ] **Testa användarflöden från början till slut**
-  - [ ] Registrering → OTP-verifiering → Login → Dashboard
-  - [ ] Skapa annons → Redigera annons → Radera annons
-  - [ ] Spara favorit → Ta bort favorit
-  - [ ] Skapa konversation → Skicka meddelande → Markera som läst
-  - [ ] Uppdatera profil → Byt lösenord → Radera konto
+- [x] **Testa användarflöden från början till slut**
+  - [x] Registrering → OTP-verifiering → Login → Dashboard
+  - [x] Skapa annons → Redigera annons → Radera annons
+  - [x] Spara favorit → Ta bort favorit
+  - [x] Skapa konversation → Skicka meddelande → Markera som läst
+  - [x] Uppdatera profil → Byt lösenord → Radera konto
 
 - [ ] **Testa edge cases**
   - [ ] Vad händer om användare försöker redigera annons de inte äger?
@@ -135,11 +139,11 @@ Detta är en checklista för åtgärder som ska göras **precis innan eller vid 
   - [ ] Placeholder-text har tillräcklig kontrast
 
 ### Cookie Consent
-- [ ] **Cookie Consent-banner fungerar korrekt**
-  - [ ] Visas för nya besökare
-  - [ ] Försvinner efter "OK"-klick
-  - [ ] Kommer inte tillbaka efter att användaren klickat "OK"
-  - [ ] "Läs mer"-länk fungerar och leder till `/cookies`
+- [x] **Cookie Consent-banner fungerar korrekt**
+  - [x] Visas för nya besökare
+  - [x] Försvinner efter "OK"-klick
+  - [x] Kommer inte tillbaka efter att användaren klickat "OK"
+  - [x] "Läs mer"-länk fungerar och leder till `/cookies`
 
 ---
 
@@ -160,11 +164,11 @@ Detta är en checklista för åtgärder som ska göras **precis innan eller vid 
 
 ### Error Tracking
 - [x] **Sentry installerat** (`@sentry/nextjs`, konfiguration: `sentry.*.config.ts`, `instrumentation.ts`, `global-error.tsx`)
-- [ ] **Sentry i produktion**
-  - [ ] `NEXT_PUBLIC_SENTRY_DSN` och eventuella auth token satta i Vercel
-  - [ ] Verifiera att fel rapporteras (t.ex. via `/sentry-example-page`)
-  - [ ] Error alerts är uppsatta i Sentry
-  - [ ] Source maps laddas upp vid build (automatiskt med `withSentryConfig`)
+- [x] **Sentry i produktion**
+  - [x] `NEXT_PUBLIC_SENTRY_DSN` och eventuella auth token satta i Vercel
+  - [x] Verifiera att fel rapporteras (t.ex. via `/sentry-example-page`)
+  - [x] Error alerts är uppsatta i Sentry
+  - [x] Source maps laddas upp vid build (automatiskt med `withSentryConfig`)
 
 ### Analytics & Monitoring
 - [ ] **Analytics-integration** (om implementerad)
@@ -187,33 +191,33 @@ Detta är en checklista för åtgärder som ska göras **precis innan eller vid 
 ## 🚀 Deployment & Infrastruktur
 
 ### Vercel Deployment
-- [ ] **Produktionsdeployment är korrekt**
-  - [ ] Production domain är konfigurerad
-  - [ ] Custom domain är uppsatt (om tillämpligt)
-  - [ ] SSL-certifikat är aktivt
-  - [ ] Redirects fungerar korrekt
+- [x] **Produktionsdeployment är korrekt**
+  - [x] Production domain är konfigurerad
+  - [x] Custom domain är uppsatt (huvuddomän + Å-domän)
+  - [x] SSL-certifikat är aktivt (HTTPS)
+  - [x] Redirects fungerar korrekt
 
-- [ ] **Build & Deployment**
-  - [ ] Build går igenom utan fel
-  - [ ] Inga varningar i build-logg
-  - [ ] Environment variables är korrekt konfigurerade i Vercel
+- [x] **Build & Deployment**
+  - [x] Build går igenom utan fel
+  - [x] Inga varningar i build-logg
+  - [x] Environment variables är korrekt konfigurerade i Vercel
 
 ### Supabase Production
-- [ ] **Produktionsdatabas är korrekt konfigurerad**
-  - [ ] Alla migrations är körda
-  - [ ] RLS policies är aktiverade
-  - [ ] Storage buckets är konfigurerade
-  - [ ] Email-templates är uppsatta
+- [x] **Produktionsdatabas är korrekt konfigurerad**
+  - [x] Alla migrations är körda
+  - [x] RLS policies är aktiverade
+  - [x] Storage buckets är konfigurerade
+  - [x] Email-templates är uppsatta
 
 ---
 
 ## 📧 Email & Kommunikation
 
 ### Email-konfiguration
-- [ ] **Supabase Email är konfigurerat**
-  - [ ] OTP-verifiering fungerar (testa att skicka OTP)
-  - [ ] Email-templates är korrekta
-  - [ ] "Glömt lösenord"-funktion fungerar
+- [x] **Supabase Email är konfigurerat**
+  - [x] OTP-verifiering fungerar (testa att skicka OTP)
+  - [x] Email-templates är korrekta
+  - [x] "Glömt lösenord"-funktion fungerar
 
 - [ ] **Email-notifikationer** (om implementerad)
   - [ ] Email-notifikationer för nya meddelanden fungerar
@@ -257,18 +261,18 @@ Detta är en checklista för åtgärder som ska göras **precis innan eller vid 
 
 ## ✅ Final Verification
 
-- [ ] **Smoke test i produktion**
-  - [ ] Alla viktiga funktioner fungerar i produktion
-  - [ ] Inga kritiska buggar finns
-  - [ ] Prestanda är acceptabel
+- [x] **Smoke test i produktion**
+  - [x] Alla viktiga funktioner fungerar i produktion
+  - [x] Inga kritiska buggar finns
+  - [x] Prestanda är acceptabel
 
-- [ ] **Team review**
-  - [ ] Alla teammedlemmar har granskat checklistan
-  - [ ] Alla kritiska punkter är godkända
+- [x] **Team review**
+  - [x] Alla teammedlemmar har granskat checklistan
+  - [x] Alla kritiska punkter är godkända
 
-- [ ] **Go Live sign-off**
-  - [ ] Projektledare har godkänt lansering
-  - [ ] Alla kritiska blockerare är lösta
+- [x] **Go Live sign-off**
+  - [x] Projektledare har godkänt lansering
+  - [x] Alla kritiska blockerare är lösta
 
 ---
 
@@ -289,3 +293,4 @@ Detta är en checklista för åtgärder som ska göras **precis innan eller vid 
 
 **Senast uppdaterad:** 2026-02-12  
 **Nästa granskning:** Vid lansering
+**Post go-live:** Checklistan uppdaterad med slutförda punkter (miljöer, RLS, migrationer, deployment, Sentry, auth, cookie consent)

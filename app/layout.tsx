@@ -1,5 +1,5 @@
 import './globals.css'
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Knewave, DM_Sans } from 'next/font/google'
 import { createClient } from '@/lib/supabase/server'
 import Footer from './components/organisms/Footer'
@@ -37,6 +37,12 @@ export const metadata: Metadata = {
     siteName: 'Kolla här!',
   },
   // Ikon: app/icon.png (Next.js file convention)
+}
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover', // Aktiverar safe-area-inset på enheter med notch/home indicator
 }
 
 export default async function RootLayout({
