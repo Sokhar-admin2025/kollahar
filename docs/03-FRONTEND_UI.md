@@ -460,6 +460,7 @@ interface CreateListingFormProps {
 
 **Listvy-bar (ovanför listan):**
 - **Filter:** Alltid synlig, öppnar filterpanel (md+) eller mobil-drawer (sm). Endast en Filter-knapp.
+- **Mobil filter-drawer:** 85dvh/85vh, safe-area padding på knappsektionen; "Visa X resultat" + "Rensa filter" i sticky bottom (ingen dubbel Rensa filter).
 - **Sortera-menyn (viewport < xl):** Dropdown med Sortering (Senaste, Äldsta, Pris), Listvy (Av/På), Säljare (Alla/Privat/Företag). Position: `left-0` för att inte flyga ut till vänster.
 - **Vid xl+:** Full inline-layout med Listvy-toggle, Säljare-toggle (Alla/Privat/Företag), Sortera-dropdown, Filter.
 - **Säljare-toggle:** Filtrerar på `profiles.account_type`; URL-parametrar `?seller=private` | `?seller=company`.
