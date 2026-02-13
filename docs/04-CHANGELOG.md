@@ -10,7 +10,6 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 #### Prestandaoptimering: bildoptimering och bundle analyzer
 - **Bildoptimering för bättre leverans:**
-  - Hero-bild (`hero-logo.png`): Bytte från `<img>` till `next/image` med `priority` och `sizes="128px"` för snabbare LCP
   - Annonsdetalj huvudbild: Bytte från `<img>` till `next/image` med `priority` och responsiva `sizes`
   - Annonsdetalj thumbnails: Bytte från `<img>` till `next/image` med lazy loading (`sizes="80px"`)
   - ListingCard: Första 6 bilderna (ovanför fold) har nu `priority` för snabbare initial rendering
@@ -30,6 +29,9 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 #### Mobil filter: ingen dubbel "Rensa filter"
 - **Problem:** Två "Rensa filter"-knappar syntes i mobil drawern (en i filterFields, en i sticky bottom).
 - **Åtgärd:** "Rensa filter" i filterFields dold på mobil (`hidden md:block`); endast drawerns sticky bottom har den på mobil. Desktop behåller den i filterFields.
+
+#### Hero-sektion: logotyp borttagen
+- **HomePageClient**: Hero-bannerns logobild (`hero-logo.png`) borttagen; rubrik och sökfält kvar.
 
 #### Cookie-banner för Sentry (GDPR)
 - **CookieBanner**: GDPR-kompatibel consent med localStorage `cookie-consent` ('accepted' | 'declined').
