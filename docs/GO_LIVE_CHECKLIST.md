@@ -7,9 +7,11 @@ Detta är en checklista för åtgärder som ska göras **precis innan eller vid 
 - Verifiera att alla kritiska punkter är genomförda innan publik lansering
 - Uppdatera checklistan när nya krav identifieras
 
-**Post Go-Live status:** Domän/SSL, Vercel, RLS, Auth, bilduppladdning och Sentry är klara. Se `docs/05-ROADMAP.md` → "Post Go-Live (Slutfört)" och "Kommande Actions".
+**Post Go-Live status:** Domän/SSL, Vercel, RLS, Auth, bilduppladdning och Sentry är klara. Se `docs/05-ROADMAP.md` → "Post Go-Live (Slutfört)" och "Kommande Actions (Todo)".
 
-**Kvar:** Cross-browser/device-test, prestanda/Lighthouse, EAA-tillgänglighet, backup-strategi, dokumentation, post-launch övervakning.
+**Kommande Todo (prioriterat):** 1) Cookie-banner för Sentry (🔴), 2) Ta bort sentry-example-page (🟡), 3) Båt-attribut (🟢). Se `docs/05-ROADMAP.md`.
+
+**Kvar (checklistan):** Cross-browser/device-test, prestanda/Lighthouse, EAA-tillgänglighet, backup-strategi, dokumentation, post-launch övervakning.
 
 ---
 

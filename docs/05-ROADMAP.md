@@ -32,11 +32,25 @@ Detta dokument samlar alla planerade features, tekniska förbättringar och go-l
 
 ---
 
-## 📋 Kommande Actions (Todo)
+## 📋 Kommande Actions (Todo) – rangordnade efter prioritet
 
-1. **Båt-specifika attribut** – Implementera filter för längd i fot, båttyp m.m. (kategori Båtar)
-2. **Compliance** – Uppdatera Cookie-banner (`CookieConsent`) för Sentry Tracking/Replay: nämn Sentry explicit, ev. separate consent för analytics/tracking innan Session Replay laddas
-3. **Städning** – Ta bort testsidan `/sentry-example-page` när loggarna är verifierade
+### 🔴 Hög prioritet (Compliance & risk)
+
+| # | Åtgärd | Beskrivning | Relevans |
+|---|--------|-------------|----------|
+| 1 | **Cookie-banner för Sentry** | Uppdatera `CookieConsent` för Sentry Tracking/Replay. Nämn Sentry explicit; ev. separat samtycke för analytics/tracking innan Session Replay laddas. | GDPR-compliance – Sentry kör tracking utan explicit consent idag. |
+
+### 🟡 Medel prioritet (Underhåll & städning)
+
+| # | Åtgärd | Beskrivning | Relevans |
+|---|--------|-------------|----------|
+| 2 | **Ta bort Sentry-testsida** | Ta bort `/sentry-example-page` och `/api/sentry-example-api` när loggarna är verifierade. | Städning – testsidor ska inte finnas kvar i produktion. |
+
+### 🟢 Lägre prioritet (Produktfeatures)
+
+| # | Åtgärd | Beskrivning | Relevans |
+|---|--------|-------------|----------|
+| 3 | **Båt-specifika attribut** | Implementera filter för längd i fot, båttyp m.m. (kategori Båtar). | Produktförbättring – bättre sökupplevelse för båtannonser. |
 
 ---
 

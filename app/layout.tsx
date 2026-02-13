@@ -83,6 +83,8 @@ export default async function RootLayout({
         {/* Cookie Consent Banner */}
         <CookieConsent />
         
+        import CookieBanner from '@/components/CookieBanner';
+        
       </body>
     </html>
   )

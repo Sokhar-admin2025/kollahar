@@ -31,11 +31,11 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 - **Problem:** Två "Rensa filter"-knappar syntes i mobil drawern (en i filterFields, en i sticky bottom).
 - **Åtgärd:** "Rensa filter" i filterFields dold på mobil (`hidden md:block`); endast drawerns sticky bottom har den på mobil. Desktop behåller den i filterFields.
 
-### 📋 Planerat
+### 📋 Planerat (rangordnat)
 
-- **Båt-specifika attribut:** Filter för längd i fot, båttyp m.m. (kategori Båtar)
-- **Cookie-banner compliance:** Uppdatera för Sentry Tracking/Replay (explicit samtycke)
-- **Städning:** Ta bort `/sentry-example-page` när Sentry-loggar är verifierade
+1. **🔴 Cookie-banner för Sentry** – Uppdatera för Tracking/Replay (GDPR-compliance)
+2. **🟡 Städning** – Ta bort `/sentry-example-page` när loggarna verifierat
+3. **🟢 Båt-attribut** – Filter längd i fot, båttyp m.m.
 
 ---
 
