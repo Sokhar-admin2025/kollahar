@@ -3,7 +3,7 @@ import type { Metadata, Viewport } from 'next'
 import { Knewave, DM_Sans } from 'next/font/google'
 import { createClient } from '@/lib/supabase/server'
 import Footer from './components/organisms/Footer'
-import CookieConsent from './components/layout/CookieConsent'
+import CookieBanner from './components/CookieBanner'
 import ScrollbarGutter from './components/ScrollbarGutter'
 import LayoutWithHeader from './components/layout/LayoutWithHeader' 
 
@@ -80,11 +80,8 @@ export default async function RootLayout({
         {/* Footern hamnar alltid längst ner */}
         <Footer />
         
-        {/* Cookie Consent Banner */}
-        <CookieConsent />
-        
-        import CookieBanner from '@/components/CookieBanner';
-        
+        {/* Cookie Consent Banner – GDPR, styr Sentry Replay */}
+        <CookieBanner />
       </body>
     </html>
   )

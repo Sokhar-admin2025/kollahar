@@ -32,10 +32,12 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 - **Åtgärd:** "Rensa filter" i filterFields dold på mobil (`hidden md:block`); endast drawerns sticky bottom har den på mobil. Desktop behåller den i filterFields.
 
 #### Cookie-banner för Sentry (GDPR)
-- **CookieBanner**: Ny komponent som visar samtycke för Sentry Tracking/Replay innan dessa laddas.
-- **sentry.client.config.ts**: Sentry initieras endast när användaren accepterat cookies.
-- **Layout**: CookieBanner integrerad i global layout.
-- **Länk**: "Läs mer" till `/cookies`-sidan.
+- **CookieBanner**: GDPR-kompatibel consent med localStorage `cookie-consent` ('accepted' | 'declined').
+- **UI**: Flytande kort nedre höger på desktop, bottom-bar på mobil; icke-störande design.
+- **Sentry-integration**: `replaysSessionSampleRate` och `replaysOnErrorSampleRate` sätts till 0 om ej accepterat; vid accept 0.1 resp. 1.0. Vid accept anropas `Sentry.getReplay()?.start()` och `window.location.reload()`.
+- **Hydration**: `mounted` + `useEffect` för att undvika hydration-fel vid localStorage-check.
+- **Layout**: CookieBanner placerad före `</body>`; ersätter CookieConsent.
+- **Cookies-sida**: Professionell beskrivning av Sentry (felspårning, prestanda, Session Replay, anonymisering).
 
 ### 📋 Planerat (rangordnat)
 
