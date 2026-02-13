@@ -31,11 +31,16 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 - **Problem:** Två "Rensa filter"-knappar syntes i mobil drawern (en i filterFields, en i sticky bottom).
 - **Åtgärd:** "Rensa filter" i filterFields dold på mobil (`hidden md:block`); endast drawerns sticky bottom har den på mobil. Desktop behåller den i filterFields.
 
+#### Cookie-banner för Sentry (GDPR)
+- **CookieBanner**: Ny komponent som visar samtycke för Sentry Tracking/Replay innan dessa laddas.
+- **sentry.client.config.ts**: Sentry initieras endast när användaren accepterat cookies.
+- **Layout**: CookieBanner integrerad i global layout.
+- **Länk**: "Läs mer" till `/cookies`-sidan.
+
 ### 📋 Planerat (rangordnat)
 
-1. **🔴 Cookie-banner för Sentry** – Uppdatera för Tracking/Replay (GDPR-compliance)
-2. **🟡 Städning** – Ta bort `/sentry-example-page` när loggarna verifierat
-3. **🟢 Båt-attribut** – Filter längd i fot, båttyp m.m.
+1. **🟡 Städning** – Ta bort `/sentry-example-page` när loggarna verifierat
+2. **🟢 Båt-attribut** – Filter längd i fot, båttyp m.m.
 
 ---
 
