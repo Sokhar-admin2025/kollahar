@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Search, X, SlidersHorizontal, ChevronDown, ChevronUp, ArrowUpDown } from 'lucide-react'
+import Image from 'next/image'
 
 import { DASHBOARD_TEXTS } from './lib/content'
 import ListingCard from './components/ListingCard'
@@ -877,11 +878,16 @@ export default function HomePageClient({
       {/* HERO + mobil-sök/filter */}
       <div id="hero-section" className="relative bg-brand-beige py-6 md:py-10 px-4 text-center overflow-hidden">
         <div className="relative z-10 max-w-4xl mx-auto">
-          <img
-            src="/hero-logo.png"
-            alt="Kollahär! Logo"
-            className="hidden md:block h-24 md:h-32 mx-auto mb-3 object-contain"
-          />
+          <div className="hidden md:block relative w-24 h-24 md:w-32 md:h-32 mx-auto mb-3">
+            <Image
+              src="/hero-logo.png"
+              alt="Kollahär! Logo"
+              fill
+              className="object-contain"
+              priority
+              sizes="128px"
+            />
+          </div>
 
           <h2 className="hidden md:block text-2xl md:text-4xl font-display font-extrabold mb-2 tracking-tight text-brand-green drop-shadow-sm">
             {t.landing.hero.title}
@@ -1502,6 +1508,7 @@ export default function HomePageClient({
                       isFavorited={favoriteIds.includes(ad.id)}
                       layout={listViewEnabled ? 'list' : 'grid'}
                       listIndex={index}
+                      priority={index < 6}
                     />
                   ))}
                 </div>

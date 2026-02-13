@@ -11,19 +11,26 @@ export async function processImage(file: File): Promise<Blob> {
       const canvas = document.createElement('canvas');
       let width = img.width;
       let height = img.height;
-      const maxDim = 1920;
+      // Lite aggressivare nedskalning för bättre leverans (prestanda)
+      const maxDim = 1600;
 
       if (width > maxDim || height > maxDim) {
-         const ratio = width / height;
-         if (ratio > 1) { width = maxDim; height = maxDim / ratio; }
-         else { height = maxDim; width = maxDim * ratio; }
+        const ratio = width / height;
+        if (ratio > 1) {
+          width = maxDim;
+          height = maxDim / ratio;
+        } else {
+          height = maxDim;
+          width = maxDim * ratio;
+        }
       }
 
       canvas.width = width;
       canvas.height = height;
       const ctx = canvas.getContext('2d');
       ctx?.drawImage(img, 0, 0, width, height);
-      canvas.toBlob(blob => resolve(blob!), 'image/jpeg', 0.8);
+      // Sänk kvaliteten något (0.75) för mindre filstorlek utan märkbar kvalitetsförlust
+      canvas.toBlob(blob => resolve(blob!), 'image/jpeg', 0.75);
     };
     img.onerror = reject;
   });

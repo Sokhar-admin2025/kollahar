@@ -8,7 +8,17 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ### ✨ Tillagt
 
-_(Inga nya tillägg ännu)_
+#### Prestandaoptimering: bildoptimering och bundle analyzer
+- **Bildoptimering för bättre leverans:**
+  - Hero-bild (`hero-logo.png`): Bytte från `<img>` till `next/image` med `priority` och `sizes="128px"` för snabbare LCP
+  - Annonsdetalj huvudbild: Bytte från `<img>` till `next/image` med `priority` och responsiva `sizes`
+  - Annonsdetalj thumbnails: Bytte från `<img>` till `next/image` med lazy loading (`sizes="80px"`)
+  - ListingCard: Första 6 bilderna (ovanför fold) har nu `priority` för snabbare initial rendering
+- **Hårdare komprimering av uppladdade bilder** (`lib/image-utils.ts`):
+  - Maxdimension sänkt från 1920px → 1600px
+  - JPEG-kvalitet sänkt från 0.8 → 0.75 för mindre filstorlek utan märkbar kvalitetsförlust
+- **ListingCard bildkvalitet:** Tog bort explicit `quality={90}`, använder nu Next.js standard (~75) för bättre balans
+- **Bundle analyzer:** Lagt till `@next/bundle-analyzer` med script `npm run analyze` för att identifiera stora bundles och optimeringsmöjligheter
 
 ### 🔧 Ändrat / Buggfixar
 
@@ -16,6 +26,10 @@ _(Inga nya tillägg ännu)_
 - **Problem:** På mobil hamnade knappen bakom webbläsarens nedre fält; användare kunde inte scrolla ned eller nå den.
 - **Åtgärd:** Drawer höjd minskad till 85dvh/85vh; extra padding-bottom (`calc(env(safe-area-inset-bottom)+5rem)`) på knappsektionen så den alltid ligger ovanför browser bar.
 - **Viewport:** `viewportFit: 'cover'` i layout för att aktivera safe-area-inset på enheter med notch.
+
+#### Mobil filter: ingen dubbel "Rensa filter"
+- **Problem:** Två "Rensa filter"-knappar syntes i mobil drawern (en i filterFields, en i sticky bottom).
+- **Åtgärd:** "Rensa filter" i filterFields dold på mobil (`hidden md:block`); endast drawerns sticky bottom har den på mobil. Desktop behåller den i filterFields.
 
 ### 📋 Planerat
 

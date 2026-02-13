@@ -29,6 +29,8 @@ interface ListingCardProps {
   layout?: 'grid' | 'list'
   /** Index för alternerande radbakgrund i listvy */
   listIndex?: number
+  /** Om true läggs priority på bilden (för första bilderna ovanför fold) */
+  priority?: boolean
 }
 
 function formatRelativeDate(dateStr: string): string {
@@ -50,6 +52,7 @@ export default function ListingCard({
   onFavoriteRemoved,
   layout = 'grid',
   listIndex = 0,
+  priority = false,
 }: ListingCardProps) {
   const isBortskankes = Boolean(listing.bortskankes)
   const formattedPrice = isBortskankes ? 'Bortskänkes' : new Intl.NumberFormat('sv-SE', {
@@ -235,8 +238,9 @@ export default function ListingCard({
               alt={listing.title}
               fill
               className="object-cover group-hover:scale-105 transition-transform duration-300"
-              quality={90}
+              // Använd Next.js standardkvalitet (~75) för bättre balans mellan skärpa och vikt
               sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
+              priority={priority}
             />
           ) : (
             <div className="flex items-center justify-center h-full text-gray-400">
