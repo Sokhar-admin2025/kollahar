@@ -30,6 +30,16 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 - **Problem:** Två "Rensa filter"-knappar syntes i mobil drawern (en i filterFields, en i sticky bottom).
 - **Åtgärd:** "Rensa filter" i filterFields dold på mobil (`hidden md:block`); endast drawerns sticky bottom har den på mobil. Desktop behåller den i filterFields.
 
+#### Mobil filter UX: mindre scroll, kompakt bottom bar
+- **Bottom bar:** Rensa + "Visa X resultat" på en rad; Rensa som textlänk, primärknapp fyller bredden.
+- **Drawer:** Höjd 85dvh → 92dvh; padding 5rem → 1rem på bottom.
+- **Filterinnehåll:** Tätare spacing (space-y-6 → space-y-4), mindre labels (mb-2 → mb-1.5), inputs p-3 → p-2.5.
+- **"Visa X resultat":** Visar nu totalCount (totalt antal matchande) istället för antal på skärmen.
+
+#### Bilfilter UX
+- **Märke & modell:** Ny hjälptext "Sök med text, eller steg 1 märke och steg 2 modell. Tomt=alla."
+- **År-dropdown:** Senaste året först (descending: 2026, 2025, … 1990).
+
 #### Hero-sektion: logotyp borttagen
 - **HomePageClient**: Hero-bannerns logobild (`hero-logo.png`) borttagen; rubrik och sökfält kvar.
 

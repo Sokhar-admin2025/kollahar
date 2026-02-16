@@ -487,7 +487,7 @@ export default function HomePageClient({
   const allYears = useMemo(() => {
     const currentYear = new Date().getFullYear()
     const years: number[] = []
-    for (let y = 1990; y <= currentYear + 1; y++) {
+    for (let y = currentYear + 1; y >= 1990; y--) {
       years.push(y)
     }
     return years
@@ -563,12 +563,12 @@ export default function HomePageClient({
   }
 
   const filterFields = (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Kategori */}
       <div>
-        <label className="block text-sm font-medium text-brand-text mb-2 antialiased">Kategori</label>
+        <label className="block text-sm font-medium text-brand-text mb-1.5 antialiased">Kategori</label>
         <select
-          className="w-full p-3 border border-gray-300 rounded-xl bg-white text-brand-text antialiased"
+          className="w-full p-2.5 border border-gray-300 rounded-xl bg-white text-brand-text antialiased"
           value={selectedCategory}
           onChange={(e) => handleCategoryChange(e.target.value)}
         >
@@ -583,7 +583,7 @@ export default function HomePageClient({
         </select>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* Bortskänkes */}
         <label className="flex items-center gap-2 cursor-pointer">
           <input
@@ -597,7 +597,7 @@ export default function HomePageClient({
 
         {/* Plats */}
         <div>
-          <label className="block text-sm font-medium text-brand-text mb-2 antialiased">
+          <label className="block text-sm font-medium text-brand-text mb-1.5 antialiased">
             Plats
           </label>
           <LocationFilter
@@ -613,7 +613,7 @@ export default function HomePageClient({
 
         {/* Pris */}
         <div>
-          <label className="block text-sm font-medium text-brand-text mb-2 antialiased">
+          <label className="block text-sm font-medium text-brand-text mb-1.5 antialiased">
             Prisintervall (kr)
           </label>
           <div className="grid grid-cols-2 gap-3">
@@ -656,7 +656,7 @@ export default function HomePageClient({
                 className=""
               />
               <p className="mt-1 text-xs text-brand-text/60">
-                Sök efter bilmärke och modell (visuellt stöd, make/modell-filter kan aktiveras här senare).
+                Sök med text, eller steg 1 märke och steg 2 modell. Tomt=alla.
               </p>
             </div>
 
@@ -701,8 +701,8 @@ export default function HomePageClient({
               <label className="block text-sm font-medium text-brand-text mb-2 antialiased">
                 Max miltal
               </label>
-              <select
-                className="w-full p-3 border border-gray-300 rounded-xl bg-white text-brand-text antialiased"
+                <select
+                className="w-full p-2.5 border border-gray-300 rounded-xl bg-white text-brand-text antialiased"
                 value={maxMileage}
                 onChange={(e) => setMaxMileage(e.target.value)}
               >
@@ -720,7 +720,7 @@ export default function HomePageClient({
 
       {/* Avancerade bilfilter */}
       {isCarsCategory && (
-        <div className="border-t border-gray-200 pt-4">
+        <div className="border-t border-gray-200 pt-3">
           <button
             type="button"
             onClick={() => setShowMoreFilters(!showMoreFilters)}
@@ -735,10 +735,10 @@ export default function HomePageClient({
           </button>
 
           {showMoreFilters && (
-            <div className="mt-4 space-y-6">
+            <div className="mt-3 space-y-4">
               {/* Drivmedel */}
               <div>
-                <label className="block text-sm font-medium text-brand-text mb-2 antialiased">Drivmedel</label>
+                <label className="block text-sm font-medium text-brand-text mb-1.5 antialiased">Drivmedel</label>
                 <div className="flex flex-wrap gap-2">
                   {fuelOptions.map((opt) => (
                     <button
@@ -759,7 +759,7 @@ export default function HomePageClient({
 
               {/* Växellåda */}
               <div>
-                <label className="block text-sm font-medium text-brand-text mb-2 antialiased">Växellåda</label>
+                <label className="block text-sm font-medium text-brand-text mb-1.5 antialiased">Växellåda</label>
                 <div className="flex flex-wrap gap-2">
                   {gearboxOptions.map((opt) => (
                     <button
@@ -780,9 +780,9 @@ export default function HomePageClient({
 
               {/* Kaross */}
               <div>
-                <label className="block text-sm font-medium text-brand-text mb-2 antialiased">Kaross</label>
+                <label className="block text-sm font-medium text-brand-text mb-1.5 antialiased">Kaross</label>
                 <select
-                  className="w-full p-3 border border-gray-300 rounded-xl bg-white text-brand-text antialiased"
+                  className="w-full p-2.5 border border-gray-300 rounded-xl bg-white text-brand-text antialiased"
                   value={bodyTypeFilter}
                   onChange={(e) => setBodyTypeFilter(e.target.value)}
                 >
@@ -795,7 +795,7 @@ export default function HomePageClient({
 
               {/* Drivhjul */}
               <div>
-                <label className="block text-sm font-medium text-brand-text mb-2 antialiased">Drivhjul</label>
+                <label className="block text-sm font-medium text-brand-text mb-1.5 antialiased">Drivhjul</label>
                 <div className="flex flex-wrap gap-2">
                   {driveWheelOptions.map((opt) => (
                     <button
@@ -816,9 +816,9 @@ export default function HomePageClient({
 
               {/* Färg */}
               <div>
-                <label className="block text-sm font-medium text-brand-text mb-2 antialiased">Färg</label>
+                <label className="block text-sm font-medium text-brand-text mb-1.5 antialiased">Färg</label>
                 <select
-                  className="w-full p-3 border border-gray-300 rounded-xl bg-white text-brand-text antialiased"
+                  className="w-full p-2.5 border border-gray-300 rounded-xl bg-white text-brand-text antialiased"
                   value={colorFilter}
                   onChange={(e) => setColorFilter(e.target.value)}
                 >
@@ -832,7 +832,7 @@ export default function HomePageClient({
 
               {/* Effekt */}
               <div>
-                <label className="block text-sm font-medium text-brand-text mb-2 antialiased">
+                <label className="block text-sm font-medium text-brand-text mb-1.5 antialiased">
                   Effekt (hk)
                 </label>
                 <div className="grid grid-cols-2 gap-3">
@@ -840,7 +840,7 @@ export default function HomePageClient({
                     type="number"
                     min={0}
                     placeholder="Min hk"
-                    className="w-full p-3 border border-gray-300 rounded-xl bg-white text-brand-text antialiased"
+                    className="w-full p-2.5 border border-gray-300 rounded-xl bg-white text-brand-text antialiased"
                     value={horsepowerMin}
                     onChange={(e) => setHorsepowerMin(e.target.value)}
                   />
@@ -848,7 +848,7 @@ export default function HomePageClient({
                     type="number"
                     min={0}
                     placeholder="Max hk"
-                    className="w-full p-3 border border-gray-300 rounded-xl bg-white text-brand-text antialiased"
+                    className="w-full p-2.5 border border-gray-300 rounded-xl bg-white text-brand-text antialiased"
                     value={horsepowerMax}
                     onChange={(e) => setHorsepowerMax(e.target.value)}
                   />
@@ -929,9 +929,9 @@ export default function HomePageClient({
             className="absolute inset-0 bg-black/40"
             onClick={() => setIsFilterOpen(false)}
           />
-          <div className="absolute right-0 top-0 h-[85dvh] max-h-[85vh] w-[90%] max-w-[95%] bg-white shadow-xl flex flex-col overflow-hidden">
-            <div className="shrink-0 p-4 border-b border-gray-200 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-brand-text">Filter</h3>
+          <div className="absolute right-0 top-0 h-[92dvh] max-h-[92vh] w-[90%] max-w-[95%] bg-white shadow-xl flex flex-col overflow-hidden">
+            <div className="shrink-0 px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+              <h3 className="text-base font-semibold text-brand-text">Filter</h3>
               <button
                 type="button"
                 onClick={() => setIsFilterOpen(false)}
@@ -941,26 +941,26 @@ export default function HomePageClient({
                 <X className="w-5 h-5" aria-hidden="true" />
               </button>
             </div>
-            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4 pb-4 overscroll-contain">
+            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4 pb-2 overscroll-contain">
               {filterFields}
             </div>
-            <div className="shrink-0 border-t border-gray-200 p-4 bg-white flex flex-col gap-2 pb-[calc(env(safe-area-inset-bottom,0px)+5rem)]">
+            <div className="shrink-0 border-t border-gray-200 px-4 py-3 bg-white flex items-center gap-3 pb-[calc(env(safe-area-inset-bottom,0px)+1rem)]">
               <button
                 type="button"
                 onClick={() => {
                   resetFilters()
                   setSearchSubmitted(false)
                 }}
-                className="text-sm text-brand-green hover:underline py-2 min-h-[44px] flex items-center justify-center touch-manipulation"
+                className="text-sm text-brand-green hover:underline py-2 touch-manipulation shrink-0"
               >
-                Rensa filter
+                Rensa
               </button>
               <button
                 type="button"
                 onClick={() => setIsFilterOpen(false)}
-                className="w-full min-h-[48px] py-3 rounded-xl bg-brand-green text-white font-semibold shadow-md touch-manipulation"
+                className="flex-1 min-h-[44px] py-2.5 rounded-xl bg-brand-green text-white font-semibold shadow-md touch-manipulation"
               >
-                Visa {filteredAds.length} resultat
+                Visa {totalCount ?? filteredAds.length} resultat
               </button>
             </div>
           </div>
