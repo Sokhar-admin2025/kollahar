@@ -52,6 +52,7 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 - **HomePageClient**: Hero-bannerns logobild (`hero-logo.png`) borttagen; rubrik och sökfält kvar.
 
 #### Annonsdetalj: Share-knapp, layout, pris
+- **Build-fix:** `navigator.share` → `'share' in navigator` för Web Share API-check (TypeScript-kompatibel).
 - **Share-knapp:** Dropdown med "Kopiera länk" (alltid) och "Dela via..." (Web Share API när tillgänglig); toast "Länk kopierad!" vid kopiering.
 - **Layout:** Plats och datum i samma rad som Share/Favorit-knappar (vänster/höger); rubrik direkt under.
 - **Pris:** Formaterat med formatCurrency (mellanslag per tusental); högerställt.

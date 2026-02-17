@@ -421,7 +421,7 @@ function ListingDetails() {
                           <Link2 className="w-4 h-4 text-brand-green flex-shrink-0" />
                           Kopiera länk
                         </button>
-                        {typeof navigator !== 'undefined' && navigator.share && (
+                        {typeof navigator !== 'undefined' && 'share' in navigator && (
                           <button
                             type="button"
                             onClick={handleShareNative}
