@@ -30,6 +30,7 @@ Detta dokument samlar alla planerade features, tekniska förbättringar och go-l
 - ✅ Performance Tracing: Övervakar laddtider och flaskhalsar
 - ✅ Error Tunneling: Går runt ad-blockers för att inte missa felrapporter
 - ✅ Cookie-banner för Sentry: Samtycke krävs innan Tracking/Replay laddas (GDPR)
+- ✅ Bilfilter märke/modell: CarMakeModelCombobox kopplad; filtrering på attributes.make/model
 
 ---
 

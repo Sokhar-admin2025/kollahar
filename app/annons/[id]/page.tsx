@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useEffect, useState } from 'react'
+import { Suspense, useEffect, useState, useRef } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -12,8 +12,9 @@ import FavoriteButton from '@/app/components/FavoriteButton'
 import { createClient } from '@/lib/supabase/client'
 import type { Listing } from '@/app/types'
 import { getListingById } from '@/lib/features/listings/listing-service'
-import { Loader2, ChevronLeft, ChevronRight, Calendar, Gauge, Fuel, Settings2, Car, Palette, Zap, BadgeCheck } from 'lucide-react'
+import { Loader2, ChevronLeft, ChevronRight, Calendar, Gauge, Fuel, Settings2, Car, Palette, Zap, BadgeCheck, Share2, Link2 } from 'lucide-react'
 import { getCategoryLabel, CATEGORY_GROUPS } from '@/lib/categories'
+import { formatCurrency } from '@/lib/features/listings/utils/price-utils'
 
 const supabase = createClient()
 
@@ -99,6 +100,9 @@ function ListingDetails() {
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null)
   const [contacting, setContacting] = useState(false)
   const [fetchError, setFetchError] = useState<string | null>(null)
+  const [showCopiedToast, setShowCopiedToast] = useState(false)
+  const [shareMenuOpen, setShareMenuOpen] = useState(false)
+  const shareMenuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -195,6 +199,59 @@ function ListingDetails() {
       setContacting(false)
     }
   }
+
+  const getShareUrl = () => (typeof window !== 'undefined' ? window.location.href : '')
+  const getShareText = () => `${ad?.title ?? 'Annons'} – Kolla här!`
+
+  const handleCopyLink = () => {
+    copyToClipboard(getShareUrl())
+    setShareMenuOpen(false)
+  }
+
+  const handleShareNative = async () => {
+    const url = getShareUrl()
+    const text = getShareText()
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({ title: text, url })
+        setShareMenuOpen(false)
+      } catch (err) {
+        if ((err as Error).name !== 'AbortError') {
+          copyToClipboard(url)
+          setShareMenuOpen(false)
+        }
+      }
+    } else {
+      copyToClipboard(url)
+      setShareMenuOpen(false)
+    }
+  }
+
+  const copyToClipboard = (text: string) => {
+    if (typeof navigator?.clipboard?.writeText === 'function') {
+      navigator.clipboard.writeText(text).then(() => {
+        setShowCopiedToast(true)
+      })
+    }
+  }
+
+  useEffect(() => {
+    if (!showCopiedToast) return
+    const t = setTimeout(() => setShowCopiedToast(false), 2000)
+    return () => clearTimeout(t)
+  }, [showCopiedToast])
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (shareMenuRef.current && !shareMenuRef.current.contains(e.target as Node)) {
+        setShareMenuOpen(false)
+      }
+    }
+    if (shareMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [shareMenuOpen])
 
   if (loading) {
     return (
@@ -327,15 +384,8 @@ function ListingDetails() {
           {/* --- INFO (HÖGER) --- */}
           <div className="flex flex-col h-full">
             <div className="bg-white p-8 rounded-xl shadow-md border border-gray-200 flex-1 flex flex-col relative">
-              {!(currentUser?.id && ad?.user_id === currentUser.id) && (
-                <div className="absolute top-4 right-4">
-                  <FavoriteButton listingId={ad.id} />
-                </div>
-              )}
-              
-              <div className="mb-6">
-                <h1 className="text-3xl font-bold text-brand-green mb-2">{ad.title}</h1>
-                <div className="flex items-center text-brand-text/70 text-sm flex-wrap gap-x-2">
+              <div className="flex items-center justify-between gap-4 mb-2">
+                <div className="flex items-center text-brand-text/70 text-sm flex-wrap gap-x-2 min-w-0">
                   {(() => {
                     const loc = ad.location.includes(',') ? ad.location.split(',')[0].trim() : ad.location
                     const isCompany = sellerProfile?.account_type === 'company'
@@ -349,10 +399,50 @@ function ListingDetails() {
                   })()}
                   <span>{new Date(ad.created_at).toLocaleDateString()}</span>
                 </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <div className="relative" ref={shareMenuRef}>
+                    <button
+                      type="button"
+                      onClick={() => setShareMenuOpen((prev) => !prev)}
+                      className="flex items-center justify-center gap-1 w-10 h-10 rounded-full border border-gray-200 hover:bg-brand-beige hover:border-brand-green/30 text-brand-text transition-colors"
+                      aria-label="Dela annons"
+                      aria-expanded={shareMenuOpen}
+                      aria-haspopup="true"
+                    >
+                      <Share2 className="w-5 h-5" />
+                    </button>
+                    {shareMenuOpen && (
+                      <div className="absolute right-0 top-full mt-2 py-1 bg-white rounded-xl shadow-lg border border-gray-200 min-w-[180px] z-50">
+                        <button
+                          type="button"
+                          onClick={handleCopyLink}
+                          className="w-full flex items-center gap-2 px-4 py-2.5 text-left text-sm text-brand-text hover:bg-brand-beige transition-colors"
+                        >
+                          <Link2 className="w-4 h-4 text-brand-green flex-shrink-0" />
+                          Kopiera länk
+                        </button>
+                        {typeof navigator !== 'undefined' && navigator.share && (
+                          <button
+                            type="button"
+                            onClick={handleShareNative}
+                            className="w-full flex items-center gap-2 px-4 py-2.5 text-left text-sm text-brand-text hover:bg-brand-beige transition-colors"
+                          >
+                            <Share2 className="w-4 h-4 text-brand-green flex-shrink-0" />
+                            Dela via...
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  {!(currentUser?.id && ad?.user_id === currentUser.id) && (
+                    <FavoriteButton listingId={ad.id} />
+                  )}
+                </div>
               </div>
+              <h1 className="text-3xl font-bold text-brand-green mb-6">{ad.title}</h1>
 
-              <div className="text-4xl font-bold text-brand-green mb-8">
-                {ad.bortskankes ? 'Bortskänkes' : `${ad.price} kr`}
+              <div className="text-4xl font-bold text-brand-green mb-8 text-right">
+                {ad.bortskankes ? 'Bortskänkes' : formatCurrency(ad.price)}
               </div>
 
               <div className="prose prose-sm text-brand-text mb-8 flex-grow">
@@ -584,6 +674,16 @@ function ListingDetails() {
           </div>
         </div>
       </div>
+
+      {showCopiedToast && (
+        <div
+          className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-brand-green text-white text-sm px-4 py-2 rounded-full shadow-lg"
+          role="status"
+          aria-live="polite"
+        >
+          Länk kopierad!
+        </div>
+      )}
     </div>
   )
 }
