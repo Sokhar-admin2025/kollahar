@@ -13,12 +13,14 @@ interface FavoriteButtonProps {
   /** Om satt används detta (ingen egen fetch = undviker N+1). Annars hämtas status en gång med useEffect (t.ex. annonsdetaljsida). */
   isFavorited?: boolean
   onFavoriteRemoved?: (listingId: string) => void
+  onFavoriteAdded?: (listingId: string) => void
 }
 
 export default function FavoriteButton({
   listingId,
   isFavorited: isFavoritedProp,
   onFavoriteRemoved,
+  onFavoriteAdded,
 }: FavoriteButtonProps) {
   const { showFavoritLoginToast } = useFavoritLoginToast()
   const [fetchedFavorited, setFetchedFavorited] = useState<boolean | null>(null)
@@ -66,7 +68,9 @@ export default function FavoriteButton({
       return
     }
 
-    if (!result.added && onFavoriteRemoved) {
+    if (result.added && onFavoriteAdded) {
+      onFavoriteAdded(listingId)
+    } else if (!result.added && onFavoriteRemoved) {
       onFavoriteRemoved(listingId)
     }
   }
@@ -74,7 +78,7 @@ export default function FavoriteButton({
   return (
     <button
       onClick={handleToggle}
-      className="p-2 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white shadow-sm transition-all duration-200 group/btn cursor-pointer hover:scale-110 active:scale-95 border border-transparent hover:border-gray-100"
+      className="p-2 rounded-full bg-white/95 backdrop-blur-sm hover:bg-white shadow-md ring-1 ring-black/5 transition-all duration-200 group/btn cursor-pointer hover:scale-110 active:scale-95 border border-gray-100/80"
       aria-label="Spara som favorit"
     >
       <Heart

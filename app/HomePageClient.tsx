@@ -51,6 +51,7 @@ export default function HomePageClient({
 
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [currentUserName, setCurrentUserName] = useState<string | null>(null)
+  const [localFavoriteIds, setLocalFavoriteIds] = useState<Set<string>>(() => new Set(favoriteIds))
   const initialLoggedOut = searchParams.get('logged_out')
   const initialLoggedIn = searchParams.get('logged_in')
   const [showLoggedOutToast, setShowLoggedOutToast] = useState(() => Boolean(initialLoggedOut))
@@ -184,6 +185,18 @@ export default function HomePageClient({
       subscription.unsubscribe()
     }
   }, [])
+
+  useEffect(() => {
+    setLocalFavoriteIds(new Set(favoriteIds))
+  }, [favoriteIds])
+
+  const handleFavoriteRemoved = (listingId: string) => {
+    setLocalFavoriteIds((prev) => {
+      const next = new Set(prev)
+      next.delete(listingId)
+      return next
+    })
+  }
 
   // Servern tillämpar sök, kategori, pris, år, mil, bilfilter och sortering.
   // Client-side filtrerar vi bara på flera platser (servern får bara en plats-term).
@@ -1539,7 +1552,8 @@ export default function HomePageClient({
                       key={ad.id}
                       listing={ad}
                       currentUserId={currentUserId}
-                      isFavorited={favoriteIds.includes(ad.id)}
+                      isFavorited={localFavoriteIds.has(ad.id)}
+                      onFavoriteRemoved={handleFavoriteRemoved}
                       layout={listViewEnabled ? 'list' : 'grid'}
                       listIndex={index}
                       priority={index < 6}

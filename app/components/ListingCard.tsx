@@ -25,6 +25,7 @@ interface ListingCardProps {
   /** Om true visas hjärtat som fyllt (ingen N+1: skicka från servern t.ex. favoriteIds.includes(listing.id)) */
   isFavorited?: boolean
   onFavoriteRemoved?: (listingId: string) => void
+  onFavoriteAdded?: (listingId: string) => void
   /** 'grid' = kortvy (default), 'list' = radvy med bild till vänster */
   layout?: 'grid' | 'list'
   /** Index för alternerande radbakgrund i listvy */
@@ -219,7 +220,7 @@ export default function ListingCard({
       
       {/* --- FAVORITKNAPPEN (Ligger helt utanför länken) --- */}
       {!isOwner && (
-        <div className="absolute top-3 right-3 z-10">
+        <div className="absolute top-2 right-2 md:top-3 md:right-3 z-20 pointer-events-auto">
           <FavoriteButton
             listingId={listing.id}
             isFavorited={isFavoritedProp}

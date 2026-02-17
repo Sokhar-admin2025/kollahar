@@ -21,6 +21,11 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ### 🔧 Ändrat / Buggfixar
 
+#### Favoritknappen på startsidan – synlighet och UX
+- **ListingCard:** Favoritknappen högre z-index (z-20), `pointer-events-auto`, justerad placering på mobil (top-2 right-2).
+- **FavoriteButton:** Tydligare synlighet – bg-white/95, shadow-md, ring-1 ring-black/5 för bättre kontrast mot ljusa bilder.
+- **HomePageClient:** Lokalt state `localFavoriteIds` med `onFavoriteRemoved` – hjärtat uppdateras direkt vid borttagning av favorit.
+
 #### Mobil filter-drawer: "Visa resultat"-knappen alltid nårbar
 - **Problem:** På mobil hamnade knappen bakom webbläsarens nedre fält; användare kunde inte scrolla ned eller nå den.
 - **Åtgärd:** Drawer höjd minskad till 85dvh/85vh; extra padding-bottom (`calc(env(safe-area-inset-bottom)+5rem)`) på knappsektionen så den alltid ligger ovanför browser bar.
