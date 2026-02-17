@@ -20,6 +20,8 @@ export interface ListingSearchFilters {
   maxYear?: number
   maxMileage?: number
   /** Bilfilter (används när category = cars) */
+  make?: string
+  model?: string
   fuel?: string
   gearbox?: string
   bodyType?: string
@@ -109,6 +111,12 @@ export async function getListings(
     }
 
     // Bilfilter (attributes JSONB)
+    if (filters.make?.trim()) {
+      query = query.eq("attributes->>make", filters.make.trim())
+    }
+    if (filters.model?.trim()) {
+      query = query.eq("attributes->>model", filters.model.trim())
+    }
     if (filters.fuel?.trim()) {
       query = query.eq("attributes->>fuel", filters.fuel.trim())
     }
@@ -125,10 +133,10 @@ export async function getListings(
       query = query.ilike("attributes->>color", `%${filters.color.trim()}%`)
     }
     if (typeof filters.horsepowerMin === 'number') {
-      query = query.gte("attributes->>horsepower", String(filters.horsepowerMin))
+      query = query.gte("attributes->>horse_power", String(filters.horsepowerMin))
     }
     if (typeof filters.horsepowerMax === 'number') {
-      query = query.lte("attributes->>horsepower", String(filters.horsepowerMax))
+      query = query.lte("attributes->>horse_power", String(filters.horsepowerMax))
     }
 
     // Plats (enklare textmatch mot location-fältet)

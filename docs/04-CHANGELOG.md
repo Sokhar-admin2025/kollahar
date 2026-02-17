@@ -40,6 +40,14 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 - **Märke & modell:** Ny hjälptext "Sök med text, eller steg 1 märke och steg 2 modell. Tomt=alla."
 - **År-dropdown:** Senaste året först (descending: 2026, 2025, … 1990).
 
+#### Märke & modell filter – nu fungerande
+- **Problem:** CarMakeModelCombobox hade `onChange={() => {}}` – val sparades inte och filtrerade inte.
+- **Åtgärd:** State `makeFilter`/`modelFilter`, kopplad till combobox; skickas till API; filtrering i listing-service på `attributes->>make` och `attributes->>model`; URL-sync (`?make=&model=`); filter-chips.
+
+#### Effekt (hk) filter – attributnamn
+- **Problem:** listing-service filtrerade på `attributes->>horsepower` men CreateListingForm sparar `horse_power`.
+- **Åtgärd:** Ändrat till `attributes->>horse_power` så effektfiltret matchar.
+
 #### Hero-sektion: logotyp borttagen
 - **HomePageClient**: Hero-bannerns logobild (`hero-logo.png`) borttagen; rubrik och sökfält kvar.
 

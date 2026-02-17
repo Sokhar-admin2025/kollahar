@@ -16,6 +16,8 @@ type HomePageSearchParams = {
   minYear?: string | string[]
   maxYear?: string | string[]
   maxMileage?: string | string[]
+  make?: string | string[]
+  model?: string | string[]
   sort?: string | string[]
 }
 
@@ -32,6 +34,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const minYearParam = searchParams?.minYear
   const maxYearParam = searchParams?.maxYear
   const maxMileageParam = searchParams?.maxMileage
+  const makeParam = searchParams?.make
+  const modelParam = searchParams?.model
   const sortParam = searchParams?.sort
   const bortskankesParam = searchParams?.bortskankes
   const sellerParam = searchParams?.seller
@@ -63,6 +67,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     minYear: toNumberOrUndefined(minYearParam),
     maxYear: toNumberOrUndefined(maxYearParam),
     maxMileage: toNumberOrUndefined(maxMileageParam),
+    make: toStringOrUndefined(makeParam) || undefined,
+    model: toStringOrUndefined(modelParam) || undefined,
     offset: 0,
     limit: PAGE_SIZE,
     sort: (toStringOrUndefined(sortParam) as ListingSearchFilters['sort']) ?? 'newest',

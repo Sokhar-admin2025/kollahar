@@ -99,6 +99,8 @@ export default function HomePageClient({
   const [yearFrom, setYearFrom] = useState(() => searchParams.get('minYear') || '')
   const [yearTo, setYearTo] = useState(() => searchParams.get('maxYear') || '')
   const [maxMileage, setMaxMileage] = useState(() => searchParams.get('maxMileage') || '')
+  const [makeFilter, setMakeFilter] = useState(() => searchParams.get('make') || '')
+  const [modelFilter, setModelFilter] = useState(() => searchParams.get('model') || '')
   const [fuelFilter, setFuelFilter] = useState('')
   const [gearboxFilter, setGearboxFilter] = useState('')
   const [bodyTypeFilter, setBodyTypeFilter] = useState('')
@@ -238,6 +240,12 @@ export default function HomePageClient({
     if (maxMileage) {
       params.set('maxMileage', maxMileage)
     }
+    if (makeFilter) {
+      params.set('make', makeFilter)
+    }
+    if (modelFilter) {
+      params.set('model', modelFilter)
+    }
     if (sort && sort !== 'newest') {
       params.set('sort', sort)
     }
@@ -252,7 +260,7 @@ export default function HomePageClient({
 
     const newUrl = params.toString() ? `/?${params.toString()}` : '/'
     window.history.replaceState({}, '', newUrl)
-  }, [searchQuery, selectedCategory, priceMin, priceMax, bortskankesOnly, sellerType, yearFrom, yearTo, maxMileage, sort, locationFilter])
+  }, [searchQuery, selectedCategory, priceMin, priceMax, bortskankesOnly, sellerType, yearFrom, yearTo, maxMileage, makeFilter, modelFilter, sort, locationFilter])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -289,6 +297,8 @@ export default function HomePageClient({
     setYearFrom('')
     setYearTo('')
     setMaxMileage('')
+    setMakeFilter('')
+    setModelFilter('')
     setFuelFilter('')
     setGearboxFilter('')
     setBodyTypeFilter('')
@@ -365,6 +375,8 @@ export default function HomePageClient({
       minYear: minYear !== undefined && !Number.isNaN(minYear) ? minYear : undefined,
       maxYear: maxYear !== undefined && !Number.isNaN(maxYear) ? maxYear : undefined,
       maxMileage: maxMileageNum !== undefined && !Number.isNaN(maxMileageNum) ? maxMileageNum : undefined,
+      make: makeFilter?.trim() || undefined,
+      model: modelFilter?.trim() || undefined,
       fuel: fuelFilter?.trim() || undefined,
       gearbox: gearboxFilter?.trim() || undefined,
       bodyType: bodyTypeFilter?.trim() || undefined,
@@ -434,6 +446,8 @@ export default function HomePageClient({
     yearFrom,
     yearTo,
     maxMileage,
+    makeFilter,
+    modelFilter,
     fuelFilter,
     gearboxFilter,
     bodyTypeFilter,
@@ -535,6 +549,13 @@ export default function HomePageClient({
         break
       case 'maxMileage':
         setMaxMileage('')
+        break
+      case 'make':
+        setMakeFilter('')
+        setModelFilter('')
+        break
+      case 'model':
+        setModelFilter('')
         break
       case 'fuel':
         setFuelFilter('')
@@ -651,8 +672,11 @@ export default function HomePageClient({
                 Märke & modell
               </label>
               <CarMakeModelCombobox
-                value={{ make: '', model: '' }}
-                onChange={() => {}}
+                value={{ make: makeFilter, model: modelFilter }}
+                onChange={(v) => {
+                  setMakeFilter(v.make)
+                  setModelFilter(v.model)
+                }}
                 className=""
               />
               <p className="mt-1 text-xs text-brand-text/60">
@@ -1343,6 +1367,26 @@ export default function HomePageClient({
                     <X className="w-3 h-3" />
                   </button>
                 )}
+                {makeFilter && (
+                  <button
+                    type="button"
+                    onClick={() => removeFilterChip('make', '')}
+                    className="inline-flex items-center gap-1 px-3 py-1 text-xs rounded-full bg-brand-green/5 text-brand-text"
+                  >
+                    <span>{makeFilter}{modelFilter ? ` ${modelFilter}` : ''}</span>
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
+                {modelFilter && !makeFilter && (
+                  <button
+                    type="button"
+                    onClick={() => removeFilterChip('model', '')}
+                    className="inline-flex items-center gap-1 px-3 py-1 text-xs rounded-full bg-brand-green/5 text-brand-text"
+                  >
+                    <span>{modelFilter}</span>
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
                 {maxMileage && (
                   <button
                     type="button"
@@ -1431,6 +1475,8 @@ export default function HomePageClient({
               locationFilter.partialMunicipalities.length > 0 ||
               bortskankesOnly ||
               sellerType !== 'all' ||
+              makeFilter ||
+              modelFilter ||
               priceMin ||
               priceMax ||
               (isCarsCategory &&
