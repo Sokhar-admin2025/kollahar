@@ -9,6 +9,7 @@ import {
   createConversation as createConversationService,
   hideConversation as hideConversationService,
 } from '@/lib/features/messages/message-service'
+import { triggerLeadNotification } from '@/app/actions/lead-notification-action'
 
 export type SendMessageResult = { success: true } | { success: false; error: string }
 
@@ -26,7 +27,44 @@ export async function sendMessageAction(
   }
 
   try {
+    const messagesBefore = await getMessages(conversationId)
+    const isFirstMessage = messagesBefore.length === 0
+
     await sendMessageService(conversationId, user.id, content.trim())
+
+    if (isFirstMessage) {
+      const { data: conv } = await supabase
+        .from('conversations')
+        .select('listing_id, seller_id')
+        .eq('id', conversationId)
+        .single()
+
+      if (conv) {
+        const { data: sellerProfile } = await supabase
+          .from('profiles')
+          .select('account_type')
+          .eq('id', (conv as { seller_id: string }).seller_id)
+          .maybeSingle()
+
+        if ((sellerProfile as { account_type?: string } | null)?.account_type === 'company') {
+          const { data: buyerProfile } = await supabase
+            .from('profiles')
+            .select('full_name')
+            .eq('id', user.id)
+            .maybeSingle()
+          const buyerName = (buyerProfile as { full_name?: string } | null)?.full_name?.trim() || 'Kund'
+
+          await triggerLeadNotification({
+            type: 'first_message',
+            conversationId,
+            listingId: (conv as { listing_id: string }).listing_id,
+            buyerName,
+            messageContent: content.trim(),
+          })
+        }
+      }
+    }
+
     revalidatePath('/dashboard/messages')
     return { success: true }
   } catch (err) {

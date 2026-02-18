@@ -14,16 +14,18 @@ export default async function DashboardPage() {
     redirect('/login')
   }
 
-  const [listingsResult, favoritesResult, unreadSet] = await Promise.all([
+  const [listingsResult, favoritesResult, unreadSet, profileRes] = await Promise.all([
     getUserListings(user.id),
     getFavoriteListings(user.id),
     getUnreadConversationIds(user.id),
+    supabase.from('profiles').select('account_type').eq('id', user.id).single(),
   ])
 
   const listings = listingsResult.success && listingsResult.data ? listingsResult.data : []
   const favoriteListings =
     favoritesResult.success && favoritesResult.data ? favoritesResult.data : []
   const hasUnreadMessages = unreadSet.size > 0
+  const accountType = (profileRes.data as { account_type?: string } | null)?.account_type ?? 'private'
 
   return (
     <DashboardClient
@@ -31,6 +33,7 @@ export default async function DashboardPage() {
       favoriteListings={favoriteListings}
       user={{ id: user.id, email: user.email ?? undefined }}
       hasUnreadMessages={hasUnreadMessages}
+      accountType={accountType}
     />
   )
 }

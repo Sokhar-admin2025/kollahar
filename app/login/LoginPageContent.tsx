@@ -59,7 +59,8 @@ export default function LoginPageContent() {
   const initialTab = (searchParams.get('tab') as AuthName) || 'login'
   const [activeTab, setActiveTab] = useState<AuthName>(initialTab)
 
-  const [email, setEmail] = useState('')
+  const initialEmail = searchParams.get('email') ?? ''
+  const [email, setEmail] = useState(initialEmail)
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)

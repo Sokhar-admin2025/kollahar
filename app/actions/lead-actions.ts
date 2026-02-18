@@ -2,11 +2,8 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
-import { supabaseAdmin } from '@/lib/supabase/admin'
-import { getListingById } from '@/lib/features/listings/listing-service'
 import { createLead } from '@/lib/features/leads/lead-service'
-import { sendLeadEmailToDealer } from '@/lib/email/resend'
-import { formatCurrency } from '@/lib/features/listings/utils/price-utils'
+import { triggerLeadNotification } from '@/app/actions/lead-notification-action'
 import { logAnalyticsEvent } from '@/lib/features/analytics/analytics-service'
 
 export type SubmitLeadCardResult = { success: true } | { success: false; error: string }
@@ -60,49 +57,20 @@ export async function submitLeadCardAction(
 
     logAnalyticsEvent(listingId, 'lead_start')
 
-    const listingResult = await getListingById(listingId)
-    if (!listingResult.success || !listingResult.data) {
-      console.error('getListingById failed for lead email:', listingResult.error)
-    }
+    const buyerProfile = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', user.id)
+      .maybeSingle()
+    const buyerNameForEmail = (buyerProfile.data as { full_name?: string } | null)?.full_name?.trim() || buyerName.trim()
 
-    const attrs = listingResult.data?.attributes ?? {}
-    const year = typeof attrs.year === 'number' ? String(attrs.year) : (attrs.year as string) ?? null
-    const model = typeof attrs.model === 'string' ? attrs.model : null
-    const price = listingResult.data?.bortskankes
-      ? 'Bortskänkes'
-      : listingResult.data
-        ? formatCurrency(listingResult.data.price)
-        : '–'
-
-    const baseUrl =
-      process.env.NEXT_PUBLIC_APP_URL ||
-      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
-      'https://kollahar.se'
-    const listingUrl = `${baseUrl}/annons/${listingId}`
-
-    let dealerEmail: string | null = null
-    if (supabaseAdmin) {
-      const { data: dealerUser } = await supabaseAdmin.auth.admin.getUserById(sellerId)
-      dealerEmail = dealerUser?.user?.email ?? null
-    }
-
-    if (dealerEmail) {
-      const emailResult = await sendLeadEmailToDealer({
-        to: dealerEmail,
-        buyerName: buyerName.trim(),
-        buyerPhone: buyerPhone.trim(),
-        listingTitle: listingResult.data?.title ?? 'Okänd annons',
-        listingUrl,
-        price,
-        year,
-        model,
-      })
-      if (!emailResult.success) {
-        console.error('Lead email failed:', emailResult.error)
-      }
-    } else {
-      console.warn('[lead] Kunde inte hämta dealer e-post för seller_id:', sellerId)
-    }
+    await triggerLeadNotification({
+      type: 'lead_card',
+      conversationId,
+      listingId,
+      buyerName: buyerNameForEmail,
+      buyerPhone: buyerPhone.trim(),
+    })
 
     revalidatePath('/dashboard/messages')
     return { success: true }

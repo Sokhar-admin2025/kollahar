@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import {
   createListing as createListingService,
   updateListing as updateListingService,
+  updateListingPrice as updateListingPriceService,
   deleteListing as deleteListingService,
   updateListingStatus as updateListingStatusService,
 } from '@/lib/features/listings/listing-service'
@@ -98,7 +99,30 @@ export async function updateListingAction(data: UpdateListingInput): Promise<Upd
 
   revalidatePath('/')
   revalidatePath('/dashboard')
+  revalidatePath('/dashboard/dealer')
   return { success: true, data: result.data! }
+}
+
+export type UpdateListingPriceResult = { success: true } | { success: false; error: string }
+
+export async function updateListingPriceAction(
+  listingId: string,
+  newPrice: number
+): Promise<UpdateListingPriceResult> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { success: false, error: 'Du måste vara inloggad.' }
+  }
+
+  const result = await updateListingPriceService(listingId, newPrice, user.id)
+  if (!result.success) {
+    return { success: false, error: result.error ?? 'Kunde inte uppdatera pris.' }
+  }
+
+  revalidatePath('/dashboard')
+  revalidatePath('/dashboard/dealer')
+  return { success: true }
 }
 
 export async function deleteListingAction(

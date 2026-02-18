@@ -15,6 +15,16 @@ export interface Listing {
   seller_type?: 'private' | 'company';
   company_name?: string;
   external_url?: string;
+  /** Externt ID för inventory sync – unikt per användare */
+  external_id?: string | null;
+  /** Tidigare pris – sätts vid prissänkning */
+  previous_price?: number | null;
+  /** När priset senast uppdaterades */
+  price_updated_at?: string | null;
+  /** E-post för specifik säljare – används för lead-notiser */
+  contact_email?: string | null;
+  /** Namn på specifik säljare */
+  contact_name?: string | null;
 }
 
 export interface Conversation {

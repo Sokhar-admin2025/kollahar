@@ -27,4 +27,8 @@ export interface Profile {
   bio?: string | null
   /** Kontaktperson (t.ex. för företagskonto) */
   contact_person?: string | null
+  /** true = huvuddealer, ser alla leads; false = säljare, ser endast egna */
+  is_admin?: boolean
+  /** Pekar på huvuddealer – säljare har denna satt */
+  parent_organization_id?: string | null
 }

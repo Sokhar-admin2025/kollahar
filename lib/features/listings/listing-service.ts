@@ -344,6 +344,7 @@ export async function createListing(
 
 /**
  * Uppdatera befintlig annons. Endast ägare kan uppdatera (RLS + user_id-check).
+ * Vid prissänkning sätts previous_price och price_updated_at.
  */
 export async function updateListing(
   data: UpdateListingInput,
@@ -353,18 +354,35 @@ export async function updateListing(
     const supabase = await createClient()
 
     const isBortskankes = Boolean(data.bortskankes)
+    const newPrice = isBortskankes ? 0 : data.price
+
+    const { data: current } = await supabase
+      .from('listings')
+      .select('price, previous_price')
+      .eq('id', data.id)
+      .eq('user_id', userId)
+      .single()
+
+    const currentPrice = (current as { price: number } | null)?.price ?? 0
+    const updatePayload: Record<string, unknown> = {
+      title: data.title.trim(),
+      description: data.description.trim(),
+      price: newPrice,
+      bortskankes: isBortskankes,
+      location: data.location.trim(),
+      category: data.category,
+      images: data.images ?? [],
+      attributes: data.attributes ?? {},
+    }
+
+    if (newPrice < currentPrice && currentPrice > 0) {
+      updatePayload.previous_price = currentPrice
+      updatePayload.price_updated_at = new Date().toISOString()
+    }
+
     const { error } = await supabase
       .from('listings')
-      .update({
-        title: data.title.trim(),
-        description: data.description.trim(),
-        price: isBortskankes ? 0 : data.price,
-        bortskankes: isBortskankes,
-        location: data.location.trim(),
-        category: data.category,
-        images: data.images ?? [],
-        attributes: data.attributes ?? {},
-      })
+      .update(updatePayload)
       .eq('id', data.id)
       .eq('user_id', userId)
 
@@ -380,6 +398,60 @@ export async function updateListing(
     return {
       success: false,
       error: withErrorRef('Ett oväntat fel uppstod vid uppdatering av annons.', err),
+    }
+  }
+}
+
+/**
+ * Uppdatera endast pris på en annons. Vid prissänkning sätts previous_price och price_updated_at.
+ * Används för pris-sync eller fokuserad prisuppdatering.
+ */
+export async function updateListingPrice(
+  listingId: string,
+  newPrice: number,
+  userId: string
+): Promise<ServiceResult<{ id: string }>> {
+  if (!listingId || !userId) {
+    return { success: false, error: 'Ogiltiga parametrar.' }
+  }
+
+  try {
+    const supabase = await createClient()
+
+    const { data: current, error: fetchError } = await supabase
+      .from('listings')
+      .select('price, previous_price')
+      .eq('id', listingId)
+      .eq('user_id', userId)
+      .single()
+
+    if (fetchError || !current) {
+      return { success: false, error: 'Annonsen hittades inte.' }
+    }
+
+    const currentPrice = (current as { price: number }).price ?? 0
+    const updatePayload: Record<string, unknown> = { price: newPrice }
+
+    if (newPrice < currentPrice && currentPrice > 0) {
+      updatePayload.previous_price = currentPrice
+      updatePayload.price_updated_at = new Date().toISOString()
+    }
+
+    const { error } = await supabase
+      .from('listings')
+      .update(updatePayload)
+      .eq('id', listingId)
+      .eq('user_id', userId)
+
+    if (error) {
+      return { success: false, error: error.message }
+    }
+
+    return { success: true, data: { id: listingId } }
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : 'Ett oväntat fel uppstod.',
     }
   }
 }

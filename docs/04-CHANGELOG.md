@@ -19,6 +19,16 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 - **View-tracking:** Server-side i annons-layout, fire-and-forget. Referer → google/social/direct.
 - **Import-fel-notis:** API `/api/import-error-notify` – konfigurera Supabase Database Webhook för import_logs.
 
+#### Ultra Pro Dealer Dashboard (Phase 3)
+- **listings:** `previous_price`, `price_updated_at` för prisspårning; `external_id` (Phase 3 migration).
+- **updateListingPrice:** Server action – vid prissänkning sätts previous_price och price_updated_at.
+- **updateListing:** Integrerad prisspårning vid redigering.
+- **/dashboard/dealer:** Ny sida för company-konton – Dealer Command Center med företagsnamn.
+- **Stats:** Total Views, Hot Leads (30 dagar), Inventory Health (aktiva annonser).
+- **Performance Insights:** Top 3 Trending (senaste 7 dagar), Price Drop Performance (current < previous).
+- **Inventory Management:** Tabell med Status, Pris, Views, Leads per annons; Bulk Import-placeholder (Phase 4).
+- **Route protection:** Endast account_type = 'company' – andra redirectas till /dashboard.
+
 #### Prestandaoptimering: bildoptimering och bundle analyzer
 - **Bildoptimering för bättre leverans:**
   - Annonsdetalj huvudbild: Bytte från `<img>` till `next/image` med `priority` och responsiva `sizes`

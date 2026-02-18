@@ -24,11 +24,13 @@ function isListingClosed(conv: Conversation | null): boolean {
 export interface InboxClientProps {
   initialConversations: Conversation[]
   userId: string
+  initialConvId?: string | null
 }
 
 export default function InboxClient({
   initialConversations,
   userId,
+  initialConvId,
 }: InboxClientProps) {
   const [conversations, setConversations] = useState<Conversation[]>(initialConversations)
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
@@ -50,6 +52,18 @@ export default function InboxClient({
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  // Öppna konversation från URL (?conv=id) – kör en gång vid mount
+  const appliedInitialConv = useRef(false)
+  useEffect(() => {
+    if (!mounted || appliedInitialConv.current || !initialConvId || conversations.length === 0) return
+    const conv = conversations.find((c) => c.id === initialConvId)
+    if (conv) {
+      appliedInitialConv.current = true
+      setSelectedConversation(conv)
+      setShowInboxMobile(false)
+    }
+  }, [mounted, initialConvId, conversations])
 
   // Stäng meny vid klick utanför
   useEffect(() => {

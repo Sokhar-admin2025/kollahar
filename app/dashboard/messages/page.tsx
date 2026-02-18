@@ -7,7 +7,13 @@ import {
 import type { Conversation } from '@/app/types'
 import InboxClient from '@/app/components/InboxClient'
 
-export default async function MessagesPage() {
+interface MessagesPageProps {
+  searchParams?: Promise<{ conv?: string }>
+}
+
+export default async function MessagesPage({ searchParams }: MessagesPageProps) {
+  const params = searchParams ? await searchParams : {}
+  const initialConvId = params?.conv ?? null
   const supabase = await createClient()
   const {
     data: { user },
@@ -34,6 +40,10 @@ export default async function MessagesPage() {
   })
 
   return (
-    <InboxClient initialConversations={enriched} userId={user.id} />
+    <InboxClient
+      initialConversations={enriched}
+      userId={user.id}
+      initialConvId={initialConvId}
+    />
   )
 }
