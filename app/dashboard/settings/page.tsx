@@ -682,7 +682,9 @@ export default function SettingsPage() {
                       return
                     }
 
-                    // Redirecta till startsidan med specifik account-deleted-toast
+                    // Rensa session på klienten så att Header/profilikon uppdateras direkt
+                    await supabase.auth.signOut()
+                    // Redirect till startsidan – toast "Ditt konto har raderats!" visas där
                     router.push('/?logged_out=deleted')
                     router.refresh()
                   } catch (err) {

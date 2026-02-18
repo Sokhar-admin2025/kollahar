@@ -4,17 +4,19 @@ import { supabaseAdmin } from '@/lib/supabase/admin'
 
 /**
  * Rensar all användardata i public-schemat innan auth.users raderas.
- * Undviker "Database error deleting user" när någon FK saknar ON DELETE CASCADE.
+ * Chatt rensas i ordning: meddelanden, sedan konversationer. Lead-rader raderas inte –
+ * de har ON DELETE SET NULL på conversation_id så företagets lead-statistik påverkas inte.
  * Körs med service role (supabaseAdmin) så RLS inte blockerar.
+ * @returns null vid lyckad rensning, annars felmeddelande
  */
-async function deletePublicDataForUser(userId: string) {
-  if (!supabaseAdmin) return
+async function deletePublicDataForUser(userId: string): Promise<string | null> {
+  if (!supabaseAdmin) return null
 
-  const tables: { table: string; column: string }[] = [
+  const steps: { table: string; column: string }[] = [
     { table: 'user_hidden_conversations', column: 'user_id' },
+    { table: 'messages', column: 'sender_id' },
     { table: 'conversations', column: 'buyer_id' },
     { table: 'conversations', column: 'seller_id' },
-    { table: 'leads', column: 'user_id' },
     { table: 'import_logs', column: 'user_id' },
     { table: 'deletion_logs', column: 'user_id' },
     { table: 'favorites', column: 'user_id' },
@@ -22,13 +24,14 @@ async function deletePublicDataForUser(userId: string) {
     { table: 'profiles', column: 'id' },
   ]
 
-  for (const { table, column } of tables) {
-    const q = supabaseAdmin.from(table).delete().eq(column, userId)
-    const { error } = await q
+  for (const { table, column } of steps) {
+    const { error } = await supabaseAdmin.from(table).delete().eq(column, userId)
     if (error) {
-      console.warn(`[delete-account] Rensning av ${table} för användare ${userId}:`, error.message)
+      console.error(`[delete-account] Rensning av ${table} (${column}=${userId}):`, error.message, error.code)
+      return `Kunde inte rensa ${table}: ${error.message}`
     }
   }
+  return null
 }
 
 export async function POST() {
@@ -57,7 +60,14 @@ export async function POST() {
       )
     }
 
-    await deletePublicDataForUser(userId)
+    const dataError = await deletePublicDataForUser(userId)
+    if (dataError) {
+      console.error('[delete-account] Rensning av användardata misslyckades:', dataError)
+      return NextResponse.json(
+        { error: 'Kunde inte radera ditt konto (rensning av data misslyckades). Försök igen eller kontakta support.' },
+        { status: 500 }
+      )
+    }
 
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId)
     if (deleteError) {

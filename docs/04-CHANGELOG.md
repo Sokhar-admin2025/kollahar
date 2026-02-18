@@ -8,9 +8,11 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ### ✨ Tillagt
 
-#### Radera konto: fix för "Database error deleting user"
-- **API** (`app/api/delete-account/route.ts`): Rensar all användardata i public-schemat med service role *innan* `deleteUser()` (user_hidden_conversations, conversations, leads, import_logs, deletion_logs, favorites, listings, profiles) så att inga FK-block kvarstår. Kräver `SUPABASE_SERVICE_ROLE_KEY`; returnerar 503 med tydligt fel om nyckeln saknas.
-- **Dokumentation** (`docs/DELETE_ACCOUNT_CHECK.md`): Checklista och felsökning för radera konto, inkl. sektion om "Database error deleting user" (AuthApiError / unexpected_failure).
+#### Radera konto: fix, lead bevaras, toast + Header
+- **API** (`app/api/delete-account/route.ts`): Rensning i ordning (user_hidden_conversations → messages → conversations → …) med fail-fast vid fel. **Lead-rader raderas inte** – företagets lead-statistik påverkas inte när köpare raderar konto.
+- **Migration** (`20260219100000_leads_preserve_on_buyer_delete.sql`): `leads.conversation_id` nullable + ON DELETE SET NULL så att lead-rader behålls när konversationen försvinner (kontoradering).
+- **Inställningar** (`app/dashboard/settings/page.tsx`): Efter lyckad kontoradering anropas `supabase.auth.signOut()` på klienten före redirect så att **Header/profilikon** uppdateras direkt; redirect till `/?logged_out=deleted` där toast **"Ditt konto har raderats!"** visas (HomePageClient).
+- **Dokumentation** (`docs/DELETE_ACCOUNT_CHECK.md`): Uppdaterad med rensningsordning, sektion om att företagets lead inte påverkas, och att lead behålls med `conversation_id = null`.
 
 #### Lead Engine & Analytics (Phase 1 & 2)
 - **profiles.slug:** URL-vänlig slug för company-konton (full_name-city), auto-genereras via trigger.

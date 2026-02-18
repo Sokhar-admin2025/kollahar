@@ -38,7 +38,7 @@ Loggen innehåller nu Supabase-felets `message` och `code` så du kan se exakt v
 
 Det här felet betyder att Supabase inte kunde radera raden i `auth.users` eftersom något i databasen blockerar (t.ex. FK utan ON DELETE CASCADE).
 
-**Lösning i koden:** API:et rensar nu **all användardata i public-schemat** med service role *innan* `deleteUser()` anropas (user_hidden_conversations, conversations, leads, import_logs, deletion_logs, favorites, listings, profiles). Därefter anropas `deleteUser()`, så inga public-tabeller ska längre blockera.
+**Lösning i koden:** API:et rensar **all användardata i public-schemat** med service role *innan* `deleteUser()`. Chatt: user_hidden_conversations → messages (sender_id) → conversations (buyer_id, seller_id). **Lead-rader raderas inte** – de har `conversation_id` med ON DELETE SET NULL (migration `20260219100000_leads_preserve_on_buyer_delete.sql`) så när konversationen försvinner sätts bara `conversation_id` till null; företagets lead-statistik och antal lead påverkas inte. Därefter: import_logs, deletion_logs, favorites, listings, profiles. Om något steg misslyckas returneras 500.
 
 Om felet kvarstår efter deploy: kontrollera i Supabase om någon annan tabell har FK mot `auth.users(id)` utan ON DELETE CASCADE.
 
@@ -55,7 +55,11 @@ Om felet kvarstår efter deploy: kontrollera i Supabase om någon annan tabell h
 
 ---
 
-## 5. Databas – CASCADE
+## 5. Företagets lead påverkas inte vid köpares kontoradering
+
+När en privat användare (köpare) som lämnat lead till ett företag raderar sitt konto ska företagets lead-räknare och lead-logg **inte** minska. Lead-tabellen har därför `conversation_id` med **ON DELETE SET NULL**: när konversationen raderas (vid kontoradering) blir lead-raden kvar med `conversation_id = null`. Företaget behåller alltså antal lead och historik (listing_id, buyer_name, buyer_phone, status); bara kopplingen till den borttagna konversationen försvinner.
+
+## 6. Databas – CASCADE
 
 Raderande av användaren i `auth.users` (via service role) ska trigga CASCADE i alla tabeller som refererar användaren:
 
@@ -67,7 +71,7 @@ Om radering lyckas i Auth men något fel uppstår i databasen syns det i Supabas
 
 ---
 
-## 6. Snabbkontroll
+## 7. Snabbkontroll
 
 1. Bekräfta att `SUPABASE_SERVICE_ROLE_KEY` finns i rätt miljö (.env.local / Vercel).
 2. Låt användaren försöka igen och kontrollera direkt efter i Supabase → Authentication → Users om användaren försvunnit.
