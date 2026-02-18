@@ -7,6 +7,7 @@ import { DASHBOARD_TEXTS } from '@/app/lib/content'
 import type { Conversation, Message } from '@/app/types'
 import Button from '@/app/components/atoms/Button'
 import { sendMessageAction, markAsReadAction, getMessagesAction, hideConversationAction } from '@/app/actions/message-actions'
+import { submitLeadCardAction, getLeadExistsAction } from '@/app/actions/lead-actions'
 import { createClient } from '@/lib/supabase/client'
 import { X, MoreVertical } from 'lucide-react'
 
@@ -38,7 +39,17 @@ export default function InboxClient({
   const [showInboxMobile, setShowInboxMobile] = useState(true)
   const [menuOpen, setMenuOpen] = useState(false)
   const [hidingConversation, setHidingConversation] = useState(false)
+  const [leadExists, setLeadExists] = useState<boolean | null>(null)
+  const [leadSubmitting, setLeadSubmitting] = useState(false)
+  const [leadSubmitted, setLeadSubmitted] = useState(false)
+  const [leadName, setLeadName] = useState('')
+  const [leadPhone, setLeadPhone] = useState('')
+  const [mounted, setMounted] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Stäng meny vid klick utanför
   useEffect(() => {
@@ -52,11 +63,13 @@ export default function InboxClient({
     return () => document.removeEventListener('click', handleClickOutside)
   }, [menuOpen])
 
-  // När användaren väljer en konversation: hämta meddelanden + markera som lästa
+  // När användaren väljer en konversation: hämta meddelanden + markera som lästa + lead-status
   useEffect(() => {
     if (!selectedConversation) return
 
     setMessages([])
+    setLeadExists(null)
+    setLeadSubmitted(false)
     const load = async () => {
       setLoadingMessages(true)
       try {
@@ -70,6 +83,13 @@ export default function InboxClient({
             conv.id === selectedConversation.id ? { ...conv, hasUnread: false } : conv
           )
         )
+        if (
+          selectedConversation.seller_account_type === 'company' &&
+          selectedConversation.buyer_id === userId
+        ) {
+          const leadRes = await getLeadExistsAction(selectedConversation.id)
+          if ('exists' in leadRes) setLeadExists(leadRes.exists)
+        }
       } catch (err) {
         console.error('Kunde inte hämta meddelanden:', err)
       } finally {
@@ -78,7 +98,7 @@ export default function InboxClient({
     }
 
     load()
-  }, [selectedConversation?.id])
+  }, [selectedConversation?.id, userId])
 
   // Realtime: lyssna på nya meddelanden i vald konversation
   useEffect(() => {
@@ -147,6 +167,41 @@ export default function InboxClient({
   const handleSelectConversation = (conv: Conversation) => {
     setSelectedConversation(conv)
     setShowInboxMobile(false)
+    setLeadName('')
+    setLeadPhone('')
+  }
+
+  const showLeadCard =
+    mounted &&
+    selectedConversation &&
+    selectedConversation.seller_account_type === 'company' &&
+    selectedConversation.buyer_id === userId &&
+    messages.length === 0 &&
+    !leadExists &&
+    !leadSubmitted &&
+    !isListingClosed(selectedConversation)
+
+  const handleSubmitLeadCard = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!selectedConversation || !leadName.trim() || !leadPhone.trim()) return
+    setLeadSubmitting(true)
+    try {
+      const result = await submitLeadCardAction(
+        selectedConversation.id,
+        leadName.trim(),
+        leadPhone.trim()
+      )
+      if (result.success) {
+        setLeadSubmitted(true)
+        setLeadExists(true)
+      } else {
+        alert(result.error ?? 'Kunde inte skicka. Försök igen.')
+      }
+    } catch {
+      alert('Kunde inte skicka. Försök igen.')
+    } finally {
+      setLeadSubmitting(false)
+    }
   }
 
   const handleBackToInboxMobile = () => {
@@ -375,6 +430,45 @@ export default function InboxClient({
                     {loadingMessages ? (
                       <div className="text-center text-brand-text text-sm antialiased">
                         Laddar meddelanden...
+                      </div>
+                    ) : showLeadCard ? (
+                      <div className="flex justify-start">
+                        <div className="max-w-[85%] rounded-xl px-4 py-3 bg-white border border-brand-green/20 shadow-sm">
+                          <p className="text-sm text-brand-text mb-3 antialiased">
+                            Lämna namn och telefonnummer så kan säljaren återkomma till dig om chatten är obemannad.
+                          </p>
+                          <form onSubmit={handleSubmitLeadCard} className="space-y-2">
+                            <input
+                              type="text"
+                              value={leadName}
+                              onChange={(e) => setLeadName(e.target.value)}
+                              placeholder="Namn"
+                              className="w-full p-2.5 border border-gray-300 rounded-lg text-sm text-brand-text focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none antialiased"
+                              disabled={leadSubmitting}
+                              required
+                            />
+                            <input
+                              type="tel"
+                              value={leadPhone}
+                              onChange={(e) => setLeadPhone(e.target.value)}
+                              placeholder="Telefonnummer"
+                              className="w-full p-2.5 border border-gray-300 rounded-lg text-sm text-brand-text focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none antialiased"
+                              disabled={leadSubmitting}
+                              required
+                            />
+                            <Button
+                              type="submit"
+                              disabled={leadSubmitting || !leadName.trim() || !leadPhone.trim()}
+                              className="w-full mt-2"
+                            >
+                              {leadSubmitting ? 'Skickar...' : 'Skicka'}
+                            </Button>
+                          </form>
+                        </div>
+                      </div>
+                    ) : messages.length === 0 ? (
+                      <div className="text-center text-brand-text/70 text-sm py-4 antialiased">
+                        Inga meddelanden än. Skriv ett meddelande nedan.
                       </div>
                     ) : (
                       messages.map((msg) => {

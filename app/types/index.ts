@@ -24,6 +24,8 @@ export interface Conversation {
   listing_id: string;
   buyer_id: string;
   seller_id: string;
+  /** Säljarens account_type – 'company' = dealer, används för lead-kort. */
+  seller_account_type?: 'private' | 'company';
   /** Namn på den andra deltagaren (köpare eller säljare – den du chattar med). */
   other_participant_name?: string | null;
   listing?: {

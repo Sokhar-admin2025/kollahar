@@ -70,19 +70,23 @@ export async function getMyConversations(userId: string): Promise<Conversation[]
 
   const { data: profiles } = await supabase
     .from('profiles')
-    .select('id, full_name')
+    .select('id, full_name, account_type')
     .in('id', Array.from(userIds))
-  const profileMap = new Map<string, string | null>()
-  ;(profiles ?? []).forEach((p: { id: string; full_name: string | null }) => {
-    profileMap.set(p.id, p.full_name?.trim() || null)
+  const profileMap = new Map<string, { full_name: string | null; account_type?: string }>()
+  ;(profiles ?? []).forEach((p: { id: string; full_name: string | null; account_type?: string }) => {
+    profileMap.set(p.id, { full_name: p.full_name?.trim() || null, account_type: p.account_type })
   })
 
   return convList.map((c) => {
     const otherId = c.buyer_id === userId ? c.seller_id : c.buyer_id
-    const otherName = profileMap.get(otherId) ?? 'Användare'
+    const otherProfile = profileMap.get(otherId)
+    const otherName = otherProfile?.full_name ?? 'Användare'
+    const sellerProfile = profileMap.get(c.seller_id)
+    const sellerAccountType = (sellerProfile?.account_type === 'company' ? 'company' : 'private') as 'private' | 'company'
     return {
       ...c,
       other_participant_name: otherName,
+      seller_account_type: sellerAccountType,
     } as Conversation
   })
 }

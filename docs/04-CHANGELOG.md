@@ -8,6 +8,17 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ### ✨ Tillagt
 
+#### Lead Engine & Analytics (Phase 1 & 2)
+- **profiles.slug:** URL-vänlig slug för company-konton (full_name-city), auto-genereras via trigger.
+- **analytics_events:** Tabell för view, lead_start, phone_click. GDPR: ingen IP, endast referrer_source.
+- **import_logs:** Tabell för bulk-import med status (success/error). RLS: användare läser/skriver egna.
+- **leads:** Tabell för Hot Leads – conversation_id, listing_id, buyer_name, buyer_phone, status.
+- **Lead-kort i chat:** Vid första meddelandet till dealer (account_type=company) visas kort med namn/telefon.
+- **submitLeadCardAction:** Sparar lead, skickar e-post till dealer (BCC hej@kollahar.se), loggar lead_start.
+- **Resend:** E-post via RESEND_API_KEY. Dealer får lead-info; admin får BCC. Import-fel → hej@kollahar.se.
+- **View-tracking:** Server-side i annons-layout, fire-and-forget. Referer → google/social/direct.
+- **Import-fel-notis:** API `/api/import-error-notify` – konfigurera Supabase Database Webhook för import_logs.
+
 #### Prestandaoptimering: bildoptimering och bundle analyzer
 - **Bildoptimering för bättre leverans:**
   - Annonsdetalj huvudbild: Bytte från `<img>` till `next/image` med `priority` och responsiva `sizes`
