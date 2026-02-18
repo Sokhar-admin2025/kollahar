@@ -8,6 +8,10 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ### ✨ Tillagt
 
+#### Radera konto: fix för "Database error deleting user"
+- **API** (`app/api/delete-account/route.ts`): Rensar all användardata i public-schemat med service role *innan* `deleteUser()` (user_hidden_conversations, conversations, leads, import_logs, deletion_logs, favorites, listings, profiles) så att inga FK-block kvarstår. Kräver `SUPABASE_SERVICE_ROLE_KEY`; returnerar 503 med tydligt fel om nyckeln saknas.
+- **Dokumentation** (`docs/DELETE_ACCOUNT_CHECK.md`): Checklista och felsökning för radera konto, inkl. sektion om "Database error deleting user" (AuthApiError / unexpected_failure).
+
 #### Lead Engine & Analytics (Phase 1 & 2)
 - **profiles.slug:** URL-vänlig slug för company-konton (full_name-city), auto-genereras via trigger.
 - **analytics_events:** Tabell för view, lead_start, phone_click. GDPR: ingen IP, endast referrer_source.
