@@ -2,6 +2,7 @@
 
 import { withErrorRef } from '@/lib/error-ref'
 import { createClient } from '@/lib/supabase/server'
+import { supabaseAdmin } from '@/lib/supabase/admin'
 import type { ServiceResult } from '@/lib/types/result'
 import type { Listing } from '@/app/types'
 import type { InsertListingInput, UpdateListingInput } from '@/lib/validators/listing-schema'
@@ -717,6 +718,7 @@ export async function toggleFavorite(
 
 /**
  * Hård DELETE av annons. Verifierar ägande (user_id === userId) innan radering.
+ * Använder supabaseAdmin för raderingen för att undvika RLS/session-problem i production.
  */
 export async function deleteListing(
   listingId: string,
@@ -728,8 +730,9 @@ export async function deleteListing(
 
   try {
     const supabase = await createClient()
+    const client = supabaseAdmin ?? supabase
 
-    const { data: row, error: fetchError } = await supabase
+    const { data: row, error: fetchError } = await client
       .from('listings')
       .select('id, user_id')
       .eq('id', listingId.trim())
@@ -743,7 +746,7 @@ export async function deleteListing(
       return { success: false, error: 'Du får bara radera egna annonser.' }
     }
 
-    const { error: deleteError } = await supabase
+    const { error: deleteError } = await client
       .from('listings')
       .delete()
       .eq('id', listingId.trim())

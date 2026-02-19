@@ -541,6 +541,7 @@ Vissa operationer kräver **admin-nivå** behörighet mot Supabase – både fö
   - Orsak: RLS på dessa tabeller kan blockera även korrekt data (t.ex. cookie-/session-problem). Sidan har redan verifierat att användaren är dealer; vi filtrerar strikt på `user_id`/`seller_id` = orgOwnerId.
 - **Lead-notiser** (`app/actions/lead-notification-action.ts`): `supabaseAdmin.auth.admin.getUserById` för att hämta mottagarens e-post.
 - **Meddelandenotiser** (`app/actions/new-message-notification-action.ts`): samma mönster för e-postuppslag.
+- **Radera annons** (`lib/features/listings/listing-service.ts`): `deleteListing` använder `supabaseAdmin` för SELECT + DELETE efter ägarverifiering. Undviker RLS/session-problem i production (t.ex. cookie-domain, serverless).
 
 ### Leads & Views med supabaseAdmin
 
@@ -549,6 +550,7 @@ Vissa operationer kräver **admin-nivå** behörighet mot Supabase – både fö
 | `leads`        | Hot Leads-räknare i Dealer Dashboard | RLS kan blockera även när `seller_id = auth.uid()` |
 | `listings`     | Inventariefråga för dealer          | Samma – sidan har redan verifierat dealer     |
 | `listing_views`| Total Views för dealer              | Inga RLS-läsproblem; konsekvent med övrigt    |
+| `listings`     | Radera annons (deleteListing)       | RLS/session kan blockera i production          |
 
 **Säkerhet:** Alla dessa frågor filtrerar strikt på `user_id`/`seller_id` = `orgOwnerId`. Dealern har redan godkänts via `account_type = 'company'`. Ingen annan dealers data läcks.
 

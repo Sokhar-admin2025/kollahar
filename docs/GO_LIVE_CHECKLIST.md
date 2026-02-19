@@ -65,7 +65,7 @@ Detta är en checklista för åtgärder som ska göras **precis innan eller vid 
 - [x] **Dubbelkolla alla Environment Variables i Vercel**
   - [x] `NEXT_PUBLIC_SUPABASE_URL` - Korrekt produktions-URL
   - [x] `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Korrekt anon key för produktion
-  - [x] `SUPABASE_SERVICE_ROLE_KEY` - Endast i server-miljö (INTE `NEXT_PUBLIC_`)
+  - [x] `SUPABASE_SERVICE_ROLE_KEY` - Endast i server-miljö (INTE `NEXT_PUBLIC_`). Krävs för: delete-account, dealer-dashboard (leads/views), **radera annons**, lead-notiser.
   - [x] Verifiera att inga development-nycklar finns i produktion
 
 - [x] **Supabase-konfiguration**

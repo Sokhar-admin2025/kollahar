@@ -22,6 +22,9 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 - **Cache bypass:** `dynamic = 'force-dynamic'`, `revalidate = 0` på dealer-sidan.
 - **Migrationer:** `leads_rls_seller_id`, `leads_realtime`, `listing_views`.
 
+#### Radera annons – fix för production
+- **deleteListing:** Använder `supabaseAdmin` för SELECT + DELETE efter ägarverifiering. Undviker RLS/session-problem (cookie-domain, serverless) som gjorde att användare inte kunde radera annonser i production.
+
 #### Sökfält & Next.js 15+ searchParams
 - **app/page.tsx:** `searchParams` är nu `Promise`; await före användning (Next.js 15+ breaking change).
 
