@@ -8,6 +8,22 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ### ✨ Tillagt
 
+#### Persistent Leads & View Tracking Fix
+- **Persistent Leads:** `leads.listing_id` är nu nullable med `ON DELETE SET NULL` – lead-räknaren försvinner inte när en annons raderas. Migration `20260226100000_leads_listing_set_null.sql`.
+- **dealer-analytics:** Hanterar leads med `listing_id = null` (hoppar över i per-listing-räkning; Hot Leads räknas fortfarande på `seller_id`).
+- **View Tracking:** `logListingViewAction` använder `supabaseAdmin` för insert – säkerställer att Total Views fungerar för anonyma och inloggade. Loggning vid misslyckad insert.
+- **Radera annons:** `conversations.listing_id` satt till `ON DELETE CASCADE` – annonser med konversationer kan nu raderas. Migration `20260225100000_conversations_listing_cascade.sql`.
+- **Manual scripts:** `manual_run_leads_listing_set_null.sql`, `manual_run_conversations_listing_cascade.sql` för production.
+
+#### Dealer Dashboard & View Tracking (feb 2025)
+- **View tracking:** Annonssidan extraherar `seller_id` från `user_id`/`owner_id`/`seller_id` med fallback; strikt validering i Server Action – inga rader med NULL seller_id.
+- **Dealer analytics:** Endast `supabaseAdmin` – ingen fallback till session-klient. Total Views via direkt count-query. Org owner ser alltid alla listings (isAdmin=true).
+- **Inventory Health:** Formel: +40% (>3 bilder), +30% (beskrivning >100 tecken), +30% (≥1 visning). Snitt över hela inventariet (alla statusar).
+- **Chat-räknare:** "Aktiva konversationer" (antal unika chattar) istället för olästa meddelanden.
+- **Realtime:** Dashboard lyssnar på `listing_views` INSERT – Total Views uppdateras vid nya visningar. Migration `20260227100000_listing_views_realtime.sql`.
+- **RLS:** Policy "Sellers read own listing views" för SELECT på `listing_views`. Migration `20260227200000_listing_views_select_policy.sql`.
+- **Debug:** `debug_listing_views.sql`, `manual_run_listing_views_select_policy.sql`.
+
 #### View Tracker & Inventory Health (Dealer Command Center)
 - **listing_views:** Ny tabell (`listing_id`, `seller_id`, `viewer_id`, `created_at`) för sidvisningar. RLS: alla får INSERT.
 - **View-logging:** Klient-effekt i `app/annons/[id]/page.tsx` anropar `logListingViewAction` vid visning. Både inloggade och anonyma användare räknas. `sessionStorage` (30 min) förhindrar dubbelräkning i samma flik/session.
@@ -72,6 +88,11 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 - **Bundle analyzer:** Lagt till `@next/bundle-analyzer` med script `npm run analyze` för att identifiera stora bundles och optimeringsmöjligheter
 
 ### 🔧 Ändrat / Buggfixar
+
+#### Chatt – scroll, läst-status, mobil tangentbord
+- **Scroll:** Ingen auto-scroll av hela sidan vid mottagande meddelande. Endast chattflödet scrollar till senaste meddelande (messagesContainerRef.scrollTo).
+- **Läst-status:** När användaren har chatten öppen och får meddelande markeras det direkt som läst (markAsReadAction + hasUnread=false).
+- **Mobil:** Skrivfältet scrollar in i vy vid fokus (scrollIntoView) för att ge plats åt tangentbordet – endast på skärmar <768px.
 
 #### Favoritknappen på startsidan – synlighet och UX
 - **ListingCard:** Favoritknappen högre z-index (z-20), `pointer-events-auto`, justerad placering på mobil (top-2 right-2).

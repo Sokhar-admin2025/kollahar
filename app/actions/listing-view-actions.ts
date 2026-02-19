@@ -4,7 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase/admin'
 
 /**
  * Log a listing view. Called from client when annons/[id] page is viewed.
- * Uses supabaseAdmin to bypass RLS – säkerställer att insert fungerar för anonyma och inloggade.
+ * Uses supabaseAdmin (service role) – bypassar RLS, insert fungerar utan explicit policy.
  * @param sellerId - listings.user_id, used for dashboard query (seller_id = orgOwnerId)
  */
 export async function logListingViewAction(
@@ -13,7 +13,10 @@ export async function logListingViewAction(
   viewerId?: string | null
 ): Promise<{ ok: boolean; error?: string }> {
   if (!listingId?.trim()) return { ok: false, error: 'missing_listing_id' }
-  if (!sellerId?.trim()) return { ok: false, error: 'missing_seller_id' }
+  if (!sellerId || typeof sellerId !== 'string' || !sellerId.trim()) {
+    console.error('[listing-view] REJECTED: seller_id saknas eller är tomt. listingId:', listingId, 'sellerId:', sellerId)
+    return { ok: false, error: 'missing_seller_id' }
+  }
 
   if (!supabaseAdmin) {
     console.error('[listing-view] supabaseAdmin saknas – SUPABASE_SERVICE_ROLE_KEY krävs')
@@ -21,6 +24,7 @@ export async function logListingViewAction(
   }
 
   try {
+    console.log('RECORDING VIEW FOR SELLER:', sellerId.trim(), 'listing:', listingId.trim())
     const { error } = await supabaseAdmin.from('listing_views').insert({
       listing_id: listingId.trim(),
       seller_id: sellerId.trim(),

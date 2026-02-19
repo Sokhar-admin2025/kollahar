@@ -37,7 +37,7 @@ export default function DealerDashboardClient({
     if (!sellerId) return
     const supabase = createClient()
     const channel = supabase
-      .channel('dealer-leads')
+      .channel('dealer-dashboard')
       .on(
         'postgres_changes',
         {
@@ -46,9 +46,17 @@ export default function DealerDashboardClient({
           table: 'leads',
           filter: `seller_id=eq.${sellerId}`,
         },
-        () => {
-          router.refresh()
-        }
+        () => router.refresh()
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'listing_views',
+          filter: `seller_id=eq.${sellerId}`,
+        },
+        () => router.refresh()
       )
       .subscribe()
     return () => {
@@ -127,10 +135,10 @@ export default function DealerDashboardClient({
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                  Chattmeddelanden
+                  Aktiva konversationer
                 </p>
                 <p className="text-2xl font-bold text-brand-text dark:text-white">
-                  {data.unreadChatMessages}
+                  {data.activeConversationsCount}
                 </p>
               </div>
             </div>
@@ -147,8 +155,8 @@ export default function DealerDashboardClient({
                 <p className="text-2xl font-bold text-brand-text dark:text-white">
                   {data.averageHealthPercent}% snitt
                 </p>
-                <p className="text-xs text-gray-400 dark:text-gray-500" title="+40% &gt;3 bilder, +30% beskrivning &gt;200 tecken, +30% minst 1 visning">
-                  &gt;3 bilder · &gt;200 tecken · ≥1 visning
+                <p className="text-xs text-gray-400 dark:text-gray-500" title="+40% &gt;3 bilder, +30% beskrivning &gt;100 tecken, +30% minst 1 visning">
+                  &gt;3 bilder · &gt;100 tecken · ≥1 visning
                 </p>
               </div>
             </div>

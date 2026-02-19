@@ -1,4 +1,3 @@
-import { createClient } from '@/lib/supabase/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 
 export interface ListingWithStats {
@@ -10,14 +9,14 @@ export interface ListingWithStats {
   bortskankes: boolean
   views: number
   leads: number
-  /** Health %: +40% (>3 images), +30% (desc>200), +30% (≥1 view) */
+  /** Health %: +40% (>3 images), +30% (desc>100), +30% (≥1 view). Images+desc ger poäng även utan visningar. */
   healthScore: number
 }
 
 export interface DealerDashboardData {
   totalViews: number
   hotLeadsLast30Days: number
-  unreadChatMessages: number
+  activeConversationsCount: number
   activeListingsCount: number
   /** Inventory Health: average health % across active listings */
   averageHealthPercent: number
@@ -45,67 +44,76 @@ export async function getDealerDashboardData(
   userId: string,
   options?: DealerDashboardOptions
 ): Promise<DealerDashboardData> {
-  const supabase = await createClient()
   const orgOwnerId = options?.orgOwnerId ?? userId
   const isAdmin = options?.isAdmin ?? true
   const userEmail = options?.userEmail?.trim() || null
+
+  if (!supabaseAdmin) {
+    console.error('[dealer-analytics] supabaseAdmin saknas – SUPABASE_SERVICE_ROLE_KEY krävs.')
+    return {
+      totalViews: 0,
+      hotLeadsLast30Days: 0,
+      activeConversationsCount: 0,
+      activeListingsCount: 0,
+      averageHealthPercent: 0,
+      trendingListings: [],
+      priceDropListings: [],
+      inventory: [],
+    }
+  }
 
   const sevenDaysAgo = new Date()
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
   const thirtyDaysAgo = new Date()
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
 
-  // Use supabaseAdmin for listings to bypass RLS (avoids session/cookie issues).
-  // We filter strictly by user_id = orgOwnerId; user is already verified as dealer.
-  const listClient = supabaseAdmin ?? supabase
+  // 1. Total Views – direkt count från listing_views (alltid, även utan listings)
+  const { count: totalViewsCount, error: viewsError } = await supabaseAdmin
+    .from('listing_views')
+    .select('*', { count: 'exact', head: true })
+    .eq('seller_id', orgOwnerId)
 
-  let query = listClient
+  if (viewsError) {
+    console.error('[dealer-analytics] listing_views count error:', viewsError.message, 'code:', viewsError.code)
+  }
+  const totalViews = totalViewsCount ?? 0
+  console.log('[dealer-analytics] orgOwnerId:', orgOwnerId, 'totalViews (count):', totalViews)
+
+  // 2. Listings – supabaseAdmin, user_id = orgOwnerId, inga status-filter (alla: active, sold, deleted)
+  let listingsQuery = supabaseAdmin
     .from('listings')
     .select('id, title, status, price, previous_price, bortskankes, images, description')
     .eq('user_id', orgOwnerId)
     .order('created_at', { ascending: false })
 
   if (!isAdmin && userEmail) {
-    query = query.eq('contact_email', userEmail)
+    listingsQuery = listingsQuery.eq('contact_email', userEmail)
   }
 
-  const { data: listings, error: listingsError } = await query
+  const { data: listings, error: listingsError } = await listingsQuery
 
   if (listingsError) {
-    console.error('[dealer-analytics] listings query error:', listingsError.message)
+    console.error('[dealer-analytics] listings query error:', listingsError.message, 'code:', listingsError.code)
   }
-
   const listingIds = (listings ?? []).map((l: { id: string }) => l.id)
+  console.log('[dealer-analytics] Listings found for user:', (listings ?? []).length, 'orgOwnerId:', orgOwnerId)
 
-  // Hämta olästa chattmeddelanden (dealer som säljare) – separat från leads
-  const { data: dealerConvs } = await supabase
+  // 3. Aktiva konversationer
+  const { data: dealerConvs } = await supabaseAdmin
     .from('conversations')
     .select('id')
     .eq('seller_id', orgOwnerId)
-  const dealerConvIds = (dealerConvs ?? []).map((c: { id: string }) => c.id)
+  const activeConversationsCount = (dealerConvs ?? []).length
 
-  let unreadChatMessages = 0
-  if (dealerConvIds.length > 0) {
-    const { count } = await supabase
-      .from('messages')
-      .select('id', { count: 'exact', head: true })
-      .in('conversation_id', dealerConvIds)
-      .eq('is_read', false)
-      .neq('sender_id', orgOwnerId)
-    unreadChatMessages = count ?? 0
-  }
-
-  // Always fetch leads by seller_id – Hot Leads counter works even when listingIds is empty.
-  const leadsClient = supabaseAdmin ?? supabase
-
+  // 4. Leads
   const [leadsLast30Res, leadsAllRes] = await Promise.all([
-    leadsClient
+    supabaseAdmin
       .from('leads')
       .select('listing_id')
       .eq('seller_id', orgOwnerId)
       .eq('status', 'hot')
       .gte('created_at', thirtyDaysAgo.toISOString()),
-    leadsClient
+    supabaseAdmin
       .from('leads')
       .select('listing_id')
       .eq('seller_id', orgOwnerId),
@@ -115,12 +123,20 @@ export async function getDealerDashboardData(
   const leadsAll = (leadsAllRes.data ?? []) as { listing_id: string }[]
   const hotLeadsLast30Days = leadsLast30.length
 
-  // Early return when no listings – but keep Hot Leads count from above
+  // 5. listing_views för per-listing breakdown (trending, inventory)
+  const { data: viewsDataRaw } = await supabaseAdmin
+    .from('listing_views')
+    .select('listing_id, created_at')
+    .eq('seller_id', orgOwnerId)
+
+  const viewsData = (viewsDataRaw ?? []) as { listing_id: string; created_at: string }[]
+
+  // Early return när inga listings – men totalViews och hotLeads behålls
   if (listingIds.length === 0) {
     return {
-      totalViews: 0,
+      totalViews,
       hotLeadsLast30Days,
-      unreadChatMessages,
+      activeConversationsCount,
       activeListingsCount: 0,
       averageHealthPercent: 0,
       trendingListings: [],
@@ -128,16 +144,6 @@ export async function getDealerDashboardData(
       inventory: [],
     }
   }
-
-  // Use listing_views for Total Views – query by seller_id for efficiency
-  const [viewsRes] = await Promise.all([
-    listClient
-      .from('listing_views')
-      .select('listing_id, created_at')
-      .eq('seller_id', orgOwnerId),
-  ])
-
-  const viewsData = (viewsRes.data ?? []) as { listing_id: string; created_at: string }[]
   const listingMap = new Map(
     (listings ?? []).map((l: {
       id: string
@@ -179,7 +185,6 @@ export async function getDealerDashboardData(
     }
   }
 
-  const totalViews = viewsData.length
   const activeListings = (listings ?? []).filter((l: { status: string }) => l.status === 'active')
 
   const trendingListings = listingIds
@@ -221,7 +226,7 @@ export async function getDealerDashboardData(
       const descLen = (l.description ?? '').length
       const healthScore =
         (images.length > 3 ? 40 : 0) +
-        (descLen > 200 ? 30 : 0) +
+        (descLen > 100 ? 30 : 0) +
         (views >= 1 ? 30 : 0)
       return {
         id: l.id,
@@ -237,19 +242,20 @@ export async function getDealerDashboardData(
     }
   )
 
-  const activeInventory = inventory.filter((l) => l.status === 'active')
+  // Health-snitt över hela inventariet (alla statusar)
   const averageHealthPercent =
-    activeInventory.length > 0
+    inventory.length > 0
       ? Math.round(
-          activeInventory.reduce((s, l) => s + l.healthScore, 0) /
-            activeInventory.length
+          inventory.reduce((s, l) => s + l.healthScore, 0) / inventory.length
         )
       : 0
+
+  console.log('[dealer-analytics] Calculated health:', averageHealthPercent, 'inventory:', inventory.length)
 
   return {
     totalViews,
     hotLeadsLast30Days,
-    unreadChatMessages,
+    activeConversationsCount,
     activeListingsCount: activeListings.length,
     averageHealthPercent,
     trendingListings,

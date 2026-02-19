@@ -48,7 +48,14 @@ export default function InboxClient({
   const [leadPhone, setLeadPhone] = useState('')
   const [mounted, setMounted] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  /** Scrolla endast chattflödet till senaste meddelande – inte hela sidan */
+  const scrollChatToBottom = () => {
+    const el = messagesContainerRef.current
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
+  }
 
   useEffect(() => {
     setMounted(true)
@@ -91,6 +98,7 @@ export default function InboxClient({
         const result = await getMessagesAction(selectedConversation.id)
         if (result.success && result.data) {
           setMessages(result.data)
+          requestAnimationFrame(() => scrollChatToBottom())
         }
         await markAsReadAction(selectedConversation.id)
         setConversations((prev) =>
@@ -115,9 +123,9 @@ export default function InboxClient({
     load()
   }, [selectedConversation?.id, userId])
 
-  // Scroll till botten vid nya meddelanden
+  // Visa senaste meddelandet i chattflödet vid nya meddelanden (scrollar endast chat-rutan, inte sidan)
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (messages.length > 0) requestAnimationFrame(() => scrollChatToBottom())
   }, [messages])
 
   // Realtime: lyssna på nya meddelanden i vald konversation
@@ -140,19 +148,30 @@ export default function InboxClient({
         (payload) => {
           const row = payload.new as Record<string, unknown>
           const id = row?.id as string | undefined
+          const senderId = (row?.sender_id as string) ?? ''
           if (!id) return
+          const isFromOther = senderId !== userId
           setMessages((prev) => {
             if (prev.some((m) => m.id === id)) return prev
             const msg: Message = {
               id,
               conversation_id: (row.conversation_id as string) ?? selectedConversation.id,
-              sender_id: (row.sender_id as string) ?? '',
+              sender_id: senderId,
               content: (row.content as string) ?? '',
-              is_read: (row.is_read as boolean) ?? false,
+              is_read: isFromOther ? true : ((row.is_read as boolean) ?? false),
               created_at: (row.created_at as string) ?? new Date().toISOString(),
             }
             return [...prev, msg]
           })
+          if (isFromOther) {
+            markAsReadAction(selectedConversation.id).then(() => {
+              setConversations((prev) =>
+                prev.map((c) =>
+                  c.id === selectedConversation.id ? { ...c, hasUnread: false } : c
+                )
+              )
+            })
+          }
         }
       )
       .subscribe()
@@ -445,8 +464,11 @@ export default function InboxClient({
                     </div>
                   </div>
 
-                  {/* Zon 2: Meddelandelista — ENDA stället som scrollar (oberoende av input) */}
-                  <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain p-4 space-y-4 bg-brand-beige/40 scroll-smooth">
+                  {/* Zon 2: Meddelandelista — scrollar endast här, aldrig hela sidan */}
+                  <div
+                    ref={messagesContainerRef}
+                    className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain p-4 space-y-4 bg-brand-beige/40 scroll-smooth"
+                  >
                     {loadingMessages ? (
                       <div className="text-center text-brand-text text-sm antialiased">
                         Laddar meddelanden...
@@ -521,7 +543,6 @@ export default function InboxClient({
                           </div>
                         )
                       })}
-                      <div ref={messagesEndRef} aria-hidden />
                       </>
                     )}
                   </div>
@@ -535,9 +556,17 @@ export default function InboxClient({
                     ) : (
                       <form onSubmit={handleSendMessage} className="flex gap-2 items-center">
                         <input
+                          ref={inputRef}
                           type="text"
                           value={newMessage}
                           onChange={(e) => setNewMessage(e.target.value)}
+                          onFocus={() => {
+                            if (typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches) {
+                              requestAnimationFrame(() => {
+                                inputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+                              })
+                            }
+                          }}
                           placeholder={t.chat.placeholder}
                           className="flex-1 min-w-0 p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-brand-text antialiased bg-white"
                           disabled={sending}

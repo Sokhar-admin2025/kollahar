@@ -175,6 +175,17 @@ function ListingDetails() {
   useEffect(() => {
     if (!listingId || !ad) return
 
+    // Boat owner = listings.user_id (ägarens user_id). Fallback för olika kolumnnamn.
+    const adAny = ad as Listing & { user_id?: string; owner_id?: string; seller_id?: string }
+    const sellerId = adAny.user_id ?? adAny.owner_id ?? adAny.seller_id
+
+    if (!sellerId || typeof sellerId !== 'string' || !sellerId.trim()) {
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('[listing-view] Saknar seller_id – listing keys:', Object.keys(ad), 'user_id:', adAny.user_id)
+      }
+      return
+    }
+
     const DEBOUNCE_MS = 30 * 60 * 1000
     const key = `listing_view_${listingId}`
 
@@ -189,7 +200,10 @@ function ListingDetails() {
     }
 
     const logView = async () => {
-      const { ok, error } = await logListingViewAction(listingId, ad.user_id, currentUser?.id ?? null)
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[listing-view] Sending view for seller:', sellerId, 'listing:', listingId)
+      }
+      const { ok, error } = await logListingViewAction(listingId, sellerId, currentUser?.id ?? null)
       if (ok) {
         try {
           sessionStorage.setItem(key, String(Date.now()))
@@ -202,7 +216,7 @@ function ListingDetails() {
     }
 
     logView()
-  }, [listingId, ad?.id, currentUser?.id])
+  }, [listingId, ad, currentUser?.id])
 
   const handleContact = async () => {
     if (!ad) return
