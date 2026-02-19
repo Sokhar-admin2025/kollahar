@@ -93,8 +93,19 @@ export const DASHBOARD_TEXTS = {
           title: "Följ oss",
           links: ["Instagram", "Facebook", "LinkedIn", "TikTok"]
         }
-      ]
+      ],
+      // URL:er för Kontakt-sidan (och ev. footer). Uppdatera vid behov.
+      socialUrls: {
+        instagram: "https://instagram.com/kollahar.se",
+        facebook: "https://www.facebook.com/share/1Dsai11D1S/?mibextid=wwXIfr"
+      }
     }
+  },
+
+  // --- KONTAKT-SIDAN ---
+  contact: {
+    responseTime: "Vi svarar vanligtvis inom 1–2 arbetsdagar.",
+    followUs: "Följ oss"
   },
 
   // --- DETALJSIDAN (Annons-sidan) ---
