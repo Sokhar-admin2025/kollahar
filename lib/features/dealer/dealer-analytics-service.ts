@@ -10,8 +10,8 @@ export interface ListingWithStats {
   bortskankes: boolean
   views: number
   leads: number
-  /** Health: (views > 0) AND (>= 3 images) AND (description > 100 chars) */
-  health: boolean
+  /** Health %: +40% (>3 images), +30% (desc>200), +30% (≥1 view) */
+  healthScore: number
 }
 
 export interface DealerDashboardData {
@@ -19,8 +19,8 @@ export interface DealerDashboardData {
   hotLeadsLast30Days: number
   unreadChatMessages: number
   activeListingsCount: number
-  /** Inventory Health: active listings where health = true */
-  healthyListingsCount: number
+  /** Inventory Health: average health % across active listings */
+  averageHealthPercent: number
   trendingListings: { id: string; title: string; views: number }[]
   priceDropListings: { id: string; title: string; price: number; previous_price: number }[]
   inventory: ListingWithStats[]
@@ -122,19 +122,19 @@ export async function getDealerDashboardData(
       hotLeadsLast30Days,
       unreadChatMessages,
       activeListingsCount: 0,
-      healthyListingsCount: 0,
+      averageHealthPercent: 0,
       trendingListings: [],
       priceDropListings: [],
       inventory: [],
     }
   }
 
-  // Use listing_views for Total Views (client-side view tracker)
+  // Use listing_views for Total Views – query by seller_id for efficiency
   const [viewsRes] = await Promise.all([
     listClient
       .from('listing_views')
       .select('listing_id, created_at')
-      .in('listing_id', listingIds),
+      .eq('seller_id', orgOwnerId),
   ])
 
   const viewsData = (viewsRes.data ?? []) as { listing_id: string; created_at: string }[]
@@ -217,7 +217,10 @@ export async function getDealerDashboardData(
       const views = viewsByListing.get(l.id) ?? 0
       const images = l.images ?? []
       const descLen = (l.description ?? '').length
-      const health = views > 0 && images.length >= 3 && descLen > 100
+      const healthScore =
+        (images.length > 3 ? 40 : 0) +
+        (descLen > 200 ? 30 : 0) +
+        (views >= 1 ? 30 : 0)
       return {
         id: l.id,
         title: l.title,
@@ -227,21 +230,26 @@ export async function getDealerDashboardData(
         bortskankes: l.bortskankes,
         views,
         leads: leadsByListing.get(l.id) ?? 0,
-        health,
+        healthScore,
       }
     }
   )
 
-  const healthyListingsCount = inventory.filter(
-    (l) => l.status === 'active' && l.health
-  ).length
+  const activeInventory = inventory.filter((l) => l.status === 'active')
+  const averageHealthPercent =
+    activeInventory.length > 0
+      ? Math.round(
+          activeInventory.reduce((s, l) => s + l.healthScore, 0) /
+            activeInventory.length
+        )
+      : 0
 
   return {
     totalViews,
     hotLeadsLast30Days,
     unreadChatMessages,
     activeListingsCount: activeListings.length,
-    healthyListingsCount,
+    averageHealthPercent,
     trendingListings,
     priceDropListings,
     inventory,

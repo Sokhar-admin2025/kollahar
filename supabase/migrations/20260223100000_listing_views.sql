@@ -2,14 +2,17 @@
 CREATE TABLE IF NOT EXISTS public.listing_views (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   listing_id uuid NOT NULL REFERENCES public.listings(id) ON DELETE CASCADE,
+  seller_id uuid REFERENCES auth.users(id) ON DELETE SET NULL,
   viewer_id uuid REFERENCES auth.users(id) ON DELETE SET NULL,
   created_at timestamptz DEFAULT now()
 );
 
 CREATE INDEX IF NOT EXISTS idx_listing_views_listing_id ON public.listing_views(listing_id);
+CREATE INDEX IF NOT EXISTS idx_listing_views_seller_id ON public.listing_views(seller_id);
 CREATE INDEX IF NOT EXISTS idx_listing_views_created_at ON public.listing_views(created_at);
 
 COMMENT ON TABLE public.listing_views IS 'Page views for listings – logged client-side when annons/[id] is viewed';
+COMMENT ON COLUMN public.listing_views.seller_id IS 'Säljaren (listings.user_id) – för dashboard-query';
 
 ALTER TABLE public.listing_views ENABLE ROW LEVEL SECURITY;
 

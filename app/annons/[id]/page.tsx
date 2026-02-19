@@ -170,7 +170,8 @@ function ListingDetails() {
     }
   }, [listingId])
 
-  // View tracker – log page view with 30-min debounce (refresh doesn't count as new view)
+  // View tracker – logs views from both logged-in and anonymous users.
+  // sessionStorage prevents double-counting: same listing in same tab/session within 30 min = 1 view.
   useEffect(() => {
     if (!listingId || !ad) return
 
@@ -184,11 +185,11 @@ function ListingDetails() {
         if (!Number.isNaN(ts) && Date.now() - ts < DEBOUNCE_MS) return
       }
     } catch {
-      // sessionStorage not available
+      // sessionStorage not available (e.g. private mode)
     }
 
     const logView = async () => {
-      const { ok } = await logListingViewAction(listingId, currentUser?.id ?? null)
+      const { ok } = await logListingViewAction(listingId, ad.user_id, currentUser?.id ?? null)
       if (ok) {
         try {
           sessionStorage.setItem(key, String(Date.now()))

@@ -29,6 +29,29 @@ export default function AboutPage() {
                 </p>
               </section>
 
+              {/* Inkludering & tillgänglighet */}
+              <section>
+                <h2 className="text-xl font-semibold mb-3 antialiased">För alla – på riktigt</h2>
+                <p className="mb-3">
+                  Vi vill att Kolla här! ska kännas som en trygg plats för alla, oavsett bakgrund, erfarenhet
+                  eller funktionsnedsättning. Därför jobbar vi steg för steg med tillgänglighet enligt
+                  gällande riktlinjer (t.ex. WCAG och EU:s tillgänglighetskrav), bättre kontraster, tydligare
+                  texter och ett gränssnitt som fungerar med hjälpmedel.
+                </p>
+                <p>
+                  Perfekt blir vi aldrig – men vi lyssnar, justerar och förbättrar hela tiden. Hör gärna av dig
+                  om du stöter på något som gör tjänsten svår att använda, så tar vi det vidare in i vår
+                  backlog. Du kan alltid nå oss på{' '}
+                  <a
+                    href="mailto:hej@kollahar.se"
+                    className="text-brand-green underline hover:text-brand-green/80"
+                  >
+                    hej@kollahar.se
+                  </a>
+                  .
+                </p>
+              </section>
+
               {/* Community-driven Beta */}
               <section className="bg-brand-beige rounded-lg p-6 border border-brand-green/10">
                 <h2 className="text-xl font-semibold mb-3 antialiased">Vi bygger detta tillsammans</h2>

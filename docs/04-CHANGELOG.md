@@ -9,8 +9,8 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 ### ✨ Tillagt
 
 #### View Tracker & Inventory Health (Dealer Command Center)
-- **listing_views:** Ny tabell (`listing_id`, `viewer_id`, `created_at`) för sidvisningar. RLS: alla får INSERT.
-- **View-logging:** Klient-effekt i `app/annons/[id]/page.tsx` anropar `logListingViewAction` vid visning. Debounce: 30 min via sessionStorage så refresh inte räknas som ny visning.
+- **listing_views:** Ny tabell (`listing_id`, `seller_id`, `viewer_id`, `created_at`) för sidvisningar. RLS: alla får INSERT.
+- **View-logging:** Klient-effekt i `app/annons/[id]/page.tsx` anropar `logListingViewAction` vid visning. Både inloggade och anonyma användare räknas. `sessionStorage` (30 min) förhindrar dubbelräkning i samma flik/session.
 - **Total Views:** Dealer-analytics använder nu `listing_views` (inte längre `analytics_events`) för Total Views och Trending.
 - **Inventory Health:** Health = (views > 0) AND (>= 3 bilder) AND (beskrivning > 100 tecken). Dashboard visar "X av Y friska" och Health-kolumn i inventarietabellen.
 - **Dokumentation:** `docs/02-BACKEND_DATABASE.md` – utökad sektion om supabaseAdmin, leads, listing_views.

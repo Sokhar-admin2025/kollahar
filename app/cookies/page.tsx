@@ -18,6 +18,14 @@ export default function CookiesPage() {
 
             <div className="space-y-6 text-brand-text leading-relaxed antialiased">
               <section>
+                <p className="mb-4">
+                  Vi använder cookies (\"kakor\") för att få sajten att fungera, hålla dig inloggad och – om du
+                  vill – hjälpa oss att förstå hur tjänsten används så att vi kan förbättra den. Här förklarar
+                  vi kort vilka typer av cookies vi använder.
+                </p>
+              </section>
+
+              <section>
                 <h2 className="text-xl font-semibold text-brand-green mb-3">
                   Nödvändiga cookies
                 </h2>
@@ -60,8 +68,19 @@ export default function CookiesPage() {
               </section>
 
               <section>
-                <p className="text-brand-green font-medium">
-                  Vi spårar dig inte i onödan.
+                <p className="text-brand-green font-medium mb-2">
+                  Vi spårar dig inte i onödan – och du kan alltid välja bort allt utom det som är
+                  absolut nödvändigt för att tjänsten ska fungera.
+                </p>
+                <p>
+                  Har du frågor om hur vi använder cookies eller Sentry? Hör av dig på{' '}
+                  <a
+                    href="mailto:hej@kollahar.se"
+                    className="text-brand-green underline hover:text-brand-green/80"
+                  >
+                    hej@kollahar.se
+                  </a>
+                  .
                 </p>
               </section>
 
@@ -72,6 +91,10 @@ export default function CookiesPage() {
                 >
                   ← Tillbaka till startsidan
                 </Link>
+              </p>
+
+              <p className="mt-4 text-sm text-brand-text/70">
+                Senast uppdaterad: 2026-02-19
               </p>
             </div>
           </div>

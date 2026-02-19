@@ -556,9 +556,10 @@ Vissa operationer kräver **admin-nivå** behörighet mot Supabase – både fö
 
 Tabellen `listing_views` loggar sidvisningar för annonser (`/annons/[id]`):
 
-- **Kolumner:** `listing_id`, `viewer_id` (nullable), `created_at`
+- **Kolumner:** `listing_id`, `seller_id` (listings.user_id), `viewer_id` (nullable), `created_at`
 - **Loggning:** Klient-effekt i `app/annons/[id]/page.tsx` anropar `logListingViewAction` (server action).
-- **Debounce:** `sessionStorage` med 30 minuters intervall – refresh räknas inte som ny visning.
+- **Inloggade och anonyma:** Båda räknas. `viewer_id` sätts till användar-id vid inloggning, annars `null`.
+- **Dubbelräkning:** `sessionStorage` med nyckel `listing_view_{id}` och 30 minuters intervall – samma flik/session inom 30 min = 1 visning (refresh räknas inte som ny).
 - **RLS:** Endast INSERT (alla får logga). Läses via `supabaseAdmin` i dealer-analytics.
 
 ### Säkerhetsprinciper

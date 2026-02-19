@@ -98,7 +98,7 @@ Phase 3.5 lägger till smarta lead-notiser, multi-user-stöd för dealers och f�
 
 ## 7. UPPDATERINGAR (View Tracker, Leads, supabaseAdmin)
 
-- **listing_views:** Ny tabell för sidvisningar. Klient loggar via `logListingViewAction` vid `/annons/[id]`; 30 min debounce.
+- **listing_views:** Ny tabell för sidvisningar. Klient loggar via `logListingViewAction` vid `/annons/[id]`. Både inloggade och anonyma användare räknas. `sessionStorage` (30 min) förhindrar dubbelräkning i samma flik/session.
 - **Dealer-analytics:** Använder `supabaseAdmin` för leads, listings, listing_views (bypassar RLS). Total Views från `listing_views`.
 - **Inventory Health:** Health = (views > 0) AND (>= 3 bilder) AND (beskrivning > 100 tecken).
 - **Leads Realtime:** Subscription på `leads` för live-uppdatering av Hot Leads-räknaren.
