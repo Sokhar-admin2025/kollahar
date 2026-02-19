@@ -174,7 +174,9 @@ export async function getDealerDashboardData(
   }
 
   for (const l of leadsAll) {
-    leadsByListing.set(l.listing_id, (leadsByListing.get(l.listing_id) ?? 0) + 1)
+    if (l.listing_id) {
+      leadsByListing.set(l.listing_id, (leadsByListing.get(l.listing_id) ?? 0) + 1)
+    }
   }
 
   const totalViews = viewsData.length

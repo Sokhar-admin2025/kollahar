@@ -1,31 +1,41 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { supabaseAdmin } from '@/lib/supabase/admin'
 
 /**
  * Log a listing view. Called from client when annons/[id] page is viewed.
- * Accepts both logged-in users (viewerId) and anonymous users (viewerId = null).
- * Client uses sessionStorage to prevent double-counting same listing in same tab/session.
+ * Uses supabaseAdmin to bypass RLS – säkerställer att insert fungerar för anonyma och inloggade.
  * @param sellerId - listings.user_id, used for dashboard query (seller_id = orgOwnerId)
  */
 export async function logListingViewAction(
   listingId: string,
   sellerId: string,
   viewerId?: string | null
-): Promise<{ ok: boolean }> {
-  if (!listingId?.trim()) return { ok: false }
-  if (!sellerId?.trim()) return { ok: false }
+): Promise<{ ok: boolean; error?: string }> {
+  if (!listingId?.trim()) return { ok: false, error: 'missing_listing_id' }
+  if (!sellerId?.trim()) return { ok: false, error: 'missing_seller_id' }
+
+  if (!supabaseAdmin) {
+    console.error('[listing-view] supabaseAdmin saknas – SUPABASE_SERVICE_ROLE_KEY krävs')
+    return { ok: false, error: 'server_config' }
+  }
 
   try {
-    const supabase = await createClient()
-    await supabase.from('listing_views').insert({
+    const { error } = await supabaseAdmin.from('listing_views').insert({
       listing_id: listingId.trim(),
       seller_id: sellerId.trim(),
       viewer_id: viewerId?.trim() || null,
     })
+
+    if (error) {
+      console.error('[listing-view] insert failed:', error.message, 'code:', error.code, 'details:', error.details)
+      return { ok: false, error: error.message }
+    }
+
     return { ok: true }
   } catch (err) {
-    console.error('[listing-view] logListingViewAction failed:', err)
-    return { ok: false }
+    const msg = err instanceof Error ? err.message : String(err)
+    console.error('[listing-view] logListingViewAction failed:', msg)
+    return { ok: false, error: msg }
   }
 }

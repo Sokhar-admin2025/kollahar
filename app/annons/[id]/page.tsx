@@ -189,13 +189,15 @@ function ListingDetails() {
     }
 
     const logView = async () => {
-      const { ok } = await logListingViewAction(listingId, ad.user_id, currentUser?.id ?? null)
+      const { ok, error } = await logListingViewAction(listingId, ad.user_id, currentUser?.id ?? null)
       if (ok) {
         try {
           sessionStorage.setItem(key, String(Date.now()))
         } catch {
           // ignore
         }
+      } else if (process.env.NODE_ENV === 'development') {
+        console.warn('[listing-view] logListingViewAction failed:', error ?? 'unknown')
       }
     }
 

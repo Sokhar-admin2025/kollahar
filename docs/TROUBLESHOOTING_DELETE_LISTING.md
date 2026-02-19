@@ -34,5 +34,5 @@ Vid fel loggas nu:
 | Fel i logg | Orsak | Åtgärd |
 |------------|-------|--------|
 | `supabaseAdmin saknas` | Nyckel saknas eller fel miljö | Sätt `SUPABASE_SERVICE_ROLE_KEY` för Production, redeploy |
-| `deleteError: ... foreign key` | FK-constraint blockerar | Kontrollera att child-tabeller har ON DELETE CASCADE |
+| `deleteError: ... foreign key` | FK-constraint blockerar | Kör `supabase/manual_run_conversations_listing_cascade.sql` i Supabase SQL Editor |
 | `Ingen rad raderad` | RLS eller filter matchar inte | Används ej med service role – kontrollera att admin används |
