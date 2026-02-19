@@ -495,6 +495,11 @@ Migrations ligger i `supabase/migrations/`:
 - `20260206100000_public_read_sold_listings.sql`: Lägger till RLS-policy "Public read sold listings" på `listings` så att besökare kan läsa sålda annonser (visas som "Såld" på annonssidan).
 - `20260207100000_profiles_public_seller_fields.sql`: Lägger till kolumner på `profiles`: `created_at`, `account_type`, `website`, `is_company_verified`, `org_number` (för publika säljprofiler).
 - `20260212100000_user_hidden_conversations.sql`: Skapar `user_hidden_conversations` för soft delete av chattar (användare kan dölja konversationer för sig själva).
+- `20260220100000_leads_seller_buyer_ids.sql`: Lägger till `seller_id` och `buyer_id` på `leads`.
+- `20260221100000_profiles_email_notifications.sql`: Lägger till `email_notifications` (boolean) på `profiles`.
+- `20260221200000_leads_rls_seller_id.sql`: RLS-policy så säljare kan läsa leads där `seller_id = auth.uid()`.
+- `20260222100000_leads_realtime.sql`: Lägger till `leads` i `supabase_realtime`-publikationen för live-uppdatering.
+- `20260223100000_listing_views.sql`: Skapar `listing_views` för view-tracker (Total Views i Dealer Command Center).
 
 Utöver migrations finns även manuella setup-skript:
 
@@ -514,7 +519,7 @@ supabase migration new migration_name
 
 ## 🔐 Admin-åtkomst & Service Role (SUPABASE_SERVICE_ROLE_KEY)
 
-Vissa operationer kräver **admin-nivå** behörighet mot Supabase (t.ex. att radera ett konto helt, inklusive raden i `auth.users`).
+Vissa operationer kräver **admin-nivå** behörighet mot Supabase – både för `auth.admin`-operationer och för att bypassa RLS vid behov.
 
 ### Service Role-nyckeln
 
@@ -528,17 +533,39 @@ Vissa operationer kräver **admin-nivå** behörighet mot Supabase (t.ex. att ra
 - `lib/supabase/admin.ts`
   - Skapar en admin-klient (`supabaseAdmin`) **endast på serversidan**.
   - Har skydd mot användning i browser (`if (typeof window !== 'undefined') throw ...`).
+  - Om nyckeln saknas blir `supabaseAdmin` `null`; tjänster faller tillbaka till vanlig Supabase-klient (RLS gäller då).
 - `app/api/delete-account/route.ts`
-  - Använder `supabaseAdmin?.auth.admin.deleteUser(user.id)` för att:
-    - Ta bort användaren från `auth.users`
-    - Låta `ON DELETE CASCADE` i `profiles` och `listings` rensa relaterad data
-  - Faller tillbaka till RLS-skyddad radering (favorites/listings/profiles) om service role saknas.
+  - Använder `supabaseAdmin?.auth.admin.deleteUser(user.id)` för att ta bort från `auth.users`.
+- **Dealer-analytics** – leads, listings, listing_views:
+  - `lib/features/dealer/dealer-analytics-service.ts` använder `supabaseAdmin` för att läsa `leads`, `listings` och `listing_views`.
+  - Orsak: RLS på dessa tabeller kan blockera även korrekt data (t.ex. cookie-/session-problem). Sidan har redan verifierat att användaren är dealer; vi filtrerar strikt på `user_id`/`seller_id` = orgOwnerId.
+- **Lead-notiser** (`app/actions/lead-notification-action.ts`): `supabaseAdmin.auth.admin.getUserById` för att hämta mottagarens e-post.
+- **Meddelandenotiser** (`app/actions/new-message-notification-action.ts`): samma mönster för e-postuppslag.
+
+### Leads & Views med supabaseAdmin
+
+| Tabell         | Användning                         | Varför supabaseAdmin?                         |
+|----------------|------------------------------------|-----------------------------------------------|
+| `leads`        | Hot Leads-räknare i Dealer Dashboard | RLS kan blockera även när `seller_id = auth.uid()` |
+| `listings`     | Inventariefråga för dealer          | Samma – sidan har redan verifierat dealer     |
+| `listing_views`| Total Views för dealer              | Inga RLS-läsproblem; konsekvent med övrigt    |
+
+**Säkerhet:** Alla dessa frågor filtrerar strikt på `user_id`/`seller_id` = `orgOwnerId`. Dealern har redan godkänts via `account_type = 'company'`. Ingen annan dealers data läcks.
+
+### Listing_views – View Tracker
+
+Tabellen `listing_views` loggar sidvisningar för annonser (`/annons/[id]`):
+
+- **Kolumner:** `listing_id`, `viewer_id` (nullable), `created_at`
+- **Loggning:** Klient-effekt i `app/annons/[id]/page.tsx` anropar `logListingViewAction` (server action).
+- **Debounce:** `sessionStorage` med 30 minuters intervall – refresh räknas inte som ny visning.
+- **RLS:** Endast INSERT (alla får logga). Läses via `supabaseAdmin` i dealer-analytics.
 
 ### Säkerhetsprinciper
 
 1. **Ingen klientåtkomst**: Inga `NEXT_PUBLIC_`-prefix på service-role-nyckeln.
-2. **Minsta möjliga yta**: Endast `delete-account`-flödet använder admin-klienten.
-3. **RLS som backup**: Fallback-logik använder alltid `auth.uid()` + RLS vid radering av publika tabeller.
+2. **Strikt filtrering**: Alla admin-frågor filtrerar på verifierad användare/org.
+3. **RLS som backup**: Vid saknad service role faller tjänster tillbaka till vanlig klient; RLS gäller då.
 
 ---
 

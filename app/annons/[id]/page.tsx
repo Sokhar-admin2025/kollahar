@@ -8,6 +8,7 @@ import Image from 'next/image'
 import { DASHBOARD_TEXTS } from '@/app/lib/content'
 import Button from '@/app/components/atoms/Button'
 import { createConversationAction } from '@/app/actions/message-actions'
+import { logListingViewAction } from '@/app/actions/listing-view-actions'
 import FavoriteButton from '@/app/components/FavoriteButton'
 import { createClient } from '@/lib/supabase/client'
 import type { Listing } from '@/app/types'
@@ -168,6 +169,37 @@ function ListingDetails() {
       subscription.unsubscribe()
     }
   }, [listingId])
+
+  // View tracker – log page view with 30-min debounce (refresh doesn't count as new view)
+  useEffect(() => {
+    if (!listingId || !ad) return
+
+    const DEBOUNCE_MS = 30 * 60 * 1000
+    const key = `listing_view_${listingId}`
+
+    try {
+      const last = sessionStorage.getItem(key)
+      if (last) {
+        const ts = Number(last)
+        if (!Number.isNaN(ts) && Date.now() - ts < DEBOUNCE_MS) return
+      }
+    } catch {
+      // sessionStorage not available
+    }
+
+    const logView = async () => {
+      const { ok } = await logListingViewAction(listingId, currentUser?.id ?? null)
+      if (ok) {
+        try {
+          sessionStorage.setItem(key, String(Date.now()))
+        } catch {
+          // ignore
+        }
+      }
+    }
+
+    logView()
+  }, [listingId, ad?.id, currentUser?.id])
 
   const handleContact = async () => {
     if (!ad) return

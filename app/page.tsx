@@ -22,23 +22,24 @@ type HomePageSearchParams = {
 }
 
 interface HomePageProps {
-  searchParams?: HomePageSearchParams
+  searchParams?: Promise<HomePageSearchParams>
 }
 
 export default async function HomePage({ searchParams }: HomePageProps) {
-  const qParam = searchParams?.q
-  const categoryParam = searchParams?.category
-  const locationParam = searchParams?.location
-  const minPriceParam = searchParams?.minPrice
-  const maxPriceParam = searchParams?.maxPrice
-  const minYearParam = searchParams?.minYear
-  const maxYearParam = searchParams?.maxYear
-  const maxMileageParam = searchParams?.maxMileage
-  const makeParam = searchParams?.make
-  const modelParam = searchParams?.model
-  const sortParam = searchParams?.sort
-  const bortskankesParam = searchParams?.bortskankes
-  const sellerParam = searchParams?.seller
+  const params = (await searchParams) ?? {}
+  const qParam = params.q
+  const categoryParam = params.category
+  const locationParam = params.location
+  const minPriceParam = params.minPrice
+  const maxPriceParam = params.maxPrice
+  const minYearParam = params.minYear
+  const maxYearParam = params.maxYear
+  const maxMileageParam = params.maxMileage
+  const makeParam = params.make
+  const modelParam = params.model
+  const sortParam = params.sort
+  const bortskankesParam = params.bortskankes
+  const sellerParam = params.seller
 
   const toStringOrUndefined = (value: string | string[] | undefined): string | undefined => {
     if (!value) return undefined

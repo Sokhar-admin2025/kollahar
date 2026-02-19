@@ -3,6 +3,10 @@ import { createClient } from '@/lib/supabase/server'
 import { getDealerDashboardData } from '@/lib/features/dealer/dealer-analytics-service'
 import DealerDashboardClient from '@/app/components/DealerDashboardClient'
 
+// Bypass Next.js cache – dashboard data must be fresh
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export default async function DealerDashboardPage() {
   const supabase = await createClient()
   const {
@@ -41,6 +45,7 @@ export default async function DealerDashboardPage() {
       companyName={companyName}
       data={data}
       userId={user.id}
+      orgOwnerId={orgOwnerId}
     />
   )
 }

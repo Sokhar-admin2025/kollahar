@@ -48,6 +48,7 @@ export default function InboxClient({
   const [leadPhone, setLeadPhone] = useState('')
   const [mounted, setMounted] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     setMounted(true)
@@ -113,6 +114,11 @@ export default function InboxClient({
 
     load()
   }, [selectedConversation?.id, userId])
+
+  // Scroll till botten vid nya meddelanden
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
 
   // Realtime: lyssna på nya meddelanden i vald konversation
   useEffect(() => {
@@ -253,7 +259,7 @@ export default function InboxClient({
 
   return (
     <div className="h-full min-h-0 flex flex-col overflow-hidden bg-brand-beige">
-      {/* Fyll tillgängligt utrymme (layout har Footer under) – flex-1 så Chrome inte trycker ner skrivfältet */}
+      {/* Meddelandelistan scrollar – inputen är sticky längst ner med tydlig avgränsning */}
       <div className="flex-1 min-h-0 flex flex-col overflow-hidden max-w-6xl mx-auto w-full">
         <div className="flex-shrink-0 px-4 md:px-6 pt-6">
           <h1 className="text-2xl font-display text-brand-green mb-4">{t.pageTitle}</h1>
@@ -439,8 +445,8 @@ export default function InboxClient({
                     </div>
                   </div>
 
-                  {/* Zon 2: Meddelandelista — ENDA stället som scrollar */}
-                  <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain p-4 space-y-4 bg-brand-beige/50">
+                  {/* Zon 2: Meddelandelista — ENDA stället som scrollar (oberoende av input) */}
+                  <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain p-4 space-y-4 bg-brand-beige/40 scroll-smooth">
                     {loadingMessages ? (
                       <div className="text-center text-brand-text text-sm antialiased">
                         Laddar meddelanden...
@@ -485,7 +491,8 @@ export default function InboxClient({
                         Inga meddelanden än. Skriv ett meddelande nedan.
                       </div>
                     ) : (
-                      messages.map((msg) => {
+                      <>
+                      {messages.map((msg) => {
                         const isMe = msg.sender_id === userId
                         return (
                           <div
@@ -513,12 +520,14 @@ export default function InboxClient({
                             </div>
                           </div>
                         )
-                      })
+                      })}
+                      <div ref={messagesEndRef} aria-hidden />
+                      </>
                     )}
                   </div>
 
-                  {/* Zon 3: Input (döljs när chatten är stängd) eller meddelande om stängd chat */}
-                  <div className="flex-shrink-0 z-20 border-t border-gray-200 bg-white p-4 shadow-[0_-4px_20px_-8px_rgba(0,0,0,0.12)] pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+                  {/* Zon 3: Input sticky längst ner – tydligt avgränsad från meddelandelistan */}
+                  <div className="flex-shrink-0 sticky bottom-0 z-20 border-t-2 border-gray-200/80 bg-white/95 backdrop-blur-sm p-4 shadow-[0_-8px_24px_-8px_rgba(0,0,0,0.15)] pb-[max(0.5rem,env(safe-area-inset-bottom))]">
                     {isListingClosed(selectedConversation) ? (
                       <p className="text-center text-brand-text/70 text-sm py-2 antialiased">
                         Du kan inte skicka nya meddelanden – chatten är stängd.

@@ -31,4 +31,6 @@ export interface Profile {
   is_admin?: boolean
   /** Pekar på huvuddealer – säljare har denna satt */
   parent_organization_id?: string | null
+  /** E-post vid nya meddelanden – default true */
+  email_notifications?: boolean
 }

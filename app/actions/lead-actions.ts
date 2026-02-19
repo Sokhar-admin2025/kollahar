@@ -47,6 +47,8 @@ export async function submitLeadCardAction(
     const leadResult = await createLead({
       conversationId,
       listingId,
+      sellerId,
+      buyerId: user.id,
       buyerName: buyerName.trim(),
       buyerPhone: buyerPhone.trim(),
     })

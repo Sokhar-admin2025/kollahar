@@ -8,6 +8,28 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ### ✨ Tillagt
 
+#### View Tracker & Inventory Health (Dealer Command Center)
+- **listing_views:** Ny tabell (`listing_id`, `viewer_id`, `created_at`) för sidvisningar. RLS: alla får INSERT.
+- **View-logging:** Klient-effekt i `app/annons/[id]/page.tsx` anropar `logListingViewAction` vid visning. Debounce: 30 min via sessionStorage så refresh inte räknas som ny visning.
+- **Total Views:** Dealer-analytics använder nu `listing_views` (inte längre `analytics_events`) för Total Views och Trending.
+- **Inventory Health:** Health = (views > 0) AND (>= 3 bilder) AND (beskrivning > 100 tecken). Dashboard visar "X av Y friska" och Health-kolumn i inventarietabellen.
+- **Dokumentation:** `docs/02-BACKEND_DATABASE.md` – utökad sektion om supabaseAdmin, leads, listing_views.
+
+#### Leads & Dashboard: supabaseAdmin, RLS, Realtime
+- **supabaseAdmin för leads/listings/listing_views:** Dealer-analytics använder service role för att bypassa RLS (avoids session/cookie-issues). Filtrerar strikt på `seller_id`/`user_id` = orgOwnerId.
+- **Fallback:** Om `listingIds` är tom räknas Hot Leads fortfarande (fråga på `seller_id` endast).
+- **Realtime:** Supabase- subscription på `leads` så Hot Leads-räknaren uppdateras live vid nya leads.
+- **Cache bypass:** `dynamic = 'force-dynamic'`, `revalidate = 0` på dealer-sidan.
+- **Migrationer:** `leads_rls_seller_id`, `leads_realtime`, `listing_views`.
+
+#### Sökfält & Next.js 15+ searchParams
+- **app/page.tsx:** `searchParams` är nu `Promise`; await före användning (Next.js 15+ breaking change).
+
+#### E-postnotiser för nya meddelanden
+- **profiles.email_notifications:** Boolean, default true. Användare kan stänga av notiser i inställningar (kolumnen finns; UI kommer).
+- **new-message-notification:** E-post till privat säljare/köpare vid nytt meddelande. 15-minuterskontroll för att undvika spam till aktiva användare.
+- **Integrering:** `sendMessageAction` anropar `triggerNewMessageNotification` efter lyckat meddelande.
+
 #### Radera konto: fix, lead bevaras, toast + Header
 - **API** (`app/api/delete-account/route.ts`): Rensning i ordning (user_hidden_conversations → messages → conversations → …) med fail-fast vid fel. **Lead-rader raderas inte** – företagets lead-statistik påverkas inte när köpare raderar konto.
 - **Migration** (`20260219100000_leads_preserve_on_buyer_delete.sql`): `leads.conversation_id` nullable + ON DELETE SET NULL så att lead-rader behålls när konversationen försvinner (kontoradering).

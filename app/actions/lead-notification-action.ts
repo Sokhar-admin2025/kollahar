@@ -3,6 +3,7 @@
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { sendLeadNotification } from '@/lib/email/lead-notification'
+import { createLead } from '@/lib/features/leads/lead-service'
 
 const BASE_URL =
   process.env.NEXT_PUBLIC_APP_URL ||
@@ -13,6 +14,7 @@ const BASE_URL =
  * Trigger lead notification – anropas vid lead-kort OCH första meddelandet.
  * Recipient: contact_email om satt, annars ägarens e-post.
  * CC: Ägaren om contact_email används och skiljer sig.
+ * Vid lead_card: skapar alltid lead-poster i leads-tabellen innan e-post skickas.
  */
 export async function triggerLeadNotification(params: {
   type: 'lead_card' | 'first_message'
@@ -61,6 +63,27 @@ export async function triggerLeadNotification(params: {
     let claimAccountUrl: string | null = null
     if (contactEmail) {
       claimAccountUrl = `${BASE_URL}/login?tab=signup&email=${encodeURIComponent(contactEmail)}&org=${ownerId}`
+    }
+
+    // Vid lead_card: säkerställ att lead-posten finns i leads (krävs för Dealer Command Center)
+    if (params.type === 'lead_card') {
+      const { data: conv } = await supabase
+        .from('conversations')
+        .select('buyer_id')
+        .eq('id', params.conversationId)
+        .single()
+      const buyerId = (conv as { buyer_id: string } | null)?.buyer_id
+      if (buyerId && params.buyerPhone) {
+        await createLead({
+          conversationId: params.conversationId,
+          listingId: params.listingId,
+          sellerId: ownerId,
+          buyerId,
+          buyerName: params.buyerName,
+          buyerPhone: params.buyerPhone,
+        })
+        // Ignorera fel vid duplicate (record finns redan från submitLeadCardAction)
+      }
     }
 
     const result = await sendLeadNotification({

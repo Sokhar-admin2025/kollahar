@@ -1,7 +1,9 @@
 'use client'
 
+import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { createClient } from '@/lib/supabase/client'
 import {
   TrendingUp,
   Users,
@@ -10,6 +12,7 @@ import {
   ArrowLeft,
   Upload,
   BarChart3,
+  MessageSquare,
 } from 'lucide-react'
 
 import type { DealerDashboardData } from '@/lib/features/dealer/dealer-analytics-service'
@@ -19,13 +22,39 @@ interface DealerDashboardClientProps {
   companyName: string
   data: DealerDashboardData
   userId: string
+  orgOwnerId?: string
 }
 
 export default function DealerDashboardClient({
   companyName,
   data,
+  orgOwnerId,
 }: DealerDashboardClientProps) {
   const router = useRouter()
+  const sellerId = orgOwnerId ?? ''
+
+  useEffect(() => {
+    if (!sellerId) return
+    const supabase = createClient()
+    const channel = supabase
+      .channel('dealer-leads')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'leads',
+          filter: `seller_id=eq.${sellerId}`,
+        },
+        () => {
+          router.refresh()
+        }
+      )
+      .subscribe()
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [sellerId, router])
 
   return (
     <div className="min-h-screen bg-brand-beige dark:bg-gray-900">
@@ -57,7 +86,7 @@ export default function DealerDashboardClient({
         </div>
 
         {/* Stats Grid */}
-        <div className="mb-8 grid gap-4 sm:grid-cols-3">
+        <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
             <div className="flex items-center gap-3">
               <div className="rounded-lg bg-blue-100 p-2.5 dark:bg-blue-900/30">
@@ -88,6 +117,24 @@ export default function DealerDashboardClient({
               </div>
             </div>
           </div>
+          <Link
+            href="/dashboard/messages"
+            className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:border-gray-800 hover:border-brand-green/50 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-emerald-100 p-2.5 dark:bg-emerald-900/30">
+                <MessageSquare className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  Chattmeddelanden
+                </p>
+                <p className="text-2xl font-bold text-brand-text dark:text-white">
+                  {data.unreadChatMessages}
+                </p>
+              </div>
+            </div>
+          </Link>
           <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
             <div className="flex items-center gap-3">
               <div className="rounded-lg bg-green-100 p-2.5 dark:bg-green-900/30">
@@ -98,7 +145,7 @@ export default function DealerDashboardClient({
                   Inventory Health
                 </p>
                 <p className="text-2xl font-bold text-brand-text dark:text-white">
-                  {data.activeListingsCount} aktiva
+                  {data.healthyListingsCount} av {data.activeListingsCount} friska
                 </p>
               </div>
             </div>
@@ -200,6 +247,7 @@ export default function DealerDashboardClient({
                 <tr>
                   <th className="px-4 py-3">Titel</th>
                   <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3">Health</th>
                   <th className="px-4 py-3">Pris</th>
                   <th className="px-4 py-3">Views</th>
                   <th className="px-4 py-3">Leads</th>
@@ -209,7 +257,7 @@ export default function DealerDashboardClient({
                 {data.inventory.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={5}
+                      colSpan={6}
                       className="px-4 py-8 text-center text-gray-500 dark:text-gray-400"
                     >
                       Inga annonser än. Lägg till din första annons.
@@ -240,6 +288,17 @@ export default function DealerDashboardClient({
                           }`}
                         >
                           {row.status === 'active' ? 'Aktiv' : 'Såld'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
+                            row.health
+                              ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400'
+                              : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
+                          }`}
+                        >
+                          {row.health ? 'Frisk' : 'Bör förbättras'}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-brand-text dark:text-gray-300">

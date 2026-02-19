@@ -40,10 +40,12 @@ export default async function MessagesPage({ searchParams }: MessagesPageProps) 
   })
 
   return (
-    <InboxClient
-      initialConversations={enriched}
-      userId={user.id}
-      initialConvId={initialConvId}
-    />
+    <div className="h-[calc(100dvh-7rem)] min-h-[400px] overflow-hidden">
+      <InboxClient
+        initialConversations={enriched}
+        userId={user.id}
+        initialConvId={initialConvId}
+      />
+    </div>
   )
 }

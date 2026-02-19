@@ -96,14 +96,25 @@ Phase 3.5 lägger till smarta lead-notiser, multi-user-stöd för dealers och f�
 
 ---
 
-## 7. SAKNADE / FRAMTIDA UPPGIFTER
+## 7. UPPDATERINGAR (View Tracker, Leads, supabaseAdmin)
 
-- **UI för contact_email/contact_name:** CreateListingForm och listing-actions har ännu inte fält för att sätta dessa. Kolumnerna finns i DB och logiken fungerar – men dealers behöver ett sätt att fylla i dem (t.ex. i redigeringsformuläret eller dealer-dashboarden).
+- **listing_views:** Ny tabell för sidvisningar. Klient loggar via `logListingViewAction` vid `/annons/[id]`; 30 min debounce.
+- **Dealer-analytics:** Använder `supabaseAdmin` för leads, listings, listing_views (bypassar RLS). Total Views från `listing_views`.
+- **Inventory Health:** Health = (views > 0) AND (>= 3 bilder) AND (beskrivning > 100 tecken).
+- **Leads Realtime:** Subscription på `leads` för live-uppdatering av Hot Leads-räknaren.
+- **SUPABASE_SERVICE_ROLE_KEY:** Krävs för dealer-dashboard (leads, listings, listing_views). Se `docs/02-BACKEND_DATABASE.md` för detaljer.
+
+## 8. SAKNADE / FRAMTIDA UPPGIFTER
+
+- **UI för contact_email/contact_name:** CreateListingForm och listing-actions har ännu inte fält för att sätta dessa.
 - **org-param vid signup:** `?org=[id]` skickas med i Claim-länken men används inte ännu för att automatiskt koppla ny användare till organisationen (`parent_organization_id`).
+
+## 9. MILJÖVARIABLER
 
 ---
 
-## 8. MILJÖVARIABLER
+## 9. MILJÖVARIABLER
 
 - `RESEND_API_KEY` – krävs för att skicka lead-notiser
+- `SUPABASE_SERVICE_ROLE_KEY` – krävs för dealer-dashboard (leads, listings, listing_views)
 - `NEXT_PUBLIC_APP_URL` eller `VERCEL_URL` – för korrekta länkar i e-post

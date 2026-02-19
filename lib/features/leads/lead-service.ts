@@ -23,6 +23,8 @@ export async function getLeadByConversationId(
 export async function createLead(params: {
   conversationId: string
   listingId: string
+  sellerId: string
+  buyerId: string
   buyerName: string
   buyerPhone: string
 }): Promise<{ success: boolean; error?: string }> {
@@ -31,6 +33,8 @@ export async function createLead(params: {
   const { error } = await supabase.from('leads').insert({
     conversation_id: params.conversationId,
     listing_id: params.listingId,
+    seller_id: params.sellerId,
+    buyer_id: params.buyerId,
     buyer_name: params.buyerName.trim(),
     buyer_phone: params.buyerPhone.trim(),
     status: 'hot',
