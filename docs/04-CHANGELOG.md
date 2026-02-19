@@ -145,7 +145,7 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ### 📋 Planerat (rangordnat)
 
-1. **🟡 Städning** – Ta bort `/sentry-example-page` när loggarna verifierat
+1. ~~**🟡 Städning** – Ta bort `/sentry-example-page`~~ ✅ Borttagen
 2. **🟢 Båt-attribut** – Filter längd i fot, båttyp m.m.
 
 ---
@@ -160,7 +160,7 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 - **Tunnel:** `/monitoring` för att undvika ad-blockers på client-side rapportering.
 - **instrumentation.ts:** Server/edge-registrering; `onRequestError` för request-fel.
 - **app/global-error.tsx:** Fångar okända fel och skickar till Sentry.
-- **Exempel:** `/sentry-example-page` och `/api/sentry-example-api` för att verifiera att Sentry fungerar.
+- **Verifiering:** Kontrollera fel i Sentry Dashboard.
 - **.gitignore:** `.env.sentry-build-plugin` tillagd.
 
 ---

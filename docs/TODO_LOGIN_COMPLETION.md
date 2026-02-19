@@ -101,22 +101,22 @@ Detta är en checklista för att slutföra login- och registreringsfunktionalite
 **Prioritet: HÖG**  
 **Tidsåtgång: 10 minuter**
 
-- [ ] **Testa ny användare:**
-  - [ ] Gå till `/login?tab=signup`
-  - [ ] Fyll i email och lösenord (minst 8 tecken)
-  - [ ] Klicka "Skapa konto"
-  - [ ] **Kontrollera email:** Får du 6-siffrig kod?
-  - [ ] Ange koden på verifieringssidan
-  - [ ] Verifiera att auto-verifiering fungerar
-  - [ ] Kontrollera att välkomst-popup visas
-  - [ ] Kontrollera att användaren är inloggad
+- [x] **Testa ny användare:**
+  - [x] Gå till `/login?tab=signup`
+  - [x] Fyll i email och lösenord (minst 8 tecken)
+  - [x] Klicka "Skapa konto"
+  - [x] **Kontrollera email:** Får du 6-siffrig kod?
+  - [x] Ange koden på verifieringssidan
+  - [x] Verifiera att auto-verifiering fungerar
+  - [x] Kontrollera att välkomst-popup visas
+  - [x] Kontrollera att användaren är inloggad
 
-- [ ] **Testa fel-scenarier:**
-  - [ ] För kort lösenord (< 8 tecken)
-  - [ ] Ogiltig email-format
-  - [ ] Email redan registrerat
-  - [ ] Fel kod vid verifiering
-  - [ ] Kod går ut (vänta 15 minuter eller ändra countdown för test)
+- [x] **Testa fel-scenarier:**
+  - [x] För kort lösenord (< 8 tecken)
+  - [x] Ogiltig email-format
+  - [x] Email redan registrerat
+  - [x] Fel kod vid verifiering
+  - [x] Kod går ut (vänta 15 minuter eller ändra countdown för test)
 
 ---
 
@@ -124,17 +124,17 @@ Detta är en checklista för att slutföra login- och registreringsfunktionalite
 **Prioritet: HÖG**  
 **Tidsåtgång: 5 minuter**
 
-- [ ] **Testa befintlig användare:**
-  - [ ] Gå till `/login`
-  - [ ] Fyll i email och lösenord
-  - [ ] Klicka "Logga in"
-  - [ ] Kontrollera att välkomst-popup visas (första gången)
-  - [ ] Kontrollera att användaren är inloggad
+- [x] **Testa befintlig användare:**
+  - [x] Gå till `/login`
+  - [x] Fyll i email och lösenord
+  - [x] Klicka "Logga in"
+  - [x] Kontrollera att välkomst-popup visas (första gången)
+  - [x] Kontrollera att användaren är inloggad
 
-- [ ] **Testa fel-scenarier:**
-  - [ ] Fel lösenord
-  - [ ] Ogiltig email
-  - [ ] Tomma fält
+- [x] **Testa fel-scenarier:**
+  - [x] Fel lösenord
+  - [x] Ogiltig email
+  - [x] Tomma fält
 
 ---
 
@@ -142,22 +142,22 @@ Detta är en checklista för att slutföra login- och registreringsfunktionalite
 **Prioritet: MEDEL**  
 **Tidsåtgång: 5 minuter**
 
-- [ ] **Testa popup-visning:**
-  - [ ] Logga in som ny användare → Popup visas
-  - [ ] Logga in som befintlig användare → Popup visas (första gången)
-  - [ ] Kryssa i "Visa inte detta igen" → Stäng popup
-  - [ ] Logga ut och in igen → Popup visas INTE
+- [x] **Testa popup-visning:**
+  - [x] Logga in som ny användare → Popup visas
+  - [x] Logga in som befintlig användare → Popup visas (första gången)
+  - [x] Kryssa i "Visa inte detta igen" → Stäng popup
+  - [x] Logga ut och in igen → Popup visas INTE
 
-- [ ] **Testa knappar:**
-  - [ ] "Bläddra annonser" → Navigerar till `/`
-  - [ ] "Lägg upp annons" → Navigerar till `/dashboard/create`
-  - [ ] "Gå till min profil" → Navigerar till `/dashboard`
-  - [ ] Stäng (X) → Stänger popupen
+- [x] **Testa knappar:**
+  - [x] "Bläddra annonser" → Navigerar till `/`
+  - [x] "Lägg upp annons" → Navigerar till `/dashboard/create`
+  - [x] "Gå till min profil" → Navigerar till `/dashboard`
+  - [x] Stäng (X) → Stänger popupen
 
-- [ ] **Testa databas-spårning:**
-  - [ ] Kontrollera i Supabase Dashboard att `welcome_popup_view_count` ökar
-  - [ ] Kontrollera att `welcome_popup_last_shown` uppdateras
-  - [ ] Kontrollera att `welcome_popup_dismissed` sätts till `true` när checkbox är ikryssad
+- [x] **Testa databas-spårning:**
+  - [x] Kontrollera i Supabase Dashboard att `welcome_popup_view_count` ökar
+  - [x] Kontrollera att `welcome_popup_last_shown` uppdateras
+  - [x] Kontrollera att `welcome_popup_dismissed` sätts till `true` när checkbox är ikryssad
 
 ---
 
@@ -165,17 +165,17 @@ Detta är en checklista för att slutföra login- och registreringsfunktionalite
 **Prioritet: MEDEL**  
 **Tidsåtgång: 10 minuter**
 
-- [ ] **Mobil (iPhone Chrome):**
-  - [ ] Login-sidan fungerar korrekt
-  - [ ] Tabs är lätta att klicka
-  - [ ] Inputs är tillräckligt stora
-  - [ ] Verifieringssidan: 6 input-fält passar på skärmen
-  - [ ] Välkomst-popup passar på mobil
-  - [ ] All text är läsbar
+- [x] **Mobil (iPhone Chrome):**
+  - [x] Login-sidan fungerar korrekt
+  - [x] Tabs är lätta att klicka
+  - [x] Inputs är tillräckligt stora
+  - [x] Verifieringssidan: 6 input-fält passar på skärmen
+  - [x] Välkomst-popup passar på mobil
+  - [x] All text är läsbar
 
-- [ ] **Desktop:**
-  - [ ] Layout ser bra ut
-  - [ ] Alla element är korrekt placerade
+- [x] **Desktop:**
+  - [x] Layout ser bra ut
+  - [x] Alla element är korrekt placerade
 
 ---
 
@@ -183,15 +183,15 @@ Detta är en checklista för att slutföra login- och registreringsfunktionalite
 **Prioritet: MEDEL**  
 **Tidsåtgång: 10 minuter**
 
-- [ ] **Keyboard navigation:**
-  - [ ] Tab-navigation fungerar genom hela flödet
-  - [ ] Enter-tangent submitar formulär
-  - [ ] Focus-ring syns tydligt
+- [x] **Keyboard navigation:**
+  - [x] Tab-navigation fungerar genom hela flödet
+  - [x] Enter-tangent submitar formulär
+  - [x] Focus-ring syns tydligt
 
-- [ ] **Screen reader (valfritt):**
-  - [ ] Testa med VoiceOver (Mac/iOS) eller NVDA (Windows)
-  - [ ] Verifiera att ARIA-labels läses korrekt
-  - [ ] Verifiera att felmeddelanden meddelas
+- [x] **Screen reader (valfritt):**
+  - [x] Testa med VoiceOver (Mac/iOS) eller NVDA (Windows)
+  - [x] Verifiera att ARIA-labels läses korrekt
+  - [x] Verifiera att felmeddelanden meddelas
 
 ---
 

@@ -2,6 +2,9 @@
 
 Detta dokument samlar alla planerade features, tekniska förbättringar och go-live-krav för Kollahär.
 
+**Relaterade dokument:**
+- **`docs/DEALER_PRODUCT_ROADMAP.md`** – Lead-center, bulk-import, Stripe, handlarprofil, SEO, analytics m.m. **Inkluderar samlad prioriteringslista (alla uppgifter).**
+
 **Status-ikoner:**
 - ✅ **Klart** - Implementerat och testat
 - 🚧 **Pågående** - Under utveckling
@@ -41,7 +44,7 @@ Detta dokument samlar alla planerade features, tekniska förbättringar och go-l
 
 | # | Åtgärd | Beskrivning | Relevans |
 |---|--------|-------------|----------|
-| 1 | **Ta bort Sentry-testsida** | Ta bort `/sentry-example-page` och `/api/sentry-example-api` när loggarna är verifierade. | Städning – testsidor ska inte finnas kvar i produktion. |
+| 1 | ~~**Ta bort Sentry-testsida**~~ | ✅ Borttagen – `/sentry-example-page` och `/api/sentry-example-api` | Städning – testsidor ska inte finnas kvar i produktion. |
 
 ### 🟢 Lägre prioritet (Produktfeatures)
 

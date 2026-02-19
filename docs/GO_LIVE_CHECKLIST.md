@@ -9,7 +9,7 @@ Detta är en checklista för åtgärder som ska göras **precis innan eller vid 
 
 **Post Go-Live status:** Domän/SSL, Vercel, RLS, Auth, bilduppladdning och Sentry är klara. Se `docs/05-ROADMAP.md` → "Post Go-Live (Slutfört)" och "Kommande Actions (Todo)".
 
-**Kommande Todo (prioriterat):** 1) Ta bort sentry-example-page (🟡), 2) Båt-attribut (🟢). Cookie-banner ✅ klar. Se `docs/05-ROADMAP.md`.
+**Kommande Todo (prioriterat):** 1) Båt-attribut (🟢). Sentry-testsida ✅ borttagen. Cookie-banner ✅ klar. Se `docs/05-ROADMAP.md`.
 
 **Kvar (checklistan):** Cross-browser/device-test, prestanda/Lighthouse, EAA-tillgänglighet, backup-strategi, dokumentation, post-launch övervakning.
 
@@ -91,22 +91,22 @@ Detta är en checklista för åtgärder som ska göras **precis innan eller vid 
   - [x] Skapa konversation → Skicka meddelande → Markera som läst
   - [x] Uppdatera profil → Byt lösenord → Radera konto
 
-- [ ] **Testa edge cases**
-  - [ ] Vad händer om användare försöker redigera annons de inte äger?
-  - [ ] Vad händer om användare försöker läsa meddelanden de inte har tillgång till?
-  - [ ] Vad händer vid nätverksfel? (visas tydliga felmeddelanden?)
+- [x] **Testa edge cases**
+  - [x] Vad händer om användare försöker redigera annons de inte äger?
+  - [x] Vad händer om användare försöker läsa meddelanden de inte har tillgång till?
+  - [x] Vad händer vid nätverksfel? (visas tydliga felmeddelanden?)
 
 ### Cross-browser & Enheter
-- [ ] **Testa på olika webbläsare**
-  - [ ] Chrome (desktop + mobil)
-  - [ ] Safari (desktop + mobil)
-  - [ ] Firefox (desktop)
-  - [ ] Edge (desktop)
+- [x] **Testa på olika webbläsare**
+  - [x] Chrome (desktop + mobil)
+  - [x] Safari (desktop + mobil)
+  - [x] Firefox (desktop)
+  - [x] Edge (desktop)
 
-- [ ] **Testa responsiv design**
-  - [ ] Mobil (iPhone, Android)
-  - [ ] Tablet (iPad)
-  - [ ] Desktop (olika skärmstorlekar)
+- [x] **Testa responsiv design**
+  - [x] Mobil (iPhone, Android)
+  - [x] Tablet (iPad)
+  - [x] Desktop (olika skärmstorlekar)
 
 ### Prestanda
 - [ ] **Laddningstider**
@@ -125,20 +125,20 @@ Detta är en checklista för åtgärder som ska göras **precis innan eller vid 
 ## 📱 UI/UX & Tillgänglighet
 
 ### EAA-kompatibilitet (Tillgänglighet)
-- [ ] **Tangentbordsnavigation**
-  - [ ] Alla interaktiva element kan nås med tangentbord
-  - [ ] Focus states är tydliga och synliga
-  - [ ] Tab-ordning är logisk
+- [x] **Tangentbordsnavigation**
+  - [x] Alla interaktiva element kan nås med tangentbord
+  - [x] Focus states är tydliga och synliga
+  - [x] Tab-ordning är logisk
 
-- [ ] **Skärmläsare**
-  - [ ] ARIA-labels finns på alla viktiga element
-  - [ ] Semantisk HTML används korrekt
-  - [ ] Formulär har korrekta labels
+- [x] **Skärmläsare**
+  - [x] ARIA-labels finns på alla viktiga element
+  - [x] Semantisk HTML används korrekt
+  - [x] Formulär har korrekta labels
 
-- [ ] **Kontrast & Synlighet**
-  - [ ] Text har tillräcklig kontrast (WCAG AA-minimum)
-  - [ ] Alla knappar och länkar är tydligt synliga
-  - [ ] Placeholder-text har tillräcklig kontrast
+- [x] **Kontrast & Synlighet**
+  - [x] Text har tillräcklig kontrast (WCAG AA-minimum)
+  - [x] Alla knappar och länkar är tydligt synliga
+  - [x] Placeholder-text har tillräcklig kontrast
 
 ### Cookie Consent
 - [x] **Cookie Consent-banner fungerar korrekt**
@@ -168,7 +168,7 @@ Detta är en checklista för åtgärder som ska göras **precis innan eller vid 
 - [x] **Sentry installerat** (`@sentry/nextjs`, konfiguration: `sentry.*.config.ts`, `instrumentation.ts`, `global-error.tsx`)
 - [x] **Sentry i produktion**
   - [x] `NEXT_PUBLIC_SENTRY_DSN` och eventuella auth token satta i Vercel
-  - [x] Verifiera att fel rapporteras (t.ex. via `/sentry-example-page`)
+  - [x] Verifiera att fel rapporteras i Sentry Dashboard
   - [x] Error alerts är uppsatta i Sentry
   - [x] Source maps laddas upp vid build (automatiskt med `withSentryConfig`)
 
@@ -221,9 +221,9 @@ Detta är en checklista för åtgärder som ska göras **precis innan eller vid 
   - [x] Email-templates är korrekta
   - [x] "Glömt lösenord"-funktion fungerar
 
-- [ ] **Email-notifikationer** (om implementerad)
-  - [ ] Email-notifikationer för nya meddelanden fungerar
-  - [ ] Användare kan slå av/på notiser i Settings
+- [x] **Email-notifikationer** (om implementerad)
+  - [x] Email-notifikationer för nya meddelanden fungerar
+  - [x] Användare kan slå av/på notiser i Settings
 
 ---
 
@@ -281,15 +281,15 @@ Detta är en checklista för åtgärder som ska göras **precis innan eller vid 
 ## 📌 Post-Launch
 
 ### Efter lansering (första 24 timmarna)
-- [ ] **Övervaka systemet aktivt**
-  - [ ] Kolla Sentry för errors
-  - [ ] Kolla analytics för användaraktivitet
-  - [ ] Kolla server logs för ovanliga mönster
+- [x] **Övervaka systemet aktivt**
+  - [x] Kolla Sentry för errors
+  - [x] Kolla analytics för användaraktivitet
+  - [x] Kolla server logs för ovanliga mönster
 
-- [ ] **Användarfeedback**
-  - [ ] Samla in användarfeedback
-  - [ ] Identifiera kritiska buggar snabbt
-  - [ ] Ha en plan för snabba hotfixes
+- [x] **Användarfeedback**
+  - [x] Samla in användarfeedback
+  - [x] Identifiera kritiska buggar snabbt
+  - [x] Ha en plan för snabba hotfixes
 
 ---
 
