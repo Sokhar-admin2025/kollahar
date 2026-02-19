@@ -729,8 +729,15 @@ export async function deleteListing(
   }
 
   try {
-    const supabase = await createClient()
-    const client = supabaseAdmin ?? supabase
+    if (!supabaseAdmin) {
+      console.error('[deleteListing] SUPABASE_SERVICE_ROLE_KEY saknas. Radering kräver service role i production.')
+      return {
+        success: false,
+        error: 'Radering är tillfälligt otillgänglig. Kontakta support om det kvarstår.',
+      }
+    }
+
+    const client = supabaseAdmin
 
     const { data: row, error: fetchError } = await client
       .from('listings')
@@ -739,6 +746,7 @@ export async function deleteListing(
       .single()
 
     if (fetchError || !row) {
+      console.error('[deleteListing] fetchError:', fetchError?.message, fetchError?.code)
       return { success: false, error: 'Annonsen hittades inte.' }
     }
 
@@ -746,14 +754,23 @@ export async function deleteListing(
       return { success: false, error: 'Du får bara radera egna annonser.' }
     }
 
-    const { error: deleteError } = await client
+    const { data: deleted, error: deleteError } = await client
       .from('listings')
       .delete()
       .eq('id', listingId.trim())
       .eq('user_id', userId)
+      .select('id')
 
     if (deleteError) {
-      console.error('deleteListing failed', deleteError)
+      console.error('[deleteListing] deleteError:', deleteError.message, 'code:', deleteError.code, 'details:', deleteError.details)
+      return {
+        success: false,
+        error: 'Kunde inte radera annonsen. Försök igen senare.',
+      }
+    }
+
+    if (!deleted || deleted.length === 0) {
+      console.error('[deleteListing] Ingen rad raderad trots ägarverifiering. RLS kan blockera.')
       return {
         success: false,
         error: 'Kunde inte radera annonsen. Försök igen senare.',

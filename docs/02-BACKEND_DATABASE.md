@@ -541,7 +541,7 @@ Vissa operationer kräver **admin-nivå** behörighet mot Supabase – både fö
   - Orsak: RLS på dessa tabeller kan blockera även korrekt data (t.ex. cookie-/session-problem). Sidan har redan verifierat att användaren är dealer; vi filtrerar strikt på `user_id`/`seller_id` = orgOwnerId.
 - **Lead-notiser** (`app/actions/lead-notification-action.ts`): `supabaseAdmin.auth.admin.getUserById` för att hämta mottagarens e-post.
 - **Meddelandenotiser** (`app/actions/new-message-notification-action.ts`): samma mönster för e-postuppslag.
-- **Radera annons** (`lib/features/listings/listing-service.ts`): `deleteListing` använder `supabaseAdmin` för SELECT + DELETE efter ägarverifiering. Undviker RLS/session-problem i production (t.ex. cookie-domain, serverless).
+- **Radera annons** (`lib/features/listings/listing-service.ts`): `deleteListing` **kräver** `supabaseAdmin` – returnerar tydligt fel om nyckeln saknas. Se `docs/TROUBLESHOOTING_DELETE_LISTING.md` vid problem.
 
 ### Leads & Views med supabaseAdmin
 
