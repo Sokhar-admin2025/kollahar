@@ -173,9 +173,11 @@ export async function getDealerDashboardData(
   const leadsByListing = new Map<string, number>()
 
   for (const a of viewsData) {
-    viewsByListing.set(a.listing_id, (viewsByListing.get(a.listing_id) ?? 0) + 1)
-    if (new Date(a.created_at) >= sevenDaysAgo) {
-      viewsLast7ByListing.set(a.listing_id, (viewsLast7ByListing.get(a.listing_id) ?? 0) + 1)
+    if (a.listing_id) {
+      viewsByListing.set(a.listing_id, (viewsByListing.get(a.listing_id) ?? 0) + 1)
+      if (new Date(a.created_at) >= sevenDaysAgo) {
+        viewsLast7ByListing.set(a.listing_id, (viewsLast7ByListing.get(a.listing_id) ?? 0) + 1)
+      }
     }
   }
 

@@ -500,6 +500,7 @@ Migrations ligger i `supabase/migrations/`:
 - `20260221200000_leads_rls_seller_id.sql`: RLS-policy så säljare kan läsa leads där `seller_id = auth.uid()`.
 - `20260222100000_leads_realtime.sql`: Lägger till `leads` i `supabase_realtime`-publikationen för live-uppdatering.
 - `20260223100000_listing_views.sql`: Skapar `listing_views` för view-tracker (Total Views i Dealer Command Center).
+- `20260228000000_listing_views_listing_set_null.sql`: `listing_views.listing_id` nullable + ON DELETE SET NULL – Total Views behålls när annons raderas.
 
 Utöver migrations finns även manuella setup-skript:
 
@@ -558,7 +559,8 @@ Vissa operationer kräver **admin-nivå** behörighet mot Supabase – både fö
 
 Tabellen `listing_views` loggar sidvisningar för annonser (`/annons/[id]`):
 
-- **Kolumner:** `listing_id`, `seller_id` (listings.user_id), `viewer_id` (nullable), `created_at`
+- **Kolumner:** `listing_id` (nullable – NULL om annons raderats), `seller_id` (listings.user_id), `viewer_id` (nullable), `created_at`
+- **Persistent:** `listing_id` har ON DELETE SET NULL – Total Views försvinner inte när en annons raderas (samma mönster som leads).
 - **Loggning:** Klient-effekt i `app/annons/[id]/page.tsx` anropar `logListingViewAction` (server action).
 - **Inloggade och anonyma:** Båda räknas. `viewer_id` sätts till användar-id vid inloggning, annars `null`.
 - **Dubbelräkning:** `sessionStorage` med nyckel `listing_view_{id}` och 30 minuters intervall – samma flik/session inom 30 min = 1 visning (refresh räknas inte som ny).

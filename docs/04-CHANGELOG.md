@@ -10,10 +10,11 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 #### Persistent Leads & View Tracking Fix
 - **Persistent Leads:** `leads.listing_id` är nu nullable med `ON DELETE SET NULL` – lead-räknaren försvinner inte när en annons raderas. Migration `20260226100000_leads_listing_set_null.sql`.
-- **dealer-analytics:** Hanterar leads med `listing_id = null` (hoppar över i per-listing-räkning; Hot Leads räknas fortfarande på `seller_id`).
+- **Persistent Views:** `listing_views.listing_id` är nu nullable med `ON DELETE SET NULL` – Total Views försvinner inte när en annons raderas. Migration `20260228000000_listing_views_listing_set_null.sql`.
+- **dealer-analytics:** Hanterar leads och views med `listing_id = null` (hoppar över i per-listing-räkning; Hot Leads och Total Views räknas fortfarande på `seller_id`).
 - **View Tracking:** `logListingViewAction` använder `supabaseAdmin` för insert – säkerställer att Total Views fungerar för anonyma och inloggade. Loggning vid misslyckad insert.
 - **Radera annons:** `conversations.listing_id` satt till `ON DELETE CASCADE` – annonser med konversationer kan nu raderas. Migration `20260225100000_conversations_listing_cascade.sql`.
-- **Manual scripts:** `manual_run_leads_listing_set_null.sql`, `manual_run_conversations_listing_cascade.sql` för production.
+- **Manual scripts:** `manual_run_leads_listing_set_null.sql`, `manual_run_listing_views_listing_set_null.sql`, `manual_run_conversations_listing_cascade.sql` för production.
 
 #### Dealer Dashboard & View Tracking (feb 2025)
 - **View tracking:** Annonssidan extraherar `seller_id` från `user_id`/`owner_id`/`seller_id` med fallback; strikt validering i Server Action – inga rader med NULL seller_id.

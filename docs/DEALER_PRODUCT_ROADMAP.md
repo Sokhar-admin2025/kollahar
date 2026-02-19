@@ -15,7 +15,7 @@ Detta dokument samlar alla planerade dealer-funktioner, SaaS-features och produk
 - Lead-tabell med seller_id, buyer_id, conversation_id
 - Lead-kort i chat vid första kontakt
 - Dealer Command Center: Total Views, Hot Leads, Aktiva konversationer, Inventory Health
-- View tracking (listing_views) med seller_id
+- View tracking (listing_views) med seller_id – persistent (ON DELETE SET NULL)
 - Chatt mellan köpare och säljare (conversations, messages)
 - E-postnotiser vid nya meddelanden (Resend)
 - Persistent leads (ON DELETE SET NULL – statistik kvar efter raderad annons)
