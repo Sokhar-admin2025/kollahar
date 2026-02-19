@@ -303,7 +303,7 @@ function ListingDetails() {
 
   const sellerDisplayLocation = sellerProfile
     ? sellerProfile.account_type === 'company'
-      ? [sellerProfile.zip_code, sellerProfile.city].filter(Boolean).join(' ') || sellerProfile.city || sellerProfile.address || null
+      ? (sellerProfile.city || sellerProfile.address)?.trim() || null
       : sellerProfile.location
     : null
 

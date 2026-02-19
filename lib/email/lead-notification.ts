@@ -1,11 +1,14 @@
 import { Resend } from 'resend'
 
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'Kollahar.se <noreply@send.kollahar.se>'
+// Endast e-postadress (ingen display name) – måste matcha verifierad domän (kollahar.se) i Resend
+const FROM_EMAIL = 'noreply@kollahar.se'
+
 const BASE_URL =
   process.env.NEXT_PUBLIC_APP_URL ||
   (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
   'https://kollahar.se'
 
+// Standard Resend-klient – använder default US-East-1, ingen region tvingas
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 
 export interface SendLeadNotificationParams {
@@ -76,13 +79,20 @@ export async function sendLeadNotification(
 `
 
   try {
-    const { error } = await resend.emails.send({
+    const sendPayload = {
       from: FROM_EMAIL,
       to: [to],
       cc: cc.length > 0 ? cc : undefined,
       subject,
       html: bodyHtml,
+    }
+    console.log('[resend] Sending lead notification:', {
+      from: sendPayload.from,
+      to: sendPayload.to,
+      cc: sendPayload.cc ?? '(none)',
     })
+
+    const { error } = await resend.emails.send(sendPayload)
 
     if (error) {
       console.error('[resend] Lead notification error:', error)

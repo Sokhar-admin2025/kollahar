@@ -121,7 +121,7 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
     setColor('')
   }, [isCarsCategory])
 
-  // Förifyll plats med användarens profil-location när man skapar ny annons
+  // Förifyll plats med stad/ort (city) – aldrig postnummer. För företag: city; för privat: location
   useEffect(() => {
     const prefillLocationFromProfile = async () => {
       if (isEditMode || location) return
@@ -132,16 +132,20 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
 
         const { data: profile } = await supabase
           .from('profiles')
-          .select('location')
+          .select('city, location')
           .eq('id', user.id)
           .maybeSingle()
 
-        if (profile?.location) {
-          const rawLocation = profile.location as string
-          const looksLikeEmail = /\S+@\S+\.\S+/.test(rawLocation)
-          if (!looksLikeEmail) {
-            setLocation(rawLocation)
-          }
+        const rawCity = (profile as { city?: string | null } | null)?.city?.trim() || ''
+        let rawLocation = (profile as { location?: string | null } | null)?.location?.trim() || ''
+        // Ta bort ledande postnummer (12345 eller 123 45) om location används som fallback
+        const withoutZip = rawLocation.replace(/^(\d{5}|\d{3}\s\d{2})\s+/, '').trim()
+        rawLocation = withoutZip || rawLocation
+
+        // Företag: använd city (stad/ort) – aldrig postnummer. Privat: location (utan postnr om det fanns)
+        const toUse = rawCity || rawLocation
+        if (toUse && !/\S+@\S+\.\S+/.test(toUse)) {
+          setLocation(toUse)
         }
       } catch (error) {
         console.error('Kunde inte förifylla plats från profil:', error)

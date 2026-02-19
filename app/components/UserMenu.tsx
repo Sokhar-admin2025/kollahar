@@ -19,13 +19,21 @@ export default function UserMenu() {
   const [open, setOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement | null>(null)
 
-  // Hämta inloggad användare + profil
+  // Hämta inloggad användare + profil och lyssna på auth-state-ändringar
   useEffect(() => {
     let isMounted = true
 
     const loadProfile = async () => {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user || !isMounted) return
+      if (!isMounted) return
+
+      if (!user) {
+        // Användare loggad ut - rensa state
+        setEmail(null)
+        setProfile(null)
+        setOpen(false)
+        return
+      }
 
       setEmail(user.email ?? null)
 
@@ -47,10 +55,26 @@ export default function UserMenu() {
       }
     }
 
+    // Ladda initial profil
     loadProfile()
+
+    // Lyssna på auth-state-ändringar (t.ex. logout)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!isMounted) return
+      if (!session?.user) {
+        // Logout - rensa state omedelbart
+        setEmail(null)
+        setProfile(null)
+        setOpen(false)
+      } else {
+        // Session finns - ladda profil igen
+        loadProfile()
+      }
+    })
 
     return () => {
       isMounted = false
+      subscription.unsubscribe()
     }
   }, [])
 
@@ -69,8 +93,8 @@ export default function UserMenu() {
   }, [open])
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut()
-    setOpen(false)
+    setOpen(false) // Stäng menyn direkt för bättre UX
+    await supabase.auth.signOut() // onAuthStateChange kommer att rensa state automatiskt
     router.push('/?logged_out=true')
     router.refresh()
   }
