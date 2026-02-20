@@ -3,6 +3,8 @@
 **Referens:** Annonssida `/annons/[id]`, design language, befintlig import  
 **Syfte:** Strukturera framtida XML/CSV-importverktyg så att det följer Kollahärs UX/UI och design language.
 
+**Status XML-import:** Väntar på exempel på XML-struktur (t.ex. Blocket, Bytbil) innan parsern byggs. CSV (Smistabil) är implementerad. När XML-sample finns: mappa fält → återanvänd `equipment-parser` → API + UI.
+
 ---
 
 ## 1. Design Language (sammanfattning)

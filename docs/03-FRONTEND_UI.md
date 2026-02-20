@@ -428,6 +428,7 @@ interface CreateListingFormProps {
 - Bildräknare "3 / 12" nere till höger
 - Thumbnails: scrollbar vid hover, ~30 % peek av nästa bild, tangentbordsstöd (piltangenter)
 - Klick på thumbnail ändrar huvudbild
+- **Favoriträknare:** "X sparade" visas nära hjärtat för alla (inloggade/anonyma). Uppdateras vid toggle.
 
 **Säljarkort:**
 - Avatar (från `profiles.avatar_url`)

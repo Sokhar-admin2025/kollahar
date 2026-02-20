@@ -678,6 +678,32 @@ export async function toggleFavorite(
 }
 
 /**
+ * Antal sparade (favoriter) för en annons. Använder supabaseAdmin för att räkna alla användares favoriter.
+ */
+export async function getFavoriteCount(listingId: string): Promise<ServiceResult<number>> {
+  if (!listingId?.trim()) {
+    return { success: false, error: 'Ogiltigt annons-id.' }
+  }
+  try {
+    if (!supabaseAdmin) {
+      return { success: true, data: 0 }
+    }
+    const { count, error } = await supabaseAdmin
+      .from('favorites')
+      .select('*', { count: 'exact', head: true })
+      .eq('listing_id', listingId.trim())
+    if (error) {
+      console.error('getFavoriteCount failed', error)
+      return { success: false, error: error.message }
+    }
+    return { success: true, data: count ?? 0 }
+  } catch (err) {
+    console.error('getFavoriteCount unexpected error', err)
+    return { success: false, error: 'Ett oväntat fel uppstod.' }
+  }
+}
+
+/**
  * Hård DELETE av annons. Verifierar ägande (user_id === userId) innan radering.
  * Använder supabaseAdmin för raderingen för att undvika RLS/session-problem i production.
  */

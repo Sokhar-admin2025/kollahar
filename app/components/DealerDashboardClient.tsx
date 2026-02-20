@@ -270,6 +270,7 @@ export default function DealerDashboardClient({
                   <th className="px-4 py-3">Health</th>
                   <th className="px-4 py-3">Pris</th>
                   <th className="px-4 py-3">Views</th>
+                  <th className="px-4 py-3">Favoriter</th>
                   <th className="px-4 py-3">Leads</th>
                 </tr>
               </thead>
@@ -277,7 +278,7 @@ export default function DealerDashboardClient({
                 {data.inventory.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={6}
+                      colSpan={7}
                       className="px-4 py-8 text-center text-gray-500 dark:text-gray-400"
                     >
                       Inga annonser än. Lägg till din första annons.
@@ -328,6 +329,9 @@ export default function DealerDashboardClient({
                       </td>
                       <td className="px-4 py-3 text-brand-text dark:text-gray-300">
                         {row.views}
+                      </td>
+                      <td className="px-4 py-3 text-brand-text dark:text-gray-300">
+                        {row.favorites}
                       </td>
                       <td className="px-4 py-3 text-brand-text dark:text-gray-300">
                         {row.leads}

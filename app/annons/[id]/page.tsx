@@ -8,6 +8,7 @@ import { DASHBOARD_TEXTS } from '@/app/lib/content'
 import Button from '@/app/components/atoms/Button'
 import { createConversationAction } from '@/app/actions/message-actions'
 import { logListingViewAction } from '@/app/actions/listing-view-actions'
+import { getFavoriteCountAction } from '@/app/actions/favorite-actions'
 import FavoriteButton from '@/app/components/FavoriteButton'
 import { createClient } from '@/lib/supabase/client'
 import type { Listing } from '@/app/types'
@@ -108,6 +109,7 @@ function ListingDetails() {
   const thumbnailsRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(false)
+  const [favoritesCount, setFavoritesCount] = useState<number | null>(null)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -134,14 +136,16 @@ function ListingDetails() {
           setActiveImageIndex(0)
         }
 
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', adData.user_id)
-          .single()
+        const [profileRes, countRes] = await Promise.all([
+          supabase.from('profiles').select('*').eq('id', adData.user_id).single(),
+          getFavoriteCountAction(adData.id),
+        ])
 
-        if (profileData) {
-          setSellerProfile(profileData)
+        if (profileRes.data) {
+          setSellerProfile(profileRes.data)
+        }
+        if (countRes.success) {
+          setFavoritesCount(countRes.count)
         }
       }
 
@@ -548,9 +552,20 @@ function ListingDetails() {
                       </div>
                     )}
                   </div>
-                  {!(currentUser?.id && ad?.user_id === currentUser.id) && (
-                    <FavoriteButton listingId={ad.id} />
-                  )}
+                  <div className="flex items-center gap-1.5">
+                    {!(currentUser?.id && ad?.user_id === currentUser.id) && (
+                      <FavoriteButton
+                        listingId={ad.id}
+                        onFavoriteAdded={() => setFavoritesCount((c) => (c ?? 0) + 1)}
+                        onFavoriteRemoved={() => setFavoritesCount((c) => Math.max(0, (c ?? 1) - 1))}
+                      />
+                    )}
+                    {favoritesCount !== null && (
+                      <span className="text-sm text-brand-text/70 tabular-nums" aria-label={`${favoritesCount} sparade`}>
+                        {favoritesCount} sparade
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
               <h1 className="text-2xl md:text-3xl font-bold text-brand-green mb-6 break-words">{ad.title}</h1>

@@ -9,6 +9,7 @@ export interface ListingWithStats {
   bortskankes: boolean
   views: number
   leads: number
+  favorites: number
   /** Health %: +40% (>3 images), +30% (desc>100), +30% (≥1 view). Images+desc ger poäng även utan visningar. */
   healthScore: number
 }
@@ -187,6 +188,19 @@ export async function getDealerDashboardData(
     }
   }
 
+  // 6. Favorites per listing
+  const { data: favoritesData } = await supabaseAdmin
+    .from('favorites')
+    .select('listing_id')
+    .in('listing_id', listingIds)
+
+  const favoritesByListing = new Map<string, number>()
+  for (const f of (favoritesData ?? []) as { listing_id: string }[]) {
+    if (f.listing_id) {
+      favoritesByListing.set(f.listing_id, (favoritesByListing.get(f.listing_id) ?? 0) + 1)
+    }
+  }
+
   const activeListings = (listings ?? []).filter((l: { status: string }) => l.status === 'active')
 
   const trendingListings = listingIds
@@ -239,6 +253,7 @@ export async function getDealerDashboardData(
         bortskankes: l.bortskankes,
         views,
         leads: leadsByListing.get(l.id) ?? 0,
+        favorites: favoritesByListing.get(l.id) ?? 0,
         healthScore,
       }
     }

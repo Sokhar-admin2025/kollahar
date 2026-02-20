@@ -8,6 +8,11 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ### ✨ Tillagt
 
+#### Favoriträknare – dealer & annonssida (feb 2025)
+- **Dealer-dashboard:** Ny kolumn "Favoriter" i inventarietabellen – antal sparade per annons.
+- **Annonssida:** "X sparade" visas nära hjärtat för alla användare (inloggade och anonyma). Uppdateras vid toggle.
+- **listing-service:** `getFavoriteCount(listingId)` – använder supabaseAdmin för att räkna alla favoriter.
+
 #### Annonssida – layout, bildgalleri & tillgänglighet (feb 2025)
 - **Bredare desktop:** `max-w-7xl` (1280px), asymmetrisk grid `1.4fr 1fr` – större huvudbild, infokort behåller bra storlek.
 - **Bildgalleri:** Klick på huvudbild öppnar lightbox (fullskärm). Huvudbild använder `object-cover` för objekt i fokus.
