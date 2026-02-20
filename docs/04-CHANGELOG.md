@@ -8,6 +8,13 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ### ✨ Tillagt
 
+#### Säljartyp på annonser (filter & sortering)
+- **listings.seller_type:** Ny kolumn – private eller company; backfill från profiles.account_type. Migration `20260229000000_listings_seller_type.sql`.
+- **Filter:** Besökare kan filtrera på Alla / Privat / Företag (redan i UI; nu filtreras direkt på listings.seller_type).
+- **Sortering:** Nya alternativ "Företag först" och "Privat först" i sorteringsmenyn.
+- **Triggers:** Ny annons får seller_type från profil; vid uppgradering privat→företag uppdateras säljarens annonser.
+- **Manual script:** `manual_run_listings_seller_type.sql` för production.
+
 #### Persistent Leads & View Tracking Fix
 - **Persistent Leads:** `leads.listing_id` är nu nullable med `ON DELETE SET NULL` – lead-räknaren försvinner inte när en annons raderas. Migration `20260226100000_leads_listing_set_null.sql`.
 - **Persistent Views:** `listing_views.listing_id` är nu nullable med `ON DELETE SET NULL` – Total Views försvinner inte när en annons raderas. Migration `20260228000000_listing_views_listing_set_null.sql`.

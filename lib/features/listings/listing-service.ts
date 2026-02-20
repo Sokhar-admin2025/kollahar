@@ -32,7 +32,7 @@ export interface ListingSearchFilters {
   horsepowerMax?: number
   offset?: number
   limit?: number
-  sort?: 'newest' | 'oldest' | 'price_asc' | 'price_desc'
+  sort?: 'newest' | 'oldest' | 'price_asc' | 'price_desc' | 'seller_company_first' | 'seller_private_first'
 }
 
 const DEFAULT_LIMIT = 24
@@ -50,34 +50,14 @@ export async function getListings(
     const offset = filters.offset ?? 0
     const limit = filters.limit ?? DEFAULT_LIMIT
 
-    // Säljartyp: hämta user_ids som matchar (company/private) innan huvudquery
-    let sellerUserIds: string[] | null = null
-    if (filters.sellerType && filters.sellerType !== 'all') {
-      const { data: profileRows } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('account_type', filters.sellerType === 'company' ? 'company' : 'private')
-      sellerUserIds = (profileRows ?? []).map((r: { id: string }) => r.id)
-      if (filters.sellerType === 'private') {
-        const { data: nullTypeRows } = await supabase
-          .from('profiles')
-          .select('id')
-          .is('account_type', null)
-        const nullIds = (nullTypeRows ?? []).map((r: { id: string }) => r.id)
-        sellerUserIds = [...sellerUserIds, ...nullIds]
-      }
-    }
-
     let query = supabase
       .from('listings')
       .select('*', { count: 'exact' })
       .eq('status', 'active')
 
-    if (sellerUserIds !== null) {
-      if (sellerUserIds.length === 0) {
-        return { success: true, data: [], totalCount: 0 }
-      }
-      query = query.in('user_id', sellerUserIds)
+    // Säljartyp: filter direkt på listings.seller_type
+    if (filters.sellerType && filters.sellerType !== 'all') {
+      query = query.eq('seller_type', filters.sellerType)
     }
 
     // Kategori
@@ -168,6 +148,16 @@ export async function getListings(
           .order('price', { ascending: false })
           .order('created_at', { ascending: false })
         break
+      case 'seller_company_first':
+        query = query
+          .order('seller_type', { ascending: true }) // company < private alfabetiskt → company först
+          .order('created_at', { ascending: false })
+        break
+      case 'seller_private_first':
+        query = query
+          .order('seller_type', { ascending: false }) // private före company
+          .order('created_at', { ascending: false })
+        break
       case 'newest':
       default:
         query = query.order('created_at', { ascending: false })
@@ -187,23 +177,10 @@ export async function getListings(
       }
     }
 
-    const rows = (data ?? []) as (Listing & { user_id: string })[]
-    const userIds = [...new Set(rows.map((r) => r.user_id).filter(Boolean))]
-
-    let sellerTypeMap: Record<string, 'private' | 'company'> = {}
-    if (userIds.length > 0) {
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, account_type')
-        .in('id', userIds)
-      ;(profiles ?? []).forEach((p: { id: string; account_type?: string }) => {
-        sellerTypeMap[p.id] = (p.account_type === 'company' ? 'company' : 'private') as 'private' | 'company'
-      })
-    }
-
+    const rows = (data ?? []) as (Listing & { user_id: string; seller_type?: string })[]
     const result: Listing[] = rows.map((r) => ({
       ...r,
-      seller_type: sellerTypeMap[r.user_id] ?? 'private',
+      seller_type: (r.seller_type === 'company' ? 'company' : 'private') as 'private' | 'company',
     }))
 
     return {
@@ -482,17 +459,11 @@ export async function getUserListings(userId: string): Promise<ServiceResult<Lis
       }
     }
 
-    const rows = (data ?? []) as (Listing & { user_id: string })[]
-    let sellerType: 'private' | 'company' = 'private'
-    if (rows.length > 0 && rows[0].user_id) {
-      const { data: prof } = await supabase
-        .from('profiles')
-        .select('account_type')
-        .eq('id', rows[0].user_id)
-        .maybeSingle()
-      sellerType = (prof as { account_type?: string } | null)?.account_type === 'company' ? 'company' : 'private'
-    }
-    const result: Listing[] = rows.map((r) => ({ ...r, seller_type: sellerType }))
+    const rows = (data ?? []) as (Listing & { user_id: string; seller_type?: string })[]
+    const result: Listing[] = rows.map((r) => ({
+      ...r,
+      seller_type: (r.seller_type === 'company' ? 'company' : 'private') as 'private' | 'company',
+    }))
 
     return {
       success: true,
@@ -534,17 +505,11 @@ export async function getActiveListingsByUserId(userId: string): Promise<Service
       }
     }
 
-    const rows = (data ?? []) as (Listing & { user_id: string })[]
-    let sellerType: 'private' | 'company' = 'private'
-    if (rows.length > 0 && rows[0].user_id) {
-      const { data: prof } = await supabase
-        .from('profiles')
-        .select('account_type')
-        .eq('id', rows[0].user_id)
-        .maybeSingle()
-      sellerType = (prof as { account_type?: string } | null)?.account_type === 'company' ? 'company' : 'private'
-    }
-    const result: Listing[] = rows.map((r) => ({ ...r, seller_type: sellerType }))
+    const rows = (data ?? []) as (Listing & { user_id: string; seller_type?: string })[]
+    const result: Listing[] = rows.map((r) => ({
+      ...r,
+      seller_type: (r.seller_type === 'company' ? 'company' : 'private') as 'private' | 'company',
+    }))
 
     return {
       success: true,
@@ -606,20 +571,12 @@ export async function getFavoriteListings(userId: string): Promise<ServiceResult
     const orderMap = new Map(ids.map((id, i) => [id, i]))
     const sorted = (listings ?? [])
       .filter((l) => orderMap.has(l.id))
-      .sort((a, b) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0)) as (Listing & { user_id: string })[]
+      .sort((a, b) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0)) as (Listing & { user_id: string; seller_type?: string })[]
 
-    const userIds = [...new Set(sorted.map((l) => l.user_id).filter(Boolean))]
-    let sellerTypeMap: Record<string, 'private' | 'company'> = {}
-    if (userIds.length > 0) {
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, account_type')
-        .in('id', userIds)
-      ;(profiles ?? []).forEach((p: { id: string; account_type?: string }) => {
-        sellerTypeMap[p.id] = p.account_type === 'company' ? 'company' : 'private'
-      })
-    }
-    const result: Listing[] = sorted.map((l) => ({ ...l, seller_type: sellerTypeMap[l.user_id] ?? 'private' }))
+    const result: Listing[] = sorted.map((l) => ({
+      ...l,
+      seller_type: (l.seller_type === 'company' ? 'company' : 'private') as 'private' | 'company',
+    }))
 
     return { success: true, data: result }
   } catch (err) {

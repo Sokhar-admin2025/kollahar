@@ -501,6 +501,7 @@ Migrations ligger i `supabase/migrations/`:
 - `20260222100000_leads_realtime.sql`: Lägger till `leads` i `supabase_realtime`-publikationen för live-uppdatering.
 - `20260223100000_listing_views.sql`: Skapar `listing_views` för view-tracker (Total Views i Dealer Command Center).
 - `20260228000000_listing_views_listing_set_null.sql`: `listing_views.listing_id` nullable + ON DELETE SET NULL – Total Views behålls när annons raderas.
+- `20260229000000_listings_seller_type.sql`: `listings.seller_type` – private/company för filter och sortering; backfill från profiles.account_type; triggers för INSERT och profiluppgradering.
 
 Utöver migrations finns även manuella setup-skript:
 

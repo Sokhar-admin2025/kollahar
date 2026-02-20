@@ -1085,7 +1085,7 @@ export default function HomePageClient({
                     <div className="px-3 py-2 border-b border-gray-100">
                       <span className="text-xs font-medium text-brand-text/70">Sortering</span>
                       <div className="mt-1.5 space-y-0.5">
-                        {(['newest', 'oldest', 'price_asc', 'price_desc'] as const).map((opt) => (
+                        {(['newest', 'oldest', 'price_asc', 'price_desc', 'seller_company_first', 'seller_private_first'] as const).map((opt) => (
                           <button
                             key={opt}
                             type="button"
@@ -1102,6 +1102,8 @@ export default function HomePageClient({
                             {opt === 'oldest' && 'Äldsta'}
                             {opt === 'price_asc' && 'Pris (lägst först)'}
                             {opt === 'price_desc' && 'Pris (högst först)'}
+                            {opt === 'seller_company_first' && 'Företag först'}
+                            {opt === 'seller_private_first' && 'Privat först'}
                           </button>
                         ))}
                       </div>
@@ -1250,6 +1252,8 @@ export default function HomePageClient({
                   <option value="oldest">Äldsta</option>
                   <option value="price_asc">Pris (lägst först)</option>
                   <option value="price_desc">Pris (högst först)</option>
+                  <option value="seller_company_first">Företag först</option>
+                  <option value="seller_private_first">Privat först</option>
                 </select>
               </div>
 
