@@ -78,12 +78,16 @@ Så profilen får rätt status (`account_type = 'company'`) och företagsnamn di
 
 ### Steg 1: Användaren ser kortet "Vill du sälja som företag?"
 
-Fält:
+Fält (obligatoriska):
 
 - **Företagsnamn**
 - **Organisationsnummer**
 - **Webbplats (domän)**
 - **Ny företags-e-post** (måste matcha webbplatsens domän)
+
+Fält (valfria):
+
+- **Postnummer**, **Ort** – för slug och sök på plats (kan fyllas i senare i Inställningar)
 
 ### Steg 2: Validering
 
@@ -95,27 +99,28 @@ Fält:
 
 1. **supabase.auth.updateUser** anropas:
    - `email`: ny företags-e-post (trimmat)
-   - `data`:  
-     `{ full_name, org_number, website, account_type: 'company' }`  
+   - `data`: `{ full_name, org_number, website, account_type: 'company' }`  
      (website normaliserat: utan protokoll/www, endast domän)
-2. Supabase skickar **verifieringslänk** till den nya e-postadressen (e-poständring kräver verifiering).
-3. Om **updateUser** ger fel → felmeddelande i kortet, `setUpgradeSaving(false)`, return.
-4. **profiles-uppdatering:**
-   - `supabase.from('profiles').update({ full_name, org_number, website, account_type, updated_at }).eq('id', userId)`
-   - Så profilen blir företag direkt i DB, även innan användaren klickat på verifieringslänken.
-5. **signOut()** – användaren loggas ut direkt (enligt plan: "signOut() direkt efter att verifieringsmailet triggats").
-6. **Redirect:**  
-   `router.push('/login?upgrade=email_sent')`
+2. Om **updateUser** ger fel → felmeddelande, `setUpgradeSaving(false)`, return.
+3. **profiles-uppdatering:**
+   - `supabase.from('profiles').update({ full_name, org_number, website, account_type: 'company', otp_verified: false, updated_at }).eq('id', userId)`
+   - **Triggrar:** `trigger_sync_profile_to_listings_seller_type` sätter `listings.seller_type = 'company'` för alla användarens annonser. `trigger_generate_profile_slug` genererar slug för företagsprofilen.
+4. **signInWithOtp** – skickar 6-siffrig kod till ny e-post (`shouldCreateUser: false`).
+5. **signOut()** – användaren loggas ut.
+6. **Redirect:** `router.push('/login/verify?email=...&type=signup&from=upgrade')`
 
-### Steg 4: På inloggningssidan
+### Steg 4: På verifieringssidan
 
-- URL `?upgrade=email_sent` gör att ett grönt meddelande visas:  
-  *"Verifieringslänk skickad till din nya e-post! Logga in med dina nya uppgifter efter verifiering."*
-- Användaren måste:
-  1. Öppna e-post och klicka på verifieringslänken (Supabase bekräftar den nya e-posten).
-  2. Gå tillbaka till `/login` och logga in med **ny e-post** + **samma lösenord**.
+- Användaren anger 6-siffrig kod från e-post.
+- **verifyOtp** validerar → vid lyckad verifiering sätts session (användaren loggas in automatiskt).
+- **profiles.otp_verified** sätts till `true`.
+- **Redirect:** `window.location.href = '/dashboard'`
 
-Efter inloggning har användaren `account_type === 'company'` och ser inställningssidan i **State B** (låsta org_number/website, redigerbara adress/postnummer/ort/bio).
+Efter inloggning har användaren `account_type === 'company'`, listings har `seller_type = 'company'`, och inställningssidan visar **State B** (låsta org_number/website, redigerbara adress/postnummer/ort/bio).
+
+**Databas-synk vid upgrade:**
+- `trigger_sync_profile_to_listings_seller_type`: Uppdaterar `listings.seller_type` till `'company'` för alla annonser där `user_id` = den uppgraderade användaren. Säljarkort, filter och sortering använder denna kolumn.
+- `trigger_generate_profile_slug`: Genererar `profiles.slug` från full_name + city för företagsprofiler (SEO/vänliga URL:er).
 
 ---
 

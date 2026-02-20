@@ -404,24 +404,29 @@ interface CreateListingFormProps {
 
 ### Listing Details (`/annons/[id]`)
 
+**Layout:** `max-w-7xl`, asymmetrisk grid `1.4fr 1fr` – bildsektion ~58 %, info ~42 %.
+
 **Struktur:**
 ```
-┌─────────────────────────────────────┐
-│  [← Tillbaka till alla annonser]    │
-├─────────────────────────────────────┤
-│  [Bildgalleri]  │  [Info]           │
-│                 │  - Titel          │
-│                 │  - Pris           │
-│                 │  - Plats          │
-│                 │  - Beskrivning    │
-│                 │  - Säljarkort     │
-│                 │  - [Kontakta]     │
-└─────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│  [← Tillbaka till alla annonser]                             │
+├──────────────────────────────────────────────────────────────┤
+│  [Bildgalleri]              │  [Info]                        │
+│  - Huvudbild (object-cover) │  - Titel                       │
+│  - Klick → lightbox         │  - Pris                        │
+│  - Bildräknare "3 / 12"     │  - Plats                       │
+│  - Thumbnails (scroll)      │  - Beskrivning + Utrustning    │
+│                             │  - Fordonsdetaljer (bilar)     │
+│                             │  - Säljarkort                  │
+│                             │  - [Kontakta]                  │
+└──────────────────────────────────────────────────────────────┘
 ```
 
 **Bildgalleri:**
-- Stor huvudbild
-- Thumbnails under (om fler än 1 bild)
+- Stor huvudbild med `object-cover` (objekt i fokus)
+- Klick på huvudbild öppnar lightbox (fullskärm)
+- Bildräknare "3 / 12" nere till höger
+- Thumbnails: scrollbar vid hover, ~30 % peek av nästa bild, tangentbordsstöd (piltangenter)
 - Klick på thumbnail ändrar huvudbild
 
 **Säljarkort:**

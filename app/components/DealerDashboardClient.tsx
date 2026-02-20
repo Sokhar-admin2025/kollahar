@@ -84,13 +84,22 @@ export default function DealerDashboardClient({
               {companyName}
             </p>
           </div>
-          <Link
-            href="/dashboard/create"
-            className="inline-flex items-center gap-2 rounded-xl bg-brand-green px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-green/90"
-          >
-            <Ship size={18} />
-            Ny annons
-          </Link>
+          <div className="flex gap-2">
+            <Link
+              href="/dashboard/import"
+              className="inline-flex items-center gap-2 rounded-xl bg-brand-green/10 px-4 py-2.5 text-sm font-semibold text-brand-green hover:bg-brand-green/20"
+            >
+              <Upload size={18} />
+              Importera CSV
+            </Link>
+            <Link
+              href="/dashboard/create"
+              className="inline-flex items-center gap-2 rounded-xl bg-brand-green px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-green/90"
+            >
+              <Ship size={18} />
+              Ny annons
+            </Link>
+          </div>
         </div>
 
         {/* Stats Grid */}

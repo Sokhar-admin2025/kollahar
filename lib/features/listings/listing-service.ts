@@ -267,6 +267,10 @@ export async function createListing(
       status: 'active',
     } as Record<string, unknown>
     insertPayload.bortskankes = isBortskankes
+    if (data.external_id?.trim()) insertPayload.external_id = data.external_id.trim()
+    if (data.external_url?.trim()) insertPayload.external_url = data.external_url.trim()
+    if (data.contact_email?.trim()) insertPayload.contact_email = data.contact_email.trim()
+    if (data.contact_name?.trim()) insertPayload.contact_name = data.contact_name.trim()
 
     let row: { id: string } | null = null
     let error: { message?: string; code?: string } | null = null

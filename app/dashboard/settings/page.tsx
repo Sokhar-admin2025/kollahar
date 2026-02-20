@@ -46,6 +46,8 @@ export default function SettingsPage() {
   const [upgradeOrgNumber, setUpgradeOrgNumber] = useState('')
   const [upgradeWebsite, setUpgradeWebsite] = useState('')
   const [upgradeEmail, setUpgradeEmail] = useState('')
+  const [upgradeZipCode, setUpgradeZipCode] = useState('')
+  const [upgradeCity, setUpgradeCity] = useState('')
   const [upgradeSaving, setUpgradeSaving] = useState(false)
   const [upgradeMessage, setUpgradeMessage] = useState<{ text: string; type: 'error' | 'success' } | null>(null)
   
@@ -216,6 +218,8 @@ export default function SettingsPage() {
           org_number: orgTrim,
           website: siteNorm,
           account_type: 'company',
+          zip_code: upgradeZipCode.trim() || null,
+          city: upgradeCity.trim() || null,
           otp_verified: false,
           updated_at: new Date().toISOString(),
         })
@@ -572,6 +576,16 @@ export default function SettingsPage() {
                       {upgradeDomainMismatch && (
                         <p className="text-xs text-red-600 mt-1" role="alert">E-postens domän måste matcha webbplatsens domän.</p>
                       )}
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-brand-text mb-1 antialiased">Postnummer (valfritt)</label>
+                        <input type="text" value={upgradeZipCode} onChange={(e) => setUpgradeZipCode(e.target.value)} placeholder="123 45" className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none text-brand-text antialiased" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-brand-text mb-1 antialiased">Ort (valfritt)</label>
+                        <input type="text" value={upgradeCity} onChange={(e) => setUpgradeCity(e.target.value)} placeholder="Stockholm" className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none text-brand-text antialiased" />
+                      </div>
                     </div>
                     {upgradeMessage && (
                       <div className={`p-3 rounded text-sm ${upgradeMessage.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`} role="alert">

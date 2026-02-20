@@ -29,6 +29,12 @@ const listingBaseSchema = z.object({
 
   images: z.array(z.string()).optional(),
   attributes: z.record(z.any()).optional(),
+
+  // Import / inventory sync
+  external_id: z.string().optional(),
+  external_url: z.string().optional(),
+  contact_email: z.string().optional(),
+  contact_name: z.string().optional(),
 })
 
 export const insertListingSchema = listingBaseSchema.refine(priceRefine, {

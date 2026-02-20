@@ -3,7 +3,6 @@
 import { Suspense, useEffect, useState, useRef } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import Image from 'next/image'
 
 import { DASHBOARD_TEXTS } from '@/app/lib/content'
 import Button from '@/app/components/atoms/Button'
@@ -13,9 +12,10 @@ import FavoriteButton from '@/app/components/FavoriteButton'
 import { createClient } from '@/lib/supabase/client'
 import type { Listing } from '@/app/types'
 import { getListingById } from '@/lib/features/listings/listing-service'
-import { Loader2, ChevronLeft, ChevronRight, Calendar, Gauge, Fuel, Settings2, Car, Palette, Zap, BadgeCheck, Share2, Link2 } from 'lucide-react'
+import { Loader2, ChevronLeft, ChevronRight, Calendar, Gauge, Fuel, Settings2, Car, Palette, Zap, BadgeCheck, Share2, Link2, X } from 'lucide-react'
 import { getCategoryLabel, CATEGORY_GROUPS } from '@/lib/categories'
 import { formatCurrency } from '@/lib/features/listings/utils/price-utils'
+import { extractEquipmentFromDescription } from '@/lib/import/equipment-parser'
 
 const supabase = createClient()
 
@@ -92,6 +92,7 @@ function ListingDetails() {
   // State för Annons
   const [ad, setAd] = useState<Listing | null>(null)
   const [activeImageIndex, setActiveImageIndex] = useState(0)
+  const [lightboxOpen, setLightboxOpen] = useState(false)
   
   // State för Säljare (NYTT!)
   const [sellerProfile, setSellerProfile] = useState<SellerProfile | null>(null)
@@ -104,6 +105,9 @@ function ListingDetails() {
   const [showCopiedToast, setShowCopiedToast] = useState(false)
   const [shareMenuOpen, setShareMenuOpen] = useState(false)
   const shareMenuRef = useRef<HTMLDivElement>(null)
+  const thumbnailsRef = useRef<HTMLDivElement>(null)
+  const [canScrollLeft, setCanScrollLeft] = useState(false)
+  const [canScrollRight, setCanScrollRight] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -302,6 +306,26 @@ function ListingDetails() {
     }
   }, [shareMenuOpen])
 
+  const updateThumbnailScrollState = () => {
+    const el = thumbnailsRef.current
+    if (!el) return
+    setCanScrollLeft(el.scrollLeft > 2)
+    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 2)
+  }
+
+  useEffect(() => {
+    updateThumbnailScrollState()
+    const el = thumbnailsRef.current
+    if (!el) return
+    el.addEventListener('scroll', updateThumbnailScrollState)
+    const ro = new ResizeObserver(updateThumbnailScrollState)
+    ro.observe(el)
+    return () => {
+      el.removeEventListener('scroll', updateThumbnailScrollState)
+      ro.disconnect()
+    }
+  }, [ad?.images?.length])
+
   if (loading) {
     return (
       <div className="min-h-screen bg-brand-beige flex items-center justify-center">
@@ -350,6 +374,17 @@ function ListingDetails() {
     setActiveImageIndex((prev) => (prev + 1) % images.length)
   }
 
+  const handleThumbnailKeyDown = (e: React.KeyboardEvent) => {
+    if (images.length <= 1) return
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault()
+      goToPrevious()
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault()
+      goToNext()
+    }
+  }
+
   const sellerDisplayLocation = sellerProfile
     ? sellerProfile.account_type === 'company'
       ? (sellerProfile.city || sellerProfile.address)?.trim() || null
@@ -357,8 +392,8 @@ function ListingDetails() {
     : null
 
   return (
-    <div className="min-h-screen bg-brand-beige flex flex-col">
-      <div className="max-w-4xl mx-auto py-10 px-4 flex-grow">
+    <div className="min-h-screen bg-brand-beige flex flex-col overflow-x-hidden">
+      <div className="max-w-7xl mx-auto w-full py-10 px-4 flex-grow min-w-0">
         <Link href={backUrl} className="inline-block mb-6 text-sm font-medium text-brand-text/70 hover:text-brand-green transition">
           {t.backToHome}
         </Link>
@@ -370,13 +405,20 @@ function ListingDetails() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-[1.4fr_1fr] gap-8 min-w-0">
           
           {/* --- BILDGALLERI (VÄNSTER) --- */}
-          <div className="flex flex-col gap-4">
-            <div className={`bg-white rounded-xl overflow-hidden shadow-md border border-gray-200 aspect-square relative ${isSold ? 'opacity-75' : ''}`}>
+          <div className="flex flex-col gap-4 min-w-0">
+            <div className={`bg-white rounded-xl overflow-hidden shadow-md border border-gray-200 aspect-square max-h-[min(50vh,400px)] md:max-h-none relative ${isSold ? 'opacity-75' : ''}`}>
               {activeImage ? (
-                <img src={activeImage} alt={ad.title} className="w-full h-full object-cover transition-all duration-300" />
+                <button
+                  type="button"
+                  onClick={() => setLightboxOpen(true)}
+                  className="w-full h-full block cursor-zoom-in focus:outline-none focus:ring-2 focus:ring-brand-green focus:ring-inset"
+                  aria-label="Förstora bild"
+                >
+                  <img src={activeImage} alt={ad.title} className="w-full h-full object-cover object-center transition-all duration-300" />
+                </button>
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-brand-beige text-brand-text/60">
                   {t.noImage}
@@ -405,34 +447,57 @@ function ListingDetails() {
               <div className="absolute top-4 left-4 bg-brand-green/95 text-white backdrop-blur px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg">
                 {getCategoryLabel(ad.category)}
               </div>
+              {images.length > 1 && (
+                <div className="absolute bottom-4 right-4 bg-black/60 text-white backdrop-blur px-3 py-1.5 rounded-lg text-sm font-medium tabular-nums" role="status" aria-live="polite" aria-label={`Bild ${activeImageIndex + 1} av ${images.length}`}>
+                  {activeImageIndex + 1} / {images.length}
+                </div>
+              )}
             </div>
 
             {images.length > 1 && (
-              <div className={`flex gap-2 overflow-x-auto pb-2 ${isSold ? 'opacity-75' : ''}`}>
-                {images.map((img: string, index: number) => (
-                  <button 
-                    key={index}
-                    onClick={() => setActiveImageIndex(index)}
-                    className={`relative w-20 h-20 rounded-xl overflow-hidden border-2 flex-shrink-0 transition ${
-                      activeImageIndex === index ? 'border-brand-green ring-2 ring-brand-green/20' : 'border-transparent opacity-70 hover:opacity-100'
-                    }`}
-                  >
-                    <Image
-                      src={img}
-                      alt={`Bild ${index + 1}`}
-                      fill
-                      className="object-cover"
-                      sizes="80px"
-                    />
-                  </button>
-                ))}
+              <div className="relative thumbnail-scroll-wrapper">
+                {canScrollLeft && (
+                  <div className="absolute left-0 top-0 bottom-2 w-8 bg-gradient-to-r from-white to-transparent pointer-events-none z-10 rounded-l-lg" aria-hidden />
+                )}
+                {canScrollRight && (
+                  <div className="absolute right-0 top-0 bottom-2 w-8 bg-gradient-to-l from-white to-transparent pointer-events-none z-10 rounded-r-lg" aria-hidden />
+                )}
+                <div
+                  ref={thumbnailsRef}
+                  tabIndex={0}
+                  role="region"
+                  aria-label={`Bildgalleri, ${images.length} bilder. Använd piltangenter eller dra för att navigera.`}
+                  onKeyDown={handleThumbnailKeyDown}
+                  className={`thumbnail-scroll flex gap-2 overflow-x-auto overflow-y-hidden pb-2 min-h-[5rem] scroll-smooth snap-x snap-mandatory max-w-[17.5rem] md:max-w-none ${isSold ? 'opacity-75' : ''}`}
+                >
+                  {images.map((img: string, index: number) => (
+                    <button
+                      key={index}
+                      onClick={() => setActiveImageIndex(index)}
+                      className={`relative w-20 h-20 rounded-xl overflow-hidden border-2 flex-shrink-0 transition snap-center focus-visible:ring-2 focus-visible:ring-brand-green focus-visible:ring-offset-2 focus:outline-none ${
+                        activeImageIndex === index ? 'border-brand-green ring-2 ring-brand-green/20' : 'border-transparent opacity-70 hover:opacity-100'
+                      }`}
+                      aria-label={`Bild ${index + 1} av ${images.length}${activeImageIndex === index ? ', vald' : ''}`}
+                      aria-current={activeImageIndex === index ? 'true' : undefined}
+                    >
+                      <img
+                        src={img}
+                        alt=""
+                        className="w-full h-full object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-brand-text/60 text-center mt-1" aria-hidden>
+                  ← Dra eller använd piltangenter för fler bilder →
+                </p>
               </div>
             )}
           </div>
 
           {/* --- INFO (HÖGER) --- */}
-          <div className="flex flex-col h-full">
-            <div className="bg-white p-8 rounded-xl shadow-md border border-gray-200 flex-1 flex flex-col relative">
+          <div className="flex flex-col h-full min-w-0">
+            <div className="bg-white p-6 md:p-8 rounded-xl shadow-md border border-gray-200 flex-1 flex flex-col relative overflow-hidden">
               <div className="flex items-center justify-between gap-4 mb-2">
                 <div className="flex items-center text-brand-text/70 text-sm flex-wrap gap-x-2 min-w-0">
                   {(() => {
@@ -488,21 +553,45 @@ function ListingDetails() {
                   )}
                 </div>
               </div>
-              <h1 className="text-3xl font-bold text-brand-green mb-6">{ad.title}</h1>
+              <h1 className="text-2xl md:text-3xl font-bold text-brand-green mb-6 break-words">{ad.title}</h1>
 
-              <div className="text-4xl font-bold text-brand-green mb-8 text-right">
+              <div className="text-3xl md:text-4xl font-bold text-brand-green mb-8 text-right">
                 {ad.bortskankes ? 'Bortskänkes' : formatCurrency(ad.price)}
               </div>
 
-              <div className="prose prose-sm text-brand-text mb-8 flex-grow">
+              <div className="prose prose-sm text-brand-text mb-8 flex-grow min-h-0 overflow-hidden">
                 <h3 className="text-brand-text font-semibold mb-2">{t.sections.description}</h3>
-                <p className="whitespace-pre-line">{ad.description}</p>
+                {(() => {
+                  const equipmentFromAttrs = Array.isArray(ad.attributes?.equipment) ? ad.attributes.equipment as string[] : null
+                  const hasEquipmentInAttrs = equipmentFromAttrs && equipmentFromAttrs.length > 0
+                  const { descriptionWithoutEquipment, equipment } = hasEquipmentInAttrs
+                    ? { descriptionWithoutEquipment: ad.description, equipment: equipmentFromAttrs }
+                    : extractEquipmentFromDescription(ad.description)
+                  return (
+                    <>
+                      <p className="whitespace-pre-line break-words">{descriptionWithoutEquipment}</p>
+                      {equipment.length > 0 && (
+                        <div className="mt-6 pt-4 border-t border-gray-100">
+                          <h4 className="text-brand-text font-semibold mb-3">Utrustning</h4>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5">
+                            {equipment.map((item, i) => (
+                              <div key={i} className="flex items-start gap-2">
+                                <span className="text-brand-green mt-0.5">•</span>
+                                <span className="text-sm">{item}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )
+                })()}
               </div>
 
               {/* --- BIL-SPECIFIKA ATTRIBUT (endast för bilar) --- */}
               {ad.category === 'cars' && ad.attributes && (
                 <div className="mb-8 pt-6 border-t border-gray-100">
-                  <h3 className="text-brand-text font-semibold mb-4 antialiased">Bildetaljer</h3>
+                  <h3 className="text-brand-text font-semibold mb-4 antialiased">Fordonsdetaljer</h3>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {/* Modellår */}
                     {(() => {
@@ -731,6 +820,51 @@ function ListingDetails() {
           aria-live="polite"
         >
           Länk kopierad!
+        </div>
+      )}
+
+      {lightboxOpen && activeImage && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Förstorad bild"
+          onClick={() => setLightboxOpen(false)}
+        >
+          <button
+            type="button"
+            onClick={() => setLightboxOpen(false)}
+            className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition"
+            aria-label="Stäng"
+          >
+            <X className="w-8 h-8" />
+          </button>
+          {images.length > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); goToPrevious() }}
+                className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition"
+                aria-label="Föregående bild"
+              >
+                <ChevronLeft className="w-8 h-8" />
+              </button>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); goToNext() }}
+                className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition"
+                aria-label="Nästa bild"
+              >
+                <ChevronRight className="w-8 h-8" />
+              </button>
+            </>
+          )}
+          <img
+            src={activeImage}
+            alt={ad.title}
+            className="max-w-full max-h-[90vh] object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
         </div>
       )}
     </div>

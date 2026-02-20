@@ -194,3 +194,28 @@ input[type="search"]::-moz-search-clear-button {
     @apply bg-background text-foreground;
   }
 }
+
+/* Thumbnail scroll: scrollbar synlig vid hover (desktop), peek av nästa bild */
+.thumbnail-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+.thumbnail-scroll-wrapper:hover .thumbnail-scroll {
+  scrollbar-color: rgba(0, 0, 0, 0.25) transparent;
+}
+.thumbnail-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+.thumbnail-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.thumbnail-scroll::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 3px;
+}
+.thumbnail-scroll-wrapper:hover .thumbnail-scroll::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.25);
+}
+.thumbnail-scroll-wrapper:hover .thumbnail-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.4);
+}

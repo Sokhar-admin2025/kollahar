@@ -5,7 +5,7 @@ import type { MouseEvent } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { MessageSquare, Settings, LogOut, Edit, Trash2, BarChart3 } from 'lucide-react'
+import { MessageSquare, Settings, LogOut, Edit, Trash2, BarChart3, Upload } from 'lucide-react'
 
 import { DASHBOARD_TEXTS } from '@/app/lib/content'
 import Button from '@/app/components/atoms/Button'
@@ -122,15 +122,25 @@ export default function DashboardClient({
         </div>
 
         <div className="mx-auto max-w-4xl mb-6 flex items-center gap-4 justify-end">
+          <Link
+            href="/dashboard/import"
+            title="Importera CSV"
+            className="inline-flex items-center gap-2 rounded-xl bg-brand-green/10 px-3 py-2 text-sm font-medium text-brand-green hover:bg-brand-green/20"
+          >
+            <Upload size={18} />
+            Importera CSV
+          </Link>
           {accountType === 'company' && (
-            <Link
-              href="/dashboard/dealer"
-              title="Dealer Command Center"
-              className="inline-flex items-center gap-2 rounded-xl bg-brand-green/10 px-3 py-2 text-sm font-medium text-brand-green hover:bg-brand-green/20"
-            >
-              <BarChart3 size={18} />
-              Dealer Dashboard
-            </Link>
+            <>
+              <Link
+                href="/dashboard/dealer"
+                title="Dealer Command Center"
+                className="inline-flex items-center gap-2 rounded-xl bg-brand-green/10 px-3 py-2 text-sm font-medium text-brand-green hover:bg-brand-green/20"
+              >
+                <BarChart3 size={18} />
+                Dealer Dashboard
+              </Link>
+            </>
           )}
           <Link href="/dashboard/messages" title="Mina meddelanden" className="relative">
             <div className="p-2 text-brand-text hover:text-brand-green hover:bg-brand-green/10 rounded-full transition cursor-pointer">

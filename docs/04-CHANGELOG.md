@@ -8,6 +8,22 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ### ✨ Tillagt
 
+#### Annonssida – layout, bildgalleri & tillgänglighet (feb 2025)
+- **Bredare desktop:** `max-w-7xl` (1280px), asymmetrisk grid `1.4fr 1fr` – större huvudbild, infokort behåller bra storlek.
+- **Bildgalleri:** Klick på huvudbild öppnar lightbox (fullskärm). Huvudbild använder `object-cover` för objekt i fokus.
+- **Bildräknare:** "3 / 12" visas nere till höger på huvudbilden; `aria-live` för skärmläsare.
+- **Thumbnails:** Scrollbar synlig vid hover (desktop). ~30 % peek av nästa bild. Tangentbordsstöd (piltangenter). Fler thumbnails synliga på desktop (`md:max-w-none`).
+- **Utrustning:** Smart parsing av sammanhängande text (t.ex. "Adaptiv farthållare (ACC)Keyless Entry") till lista. Visas i två kolumner under beskrivning. `lib/import/equipment-parser.ts`.
+- **Övrigt:** `break-words`, `overflow-x-hidden` för text/layout. Hooks-fix (useEffect före early returns).
+
+#### Fas 3 – CSV-import (Smistabil)
+- **Import-sida:** `app/dashboard/import/` – filuppladdning, visar fel per rad. Länk "Importera CSV" i dashboard.
+- **API:** `app/api/import-smistabil/route.ts` – POST med auth, upsert per rad med paus.
+- **Parser:** `lib/import/smistabil-csv-parser.ts` – mappar Smistabil-kolumner, transformerar pris/miltal/växellåda/drivmedel. Utrustning parsas till `attributes.equipment`.
+- **Schema:** `external_id`, `external_url`, `contact_email`, `contact_name` i listing-schema.
+- **Migrationer:** `listings_upsert_constraint` (UNIQUE user_id+external_id), `listings_limit_company` (20 aktiva privat, 200 företag).
+- **Dokumentation:** `docs/FAS3_IMPORT_PLAN.md`, `docs/CSV_IMPORT_ANALYSIS_SMISTABIL.md`, `docs/UX_IMPORT_SELF_SERVICE_SPEC.md`.
+
 #### Säljartyp på annonser (filter & sortering)
 - **listings.seller_type:** Ny kolumn – private eller company; backfill från profiles.account_type. Migration `20260229000000_listings_seller_type.sql`.
 - **Filter:** Besökare kan filtrera på Alla / Privat / Företag (redan i UI; nu filtreras direkt på listings.seller_type).
