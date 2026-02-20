@@ -75,7 +75,7 @@ export function extractEquipmentFromDescription(description: string): {
   const equipmentRaw = match[1].trim()
   const equipment = parseEquipmentList(equipmentRaw)
   const descriptionWithoutEquipment = description
-    .replace(/\n\s*Utrustning:.*$/s, '')
+    .replace(/\n\s*Utrustning:[\s\S]*$/, '')
     .trim()
 
   return { descriptionWithoutEquipment, equipment }
