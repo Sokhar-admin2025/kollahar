@@ -156,6 +156,7 @@ export function parseSmistabilCsv(csvContent: string): SmistabilImportRow[] {
         description,
         price,
         bortskankes: false,
+        status: 'active',
         category: CATEGORY_CARS,
         location: FIXED_LOCATION,
         images: images.length > 0 ? images : undefined,
