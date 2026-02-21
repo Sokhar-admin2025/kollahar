@@ -8,6 +8,13 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ### ✨ Tillagt
 
+#### Draft/gömd annons – handlare kan förbereda utan att visa (feb 2025)
+- **Status `draft`:** Ny status – annonsen är gömd från alla utom ägaren. Räknas inte i gränsen (20/200).
+- **Toggle:** "Synlig för alla" i create/edit-formuläret. Snabbtoggle (öga/öga-streck) i dashboard.
+- **Dashboard:** Draft visas med badge "Gömd", klick öppnar redigera. Toggle växlar draft ↔ active.
+- **Dealer-dashboard:** Status "Gömd" i inventarietabellen.
+- **Migration:** `20260230000000_listings_draft_status.sql` – lägger till draft i status-check.
+
 #### Favoriträknare – dealer & annonssida (feb 2025)
 - **Dealer-dashboard:** Ny kolumn "Favoriter" i inventarietabellen – antal sparade per annons.
 - **Annonssida:** "X sparade" visas nära hjärtat för alla användare (inloggade och anonyma). Uppdateras vid toggle.

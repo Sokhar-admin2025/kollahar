@@ -5,14 +5,14 @@ import type { MouseEvent } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { MessageSquare, Settings, LogOut, Edit, Trash2, BarChart3, Upload } from 'lucide-react'
+import { MessageSquare, Settings, LogOut, Edit, Trash2, BarChart3, Upload, Eye, EyeOff } from 'lucide-react'
 
 import { DASHBOARD_TEXTS } from '@/app/lib/content'
 import Button from '@/app/components/atoms/Button'
 import ListingCard from '@/app/components/ListingCard'
 import ScrollToSearch from '@/app/components/ScrollToSearch'
 import type { Listing } from '@/app/types'
-import { deleteListingAction, markAsSoldAction } from '@/app/actions/listing-actions'
+import { deleteListingAction, markAsSoldAction, toggleListingVisibilityAction } from '@/app/actions/listing-actions'
 
 const supabase = createClient()
 
@@ -35,7 +35,7 @@ export default function DashboardClient({
   const searchParams = useSearchParams()
 
   const activeAds = useMemo(
-    () => listings.filter((ad) => ad.status === 'active'),
+    () => listings.filter((ad) => ad.status === 'active' || ad.status === 'draft'),
     [listings]
   )
   const soldAds = useMemo(
@@ -225,7 +225,7 @@ export default function DashboardClient({
                   {activeAds.map((ad) => (
                     <div
                       key={ad.id}
-                      onClick={() => router.push(`/annons/${ad.id}`)}
+                      onClick={() => router.push(ad.status === 'draft' ? `/dashboard/edit/${ad.id}` : `/annons/${ad.id}`)}
                       className="group flex gap-4 p-4 border rounded-xl hover:bg-brand-beige transition cursor-pointer relative"
                     >
                       <div className="h-20 w-20 flex-shrink-0 bg-gray-200 rounded overflow-hidden">
@@ -241,6 +241,18 @@ export default function DashboardClient({
                         <div className="flex items-start justify-between gap-2 mb-2">
                           <h3 className="font-bold text-lg text-brand-text antialiased flex-1">{ad.title}</h3>
                           <div className="flex gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                            <Button
+                              variant="icon"
+                              onClick={async (e) => {
+                                e.stopPropagation()
+                                const res = await toggleListingVisibilityAction(ad.id)
+                                if (res.success) router.refresh()
+                                else if (res.error) alert(res.error)
+                              }}
+                              title={ad.status === 'draft' ? 'Visa annonsen för alla' : 'Göm annonsen'}
+                            >
+                              {ad.status === 'draft' ? <Eye size={20} /> : <EyeOff size={20} />}
+                            </Button>
                             <Button
                               variant="icon"
                               onClick={(e) => {
@@ -262,8 +274,8 @@ export default function DashboardClient({
                         </div>
                         <div className="flex items-center justify-between">
                           <p className="text-brand-text text-sm font-semibold antialiased">{ad.bortskankes ? 'Bortskänkes' : `${ad.price} kr`}</p>
-                          <span className="inline-block px-2 py-1 text-xs rounded bg-green-100 text-green-800">
-                            {t.listing.activeLabel}
+                          <span className={`inline-block px-2 py-1 text-xs rounded ${ad.status === 'draft' ? 'bg-amber-100 text-amber-800' : 'bg-green-100 text-green-800'}`}>
+                            {ad.status === 'draft' ? 'Gömd' : t.listing.activeLabel}
                           </span>
                         </div>
                       </div>

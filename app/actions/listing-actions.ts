@@ -60,6 +60,7 @@ export async function createListingAction(data: InsertListingInput): Promise<Cre
 
   revalidatePath('/')
   revalidatePath('/dashboard')
+  revalidatePath('/dashboard/dealer')
   return { success: true, data: result.data! }
 }
 
@@ -191,4 +192,38 @@ export async function markAsSoldAction(
 
   revalidatePath('/dashboard')
   return { success: true }
+}
+
+export type ToggleVisibilityResult = { success: true; status: 'active' | 'draft' } | { success: false; error: string }
+
+export async function toggleListingVisibilityAction(listingId: string): Promise<ToggleVisibilityResult> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { success: false, error: 'Du måste vara inloggad.' }
+  }
+
+  const { data: row } = await supabase
+    .from('listings')
+    .select('status')
+    .eq('id', listingId)
+    .eq('user_id', user.id)
+    .single()
+
+  if (!row) {
+    return { success: false, error: 'Annonsen hittades inte.' }
+  }
+
+  const currentStatus = (row as { status: string }).status
+  const newStatus = currentStatus === 'draft' ? 'active' : 'draft'
+
+  const result = await updateListingStatusService(listingId, newStatus, user.id)
+  if (!result.success) {
+    return { success: false, error: result.error ?? 'Kunde inte uppdatera.' }
+  }
+
+  revalidatePath('/dashboard')
+  revalidatePath('/dashboard/dealer')
+  revalidatePath('/')
+  return { success: true, status: newStatus }
 }

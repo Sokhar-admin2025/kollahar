@@ -305,10 +305,12 @@ export default function DealerDashboardClient({
                           className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
                             row.status === 'active'
                               ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                              : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+                              : row.status === 'draft'
+                                ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
+                                : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
                           }`}
                         >
-                          {row.status === 'active' ? 'Aktiv' : 'Såld'}
+                          {row.status === 'active' ? 'Aktiv' : row.status === 'draft' ? 'Gömd' : 'Såld'}
                         </span>
                       </td>
                       <td className="px-4 py-3">

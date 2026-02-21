@@ -429,6 +429,7 @@ interface CreateListingFormProps {
 - Thumbnails: scrollbar vid hover, ~30 % peek av nästa bild, tangentbordsstöd (piltangenter)
 - Klick på thumbnail ändrar huvudbild
 - **Favoriträknare:** "X sparade" visas nära hjärtat för alla (inloggade/anonyma). Uppdateras vid toggle.
+- **Draft:** Toggle "Synlig för alla" i create/edit – gömd annons visas inte för någon utom ägaren.
 
 **Säljarkort:**
 - Avatar (från `profiles.avatar_url`)

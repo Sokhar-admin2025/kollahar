@@ -10,7 +10,7 @@ export interface Listing {
   attributes?: Record<string, unknown>;
   images: string[];
   user_id: string;
-  status: 'active' | 'sold' | 'deleted';
+  status: 'active' | 'sold' | 'deleted' | 'draft';
   deleted_at?: string | null;
   seller_type?: 'private' | 'company';
   company_name?: string;

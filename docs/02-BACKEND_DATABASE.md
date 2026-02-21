@@ -170,7 +170,7 @@ CREATE TABLE public.listings (
   location text NOT NULL,
   category text NOT NULL,
   images text[] DEFAULT '{}',
-  status text NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'sold', 'deleted')),
+  status text NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'sold', 'deleted', 'draft')),
   created_at timestamptz DEFAULT now(),
   deleted_at timestamptz
 );
@@ -538,8 +538,8 @@ Vissa operationer kräver **admin-nivå** behörighet mot Supabase – både fö
   - Om nyckeln saknas blir `supabaseAdmin` `null`; tjänster faller tillbaka till vanlig Supabase-klient (RLS gäller då).
 - `app/api/delete-account/route.ts`
   - Använder `supabaseAdmin?.auth.admin.deleteUser(user.id)` för att ta bort från `auth.users`.
-- **Dealer-analytics** – leads, listings, listing_views:
-  - `lib/features/dealer/dealer-analytics-service.ts` använder `supabaseAdmin` för att läsa `leads`, `listings` och `listing_views`.
+- **Dealer-analytics** – leads, listings, listing_views, favorites:
+  - `lib/features/dealer/dealer-analytics-service.ts` använder `supabaseAdmin` för att läsa `leads`, `listings`, `listing_views` och `favorites` (antal sparade per annons i inventarietabellen).
   - Orsak: RLS på dessa tabeller kan blockera även korrekt data (t.ex. cookie-/session-problem). Sidan har redan verifierat att användaren är dealer; vi filtrerar strikt på `user_id`/`seller_id` = orgOwnerId.
 - **Lead-notiser** (`app/actions/lead-notification-action.ts`): `supabaseAdmin.auth.admin.getUserById` för att hämta mottagarens e-post.
 - **Meddelandenotiser** (`app/actions/new-message-notification-action.ts`): samma mönster för e-postuppslag.

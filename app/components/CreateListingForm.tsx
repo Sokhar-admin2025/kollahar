@@ -56,6 +56,7 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
   const [loading, setLoading] = useState(false)
   const [compressing, setCompressing] = useState(false)
   const [errors, setErrors] = useState<Record<string, string[]>>({})
+  const [isVisible, setIsVisible] = useState(true)
 
   // Ref för att hålla koll på preview URLs för cleanup
   const previewUrlsRef = useRef<string[]>([])
@@ -100,6 +101,7 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
       setGearbox(typeof attributes.gearbox === 'string' ? attributes.gearbox : '')
       setYear(attributes.year ? String(attributes.year) : '')
       setMileage(attributes.mileage ? String(attributes.mileage) : '')
+      setIsVisible(initialData.status !== 'draft')
       setBodyType(typeof attributes.body_type === 'string' ? attributes.body_type : '')
       setColor(typeof attributes.color === 'string' ? attributes.color : '')
       setColorCustom(typeof attributes.color_custom === 'string' ? attributes.color_custom : '')
@@ -369,6 +371,7 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
         category,
         images: allImageUrls,
         attributes: Object.keys(attributes).length > 0 ? attributes : undefined,
+        status: isVisible ? 'active' : 'draft',
       }
 
       let result
@@ -925,6 +928,32 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
 
 
       <hr className="border-gray-100" />
+
+      {/* Toggle: Synlig för alla – gömd = draft, ingen annan ser annonsen */}
+      <div className="flex items-center justify-between gap-4 py-4 px-4 rounded-xl bg-brand-beige/50 border border-gray-200">
+        <div>
+          <p className="font-medium text-brand-text antialiased">Synlig för alla</p>
+          <p className="text-sm text-brand-text/70 antialiased">
+            {isVisible ? 'Annonsen visas i sökningen.' : 'Annonsen är gömd – endast du ser den tills du aktiverar.'}
+          </p>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={isVisible}
+          aria-label={isVisible ? 'Synlig för alla – klicka för att gömma' : 'Gömd – klicka för att visa'}
+          onClick={() => setIsVisible((v) => !v)}
+          className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-brand-green focus:ring-offset-2 ${
+            isVisible ? 'bg-brand-green' : 'bg-gray-300'
+          }`}
+        >
+          <span
+            className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition ${
+              isVisible ? 'translate-x-5' : 'translate-x-1'
+            }`}
+          />
+        </button>
+      </div>
 
       <div className="pt-2">
         <Button 

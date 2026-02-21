@@ -264,7 +264,7 @@ export async function createListing(
       images: data.images ?? [],
       attributes: data.attributes ?? {},
       user_id: userId,
-      status: 'active',
+      status: (data as { status?: string }).status === 'draft' ? 'draft' : 'active',
     } as Record<string, unknown>
     insertPayload.bortskankes = isBortskankes
     if (data.external_id?.trim()) insertPayload.external_id = data.external_id.trim()
@@ -355,6 +355,11 @@ export async function updateListing(
       category: data.category,
       images: data.images ?? [],
       attributes: data.attributes ?? {},
+    }
+
+    const statusVal = (data as { status?: string }).status
+    if (statusVal === 'draft' || statusVal === 'active') {
+      updatePayload.status = statusVal
     }
 
     if (newPrice < currentPrice && currentPrice > 0) {
@@ -787,7 +792,7 @@ export async function updateListingStatus(
     return { success: false, error: 'Ogiltigt annons- eller användar-id.' }
   }
 
-  const allowed = ['active', 'sold', 'deleted']
+  const allowed = ['active', 'sold', 'deleted', 'draft']
   if (!allowed.includes(status)) {
     return { success: false, error: 'Ogiltig status.' }
   }

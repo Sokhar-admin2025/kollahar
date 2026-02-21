@@ -35,6 +35,9 @@ const listingBaseSchema = z.object({
   external_url: z.string().optional(),
   contact_email: z.string().optional(),
   contact_name: z.string().optional(),
+
+  // Draft: gömd från alla utom ägare (endast för handlare/alla som skapar)
+  status: z.enum(['active', 'draft']).optional().default('active'),
 })
 
 export const insertListingSchema = listingBaseSchema.refine(priceRefine, {
