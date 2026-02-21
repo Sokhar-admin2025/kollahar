@@ -371,7 +371,7 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
         category,
         images: allImageUrls,
         attributes: Object.keys(attributes).length > 0 ? attributes : undefined,
-        status: isVisible ? 'active' : 'draft',
+        status: (isVisible ? 'active' : 'draft') as 'active' | 'draft',
       }
 
       let result
