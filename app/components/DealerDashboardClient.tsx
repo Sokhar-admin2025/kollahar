@@ -196,9 +196,6 @@ export default function DealerDashboardClient({
                 <p className="text-2xl font-bold text-brand-text dark:text-white">
                   {data.averageHealthPercent}% ∅
                 </p>
-                <p className="text-xs text-gray-400 dark:text-gray-500" title="+40% &gt;3 bilder, +30% beskrivning &gt;100 tecken, +30% minst 1 visning">
-                  &gt;3 bilder · &gt;100 tecken · ≥1 visning
-                </p>
               </div>
             </div>
           </div>
