@@ -21,10 +21,6 @@ const dmSans = DM_Sans({
 })
 
 export const metadata: Metadata = {
-  robots: {
-    index: false,
-    follow: false,
-  },
   title: {
     default: 'Kolla här! – En gladare marknadsplats, gjord för alla',
     template: '%s | Kolla här!',
