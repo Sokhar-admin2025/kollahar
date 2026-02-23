@@ -531,6 +531,17 @@ NOTIFY pgrst, 'reload schema';
 
 Exempel vid leads-utrullning: om `buyer_email` lagts till manuellt och klienten fortfarande får "column not found".
 
+## ✅ Guardrail-checklista (Privat vs Företag)
+
+Använd denna checklista vid alla ändringar kring multi-tenancy (`organization_id`) så att privatflödet aldrig bryts:
+
+1. **Privat annons** ska kunna skapas med `organization_id = NULL`.
+2. **Företagsannons** ska få `organization_id` automatiskt via profil/trigger.
+3. **FK-säkerhet:** Om `organization_id` sätts måste motsvarande rad finnas i `public.organizations` (auto-create i trigger är OK).
+4. **RLS-scope:** org-baserade queries/policies får endast användas för företagsflöden; privat ska ha säker fallback utan org-krav.
+5. **Lead/View arv:** `leads` och `listing_views` ska ärva `organization_id` från listing när det finns; privat kan vara `NULL`.
+6. **Migrationstest:** verifiera både privat användare och företagsanvändare i staging innan production.
+
 Utöver migrations finns även manuella setup-skript:
 
 - `supabase/setup_profiles.sql`: Skapar `public.profiles` + trigger från `auth.users` + RLS

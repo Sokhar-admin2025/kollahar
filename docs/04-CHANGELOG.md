@@ -146,6 +146,11 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
   - `NOTIFY pgrst, 'reload schema';`
 - **Resultat:** klienten hittar `buyer_email` utan att vänta på automatisk cache-refresh.
 
+#### FK-fix för organization_id vid annonsskapande
+- **Fix:** Ny migration `20260304100000_fix_organization_fk_autocreate.sql` förhindrar FK-fel mot `organizations`.
+- **Viktig regel:** Privata användare ska inte tvingas in i tenant-id på annonser (`organization_id` kan vara `NULL`), medan företagsflödet fortsatt använder org-koppling.
+- **Trigger-härdning:** Auto-create av saknad `organizations`-rad när org-id faktiskt används.
+
 #### Lead-status migration – ordningsfix
 - **Fixat SQL-ordning:** Gamla status-check constraints tas nu bort **innan** migration till nya statusvärden (`hot -> new`, `closed -> archived`) för att undvika constraint-fel vid körning.
 - **Conversion readiness:** Lead-skapning blockeras utan `listing_id` i server action och migrationen lägger till check-constraint för framtida rader.
