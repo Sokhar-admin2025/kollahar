@@ -33,6 +33,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Du måste vara inloggad för att importera.' }, { status: 401 })
     }
 
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('account_type')
+      .eq('id', user.id)
+      .single()
+
+    if ((profile as { account_type?: string } | null)?.account_type !== 'company') {
+      return NextResponse.json(
+        { error: 'CSV/XML bulk-import är endast tillgänglig för företagskonton.' },
+        { status: 403 }
+      )
+    }
+
     if (!supabaseAdmin) {
       return NextResponse.json(
         { error: 'SUPABASE_SERVICE_ROLE_KEY saknas – import kräver service role.' },

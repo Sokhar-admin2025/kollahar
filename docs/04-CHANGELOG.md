@@ -151,6 +151,11 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 - **Viktig regel:** Privata användare ska inte tvingas in i tenant-id på annonser (`organization_id` kan vara `NULL`), medan företagsflödet fortsatt använder org-koppling.
 - **Trigger-härdning:** Auto-create av saknad `organizations`-rad när org-id faktiskt används.
 
+#### Import-behörighet: endast företag
+- **API-låsning:** `POST /api/import-smistabil` returnerar `403` för konton som inte har `profiles.account_type = 'company'`.
+- **UI-gating:** `Importera CSV`-länk visas endast för företagskonton i dashboard.
+- **Sidskydd:** `/dashboard/import` gör klientkontroll av konto och redirectar privata användare till `/dashboard`.
+
 #### Lead-status migration – ordningsfix
 - **Fixat SQL-ordning:** Gamla status-check constraints tas nu bort **innan** migration till nya statusvärden (`hot -> new`, `closed -> archived`) för att undvika constraint-fel vid körning.
 - **Conversion readiness:** Lead-skapning blockeras utan `listing_id` i server action och migrationen lägger till check-constraint för framtida rader.

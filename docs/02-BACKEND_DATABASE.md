@@ -558,6 +558,15 @@ Aktivera denna gate när en PR innehåller något av följande:
 4. **Staging-bevis (obligatoriskt)**  
    - Testfall körda för både privat och företag (create/update/read), inklusive lead/view-paths.
 
+### Bulk-import policy (CSV/XML)
+
+- Bulk-import (`/dashboard/import`, `/api/import-smistabil`) är **endast för företagskonton**.
+- `profiles.account_type` måste vara `company`.
+- Privata konton ska:
+  - inte se importknappen i dashboard,
+  - redirectas bort från import-sidan,
+  - och få `403` från API om endpointen anropas direkt.
+
 Utöver migrations finns även manuella setup-skript:
 
 - `supabase/setup_profiles.sql`: Skapar `public.profiles` + trigger från `auth.users` + RLS

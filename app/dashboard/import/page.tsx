@@ -1,9 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Upload, ArrowLeft } from 'lucide-react'
 import Button from '@/app/components/atoms/Button'
+import { createClient } from '@/lib/supabase/client'
+
+const supabase = createClient()
 
 export default function ImportPage() {
   const router = useRouter()
@@ -11,6 +14,30 @@ export default function ImportPage() {
   const [status, setStatus] = useState<'idle' | 'uploading' | 'done' | 'error'>('idle')
   const [message, setMessage] = useState<string>('')
   const [errors, setErrors] = useState<string[]>([])
+  const [checkingAccess, setCheckingAccess] = useState(true)
+
+  useEffect(() => {
+    const guard = async () => {
+      const { data: sessionRes } = await supabase.auth.getSession()
+      const userId = sessionRes.session?.user?.id
+      if (!userId) {
+        router.replace('/login')
+        return
+      }
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('account_type')
+        .eq('id', userId)
+        .single()
+
+      if ((profile as { account_type?: string } | null)?.account_type !== 'company') {
+        router.replace('/dashboard')
+        return
+      }
+      setCheckingAccess(false)
+    }
+    guard()
+  }, [router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -48,6 +75,12 @@ export default function ImportPage() {
   return (
     <div className="min-h-screen bg-brand-beige flex flex-col">
       <div className="max-w-xl mx-auto py-10 px-4 flex-grow">
+        {checkingAccess ? (
+          <div className="p-4 rounded-lg bg-white border border-gray-200 text-brand-gray">
+            Kontrollerar behörighet…
+          </div>
+        ) : (
+          <>
         <div className="mb-8 flex items-center justify-between">
           <h1 className="text-3xl font-display text-brand-green">Importera Smistabil CSV</h1>
           <Button variant="link" onClick={() => router.push('/dashboard')}>
@@ -103,6 +136,8 @@ export default function ImportPage() {
               </ul>
             )}
           </div>
+        )}
+          </>
         )}
       </div>
     </div>

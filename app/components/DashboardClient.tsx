@@ -122,14 +122,16 @@ export default function DashboardClient({
         </div>
 
         <div className="mx-auto max-w-4xl mb-6 flex items-center gap-4 justify-end">
-          <Link
-            href="/dashboard/import"
-            title="Importera CSV"
-            className="inline-flex items-center gap-2 rounded-xl bg-brand-green/10 px-3 py-2 text-sm font-medium text-brand-green hover:bg-brand-green/20"
-          >
-            <Upload size={18} />
-            Importera CSV
-          </Link>
+          {accountType === 'company' && (
+            <Link
+              href="/dashboard/import"
+              title="Importera CSV"
+              className="inline-flex items-center gap-2 rounded-xl bg-brand-green/10 px-3 py-2 text-sm font-medium text-brand-green hover:bg-brand-green/20"
+            >
+              <Upload size={18} />
+              Importera CSV
+            </Link>
+          )}
           {accountType === 'company' && (
             <>
               <Link
