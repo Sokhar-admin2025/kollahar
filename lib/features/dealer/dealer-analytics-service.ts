@@ -12,6 +12,9 @@ export interface ListingWithStats {
   bortskankes: boolean
   views: number
   leads: number
+  conversionRate: number
+  conversionTrend: 'up' | 'down' | 'flat'
+  conversionTrendDelta: number
   favorites: number
   /** Health %: +40% (>3 images), +30% (desc>100), +30% (≥1 view). Images+desc ger poäng även utan visningar. */
   healthScore: number
@@ -20,6 +23,9 @@ export interface ListingWithStats {
 export interface DealerDashboardData {
   totalViews: number
   totalLeads: number
+  conversionRate: number
+  conversionTrend: 'up' | 'down' | 'flat'
+  conversionTrendDelta: number
   activeConversationsCount: number
   activeListingsCount: number
   /** Inventory Health: average health % across active listings */
@@ -77,6 +83,9 @@ export async function getDealerDashboardData(
     return {
       totalViews: 0,
       totalLeads: 0,
+      conversionRate: 0,
+      conversionTrend: 'flat',
+      conversionTrendDelta: 0,
       activeConversationsCount: 0,
       activeListingsCount: 0,
       averageHealthPercent: 0,
@@ -89,6 +98,8 @@ export async function getDealerDashboardData(
 
   const sevenDaysAgo = new Date()
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+  const fourteenDaysAgo = new Date()
+  fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14)
 
   // 1. Total Views – direkt count från listing_views (alltid, även utan listings)
   const { count: totalViewsCount, error: viewsError } = await supabaseAdmin
@@ -176,11 +187,34 @@ export async function getDealerDashboardData(
 
   const viewsData = (viewsDataRaw ?? []) as { listing_id: string; created_at: string }[]
 
+  const currentWeekViews = viewsData.filter((v) => new Date(v.created_at) >= sevenDaysAgo).length
+  const previousWeekViews = viewsData.filter((v) => {
+    const created = new Date(v.created_at)
+    return created >= fourteenDaysAgo && created < sevenDaysAgo
+  }).length
+
+  const currentWeekLeads = leadsAll.filter((l) => new Date(l.created_at) >= sevenDaysAgo).length
+  const previousWeekLeads = leadsAll.filter((l) => {
+    const created = new Date(l.created_at)
+    return created >= fourteenDaysAgo && created < sevenDaysAgo
+  }).length
+
+  const safeRate = (leads: number, views: number) => (views > 0 ? (leads / views) * 100 : 0)
+  const conversionRate = safeRate(totalLeads, totalViews)
+  const currentWeekConversionRate = safeRate(currentWeekLeads, currentWeekViews)
+  const previousWeekConversionRate = safeRate(previousWeekLeads, previousWeekViews)
+  const conversionTrendDelta = currentWeekConversionRate - previousWeekConversionRate
+  const conversionTrend: 'up' | 'down' | 'flat' =
+    conversionTrendDelta > 0.01 ? 'up' : conversionTrendDelta < -0.01 ? 'down' : 'flat'
+
   // Early return när inga listings – men totalViews/leads behålls
   if (listingIds.length === 0) {
     return {
       totalViews,
       totalLeads,
+      conversionRate,
+      conversionTrend,
+      conversionTrendDelta,
       activeConversationsCount,
       activeListingsCount: 0,
       averageHealthPercent: 0,
@@ -222,13 +256,19 @@ export async function getDealerDashboardData(
 
   const viewsByListing = new Map<string, number>()
   const viewsLast7ByListing = new Map<string, number>()
+  const viewsPrev7ByListing = new Map<string, number>()
   const leadsByListing = new Map<string, number>()
+  const leadsLast7ByListing = new Map<string, number>()
+  const leadsPrev7ByListing = new Map<string, number>()
 
   for (const a of viewsData) {
     if (a.listing_id) {
       viewsByListing.set(a.listing_id, (viewsByListing.get(a.listing_id) ?? 0) + 1)
-      if (new Date(a.created_at) >= sevenDaysAgo) {
+      const created = new Date(a.created_at)
+      if (created >= sevenDaysAgo) {
         viewsLast7ByListing.set(a.listing_id, (viewsLast7ByListing.get(a.listing_id) ?? 0) + 1)
+      } else if (created >= fourteenDaysAgo && created < sevenDaysAgo) {
+        viewsPrev7ByListing.set(a.listing_id, (viewsPrev7ByListing.get(a.listing_id) ?? 0) + 1)
       }
     }
   }
@@ -236,6 +276,12 @@ export async function getDealerDashboardData(
   for (const l of leadsAll) {
     if (l.listing_id) {
       leadsByListing.set(l.listing_id, (leadsByListing.get(l.listing_id) ?? 0) + 1)
+      const created = new Date(l.created_at)
+      if (created >= sevenDaysAgo) {
+        leadsLast7ByListing.set(l.listing_id, (leadsLast7ByListing.get(l.listing_id) ?? 0) + 1)
+      } else if (created >= fourteenDaysAgo && created < sevenDaysAgo) {
+        leadsPrev7ByListing.set(l.listing_id, (leadsPrev7ByListing.get(l.listing_id) ?? 0) + 1)
+      }
     }
   }
 
@@ -292,6 +338,23 @@ export async function getDealerDashboardData(
       description?: string | null
     }) => {
       const views = viewsByListing.get(l.id) ?? 0
+      const leads = leadsByListing.get(l.id) ?? 0
+      const currentWeekListingConversionRate = safeRate(
+        leadsLast7ByListing.get(l.id) ?? 0,
+        viewsLast7ByListing.get(l.id) ?? 0
+      )
+      const previousWeekListingConversionRate = safeRate(
+        leadsPrev7ByListing.get(l.id) ?? 0,
+        viewsPrev7ByListing.get(l.id) ?? 0
+      )
+      const listingConversionTrendDelta =
+        currentWeekListingConversionRate - previousWeekListingConversionRate
+      const listingConversionTrend: 'up' | 'down' | 'flat' =
+        listingConversionTrendDelta > 0.01
+          ? 'up'
+          : listingConversionTrendDelta < -0.01
+            ? 'down'
+            : 'flat'
       const images = l.images ?? []
       const descLen = (l.description ?? '').length
       const healthScore =
@@ -309,7 +372,10 @@ export async function getDealerDashboardData(
         previous_price: l.previous_price,
         bortskankes: l.bortskankes,
         views,
-        leads: leadsByListing.get(l.id) ?? 0,
+        leads,
+        conversionRate: safeRate(leads, views),
+        conversionTrend: listingConversionTrend,
+        conversionTrendDelta: listingConversionTrendDelta,
         favorites: favoritesByListing.get(l.id) ?? 0,
         healthScore,
       }
@@ -329,6 +395,9 @@ export async function getDealerDashboardData(
   return {
     totalViews,
     totalLeads,
+    conversionRate,
+    conversionTrend,
+    conversionTrendDelta,
     activeConversationsCount,
     activeListingsCount: activeListings.length,
     averageHealthPercent,

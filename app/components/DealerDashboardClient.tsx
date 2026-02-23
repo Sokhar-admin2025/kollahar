@@ -13,6 +13,9 @@ import {
   Upload,
   BarChart3,
   MessageSquare,
+  ArrowUpRight,
+  ArrowDownRight,
+  Minus,
 } from 'lucide-react'
 
 import type { DealerDashboardData } from '@/lib/features/dealer/dealer-analytics-service'
@@ -68,6 +71,13 @@ export default function DealerDashboardClient({
     }
   }, [sellerId, orgId, router])
 
+  const formatPercent = (value: number) => `${value.toFixed(2)}%`
+  const getConversionBadgeClass = (value: number) => {
+    if (value < 1) return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+    if (value <= 3) return 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
+    return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400'
+  }
+
   return (
     <div className="min-h-screen bg-brand-beige dark:bg-gray-900">
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
@@ -107,7 +117,7 @@ export default function DealerDashboardClient({
         </div>
 
         {/* Stats Grid */}
-        <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
             <div className="flex items-center gap-3">
               <div className="rounded-lg bg-blue-100 p-2.5 dark:bg-blue-900/30">
@@ -170,6 +180,31 @@ export default function DealerDashboardClient({
                 </p>
                 <p className="text-xs text-gray-400 dark:text-gray-500" title="+40% &gt;3 bilder, +30% beskrivning &gt;100 tecken, +30% minst 1 visning">
                   &gt;3 bilder · &gt;100 tecken · ≥1 visning
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-violet-100 p-2.5 dark:bg-violet-900/30">
+                <TrendingUp className="h-6 w-6 text-violet-600 dark:text-violet-400" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  Conversion Rate
+                </p>
+                <p className="text-2xl font-bold text-brand-text dark:text-white">
+                  {formatPercent(data.conversionRate)}
+                </p>
+                <p className="mt-0.5 inline-flex items-center gap-1 text-xs font-medium text-brand-text/70 dark:text-gray-300">
+                  {data.conversionTrend === 'up' ? (
+                    <ArrowUpRight className="h-3.5 w-3.5 text-emerald-500" />
+                  ) : data.conversionTrend === 'down' ? (
+                    <ArrowDownRight className="h-3.5 w-3.5 text-red-500" />
+                  ) : (
+                    <Minus className="h-3.5 w-3.5 text-amber-500" />
+                  )}
+                  {`${data.conversionTrendDelta >= 0 ? '+' : ''}${data.conversionTrendDelta.toFixed(2)} pp vs förra veckan`}
                 </p>
               </div>
             </div>
@@ -280,13 +315,14 @@ export default function DealerDashboardClient({
                   <th className="px-4 py-3">Views</th>
                   <th className="px-4 py-3">Favoriter</th>
                   <th className="px-4 py-3">Leads</th>
+                  <th className="px-4 py-3">Conv. %</th>
                 </tr>
               </thead>
               <tbody>
                 {data.inventory.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={7}
+                      colSpan={8}
                       className="px-4 py-8 text-center text-gray-500 dark:text-gray-400"
                     >
                       Inga annonser än. Lägg till din första annons.
@@ -350,6 +386,23 @@ export default function DealerDashboardClient({
                       </td>
                       <td className="px-4 py-3 text-brand-text dark:text-gray-300">
                         {row.leads}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${getConversionBadgeClass(row.conversionRate)}`}
+                        >
+                          {formatPercent(row.conversionRate)}
+                        </span>
+                        <div className="mt-1 inline-flex items-center gap-1 text-[11px] text-brand-text/70 dark:text-gray-400">
+                          {row.conversionTrend === 'up' ? (
+                            <ArrowUpRight className="h-3.5 w-3.5 text-emerald-500" />
+                          ) : row.conversionTrend === 'down' ? (
+                            <ArrowDownRight className="h-3.5 w-3.5 text-red-500" />
+                          ) : (
+                            <Minus className="h-3.5 w-3.5 text-amber-500" />
+                          )}
+                          {`${row.conversionTrendDelta >= 0 ? '+' : ''}${row.conversionTrendDelta.toFixed(2)} pp`}
+                        </div>
                       </td>
                     </tr>
                   ))
