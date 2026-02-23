@@ -54,6 +54,7 @@ export default async function DealerDashboardPage() {
       data={data}
       userId={user.id}
       orgOwnerId={orgOwnerId}
+      organizationId={organizationId}
     />
   )
 }

@@ -517,6 +517,7 @@ Migrations ligger i `supabase/migrations/`:
 - `20260228000000_listing_views_listing_set_null.sql`: `listing_views.listing_id` nullable + ON DELETE SET NULL – Total Views behålls när annons raderas.
 - `20260229000000_listings_seller_type.sql`: `listings.seller_type` – private/company för filter och sortering; backfill från profiles.account_type; triggers för INSERT och profiluppgradering.
 - `20260302100000_listings_vehicle_agnostic_columns.sql`: Lägger till dedikerade vehicle-agnostiska filterkolumner på `listings`, backfill från `attributes` och B-tree-index på `category`, `make`, `model`, `year`, `price`.
+- `20260303100000_leads_action_center_status.sql`: Uppdaterar lead-statusflöde (`new/contacted/qualified/sold/archived`), lägger till `buyer_email`, index för org+status, samt policy för org-baserad statusuppdatering.
 
 Utöver migrations finns även manuella setup-skript:
 

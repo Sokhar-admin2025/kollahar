@@ -19,7 +19,7 @@ export interface ListingWithStats {
 
 export interface DealerDashboardData {
   totalViews: number
-  hotLeadsLast30Days: number
+  totalLeads: number
   activeConversationsCount: number
   activeListingsCount: number
   /** Inventory Health: average health % across active listings */
@@ -27,6 +27,23 @@ export interface DealerDashboardData {
   trendingListings: { id: string; title: string; views: number }[]
   priceDropListings: { id: string; title: string; price: number; previous_price: number }[]
   inventory: ListingWithStats[]
+  leadActionItems: LeadActionItem[]
+}
+
+export type LeadStatus = 'new' | 'contacted' | 'qualified' | 'sold' | 'archived'
+
+export interface LeadActionItem {
+  id: string
+  listing_id: string | null
+  listing_title: string
+  listing_make: string | null
+  listing_model: string | null
+  listing_year: number | null
+  buyer_name: string
+  buyer_email: string | null
+  buyer_phone: string
+  status: LeadStatus
+  created_at: string
 }
 
 export interface DealerDashboardOptions {
@@ -59,20 +76,19 @@ export async function getDealerDashboardData(
     console.error('[dealer-analytics] supabaseAdmin saknas – SUPABASE_SERVICE_ROLE_KEY krävs.')
     return {
       totalViews: 0,
-      hotLeadsLast30Days: 0,
+      totalLeads: 0,
       activeConversationsCount: 0,
       activeListingsCount: 0,
       averageHealthPercent: 0,
       trendingListings: [],
       priceDropListings: [],
       inventory: [],
+      leadActionItems: [],
     }
   }
 
   const sevenDaysAgo = new Date()
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
-  const thirtyDaysAgo = new Date()
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
 
   // 1. Total Views – direkt count från listing_views (alltid, även utan listings)
   const { count: totalViewsCount, error: viewsError } = await supabaseAdmin
@@ -113,22 +129,44 @@ export async function getDealerDashboardData(
   const activeConversationsCount = (dealerConvs ?? []).length
 
   // 4. Leads
-  const [leadsLast30Res, leadsAllRes] = await Promise.all([
-    supabaseAdmin
-      .from('leads')
-      .select('listing_id')
-      .eq('organization_id', organizationId)
-      .eq('status', 'hot')
-      .gte('created_at', thirtyDaysAgo.toISOString()),
-    supabaseAdmin
-      .from('leads')
-      .select('listing_id')
-      .eq('organization_id', organizationId),
-  ])
+  const { data: leadsAllData } = await supabaseAdmin
+    .from('leads')
+    .select('id, listing_id, buyer_name, buyer_email, buyer_phone, status, created_at, listing:listings(id, title, make, model, year)')
+    .eq('organization_id', organizationId)
+    .order('created_at', { ascending: false })
 
-  const leadsLast30 = (leadsLast30Res.data ?? []) as { listing_id: string }[]
-  const leadsAll = (leadsAllRes.data ?? []) as { listing_id: string }[]
-  const hotLeadsLast30Days = leadsLast30.length
+  const leadsAll = (leadsAllData ?? []) as Array<{
+    id: string
+    listing_id: string | null
+    buyer_name: string
+    buyer_email?: string | null
+    buyer_phone: string
+    status?: string | null
+    created_at: string
+    listing?: {
+      id?: string
+      title?: string | null
+      make?: string | null
+      model?: string | null
+      year?: number | null
+    } | null
+  }>
+  const totalLeads = leadsAll.length
+  const leadActionItems: LeadActionItem[] = leadsAll.map((lead) => ({
+    id: lead.id,
+    listing_id: lead.listing_id,
+    listing_title: lead.listing?.title?.trim() || 'Borttagen annons',
+    listing_make: lead.listing?.make ?? null,
+    listing_model: lead.listing?.model ?? null,
+    listing_year: lead.listing?.year ?? null,
+    buyer_name: lead.buyer_name,
+    buyer_email: lead.buyer_email ?? null,
+    buyer_phone: lead.buyer_phone,
+    status: (lead.status === 'contacted' || lead.status === 'qualified' || lead.status === 'sold' || lead.status === 'archived'
+      ? lead.status
+      : 'new'),
+    created_at: lead.created_at,
+  }))
 
   // 5. listing_views för per-listing breakdown (trending, inventory)
   const { data: viewsDataRaw } = await supabaseAdmin
@@ -138,17 +176,18 @@ export async function getDealerDashboardData(
 
   const viewsData = (viewsDataRaw ?? []) as { listing_id: string; created_at: string }[]
 
-  // Early return när inga listings – men totalViews och hotLeads behålls
+  // Early return när inga listings – men totalViews/leads behålls
   if (listingIds.length === 0) {
     return {
       totalViews,
-      hotLeadsLast30Days,
+      totalLeads,
       activeConversationsCount,
       activeListingsCount: 0,
       averageHealthPercent: 0,
       trendingListings: [],
       priceDropListings: [],
       inventory: [],
+      leadActionItems,
     }
   }
   const listingMap = new Map(
@@ -289,12 +328,13 @@ export async function getDealerDashboardData(
 
   return {
     totalViews,
-    hotLeadsLast30Days,
+    totalLeads,
     activeConversationsCount,
     activeListingsCount: activeListings.length,
     averageHealthPercent,
     trendingListings,
     priceDropListings,
     inventory,
+    leadActionItems,
   }
 }

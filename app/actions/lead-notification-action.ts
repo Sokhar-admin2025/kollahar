@@ -74,12 +74,18 @@ export async function triggerLeadNotification(params: {
         .single()
       const buyerId = (conv as { buyer_id: string } | null)?.buyer_id
       if (buyerId && params.buyerPhone) {
+        let buyerEmail: string | null = null
+        if (supabaseAdmin) {
+          const buyerUserRes = await supabaseAdmin.auth.admin.getUserById(buyerId)
+          buyerEmail = buyerUserRes.data?.user?.email ?? null
+        }
         await createLead({
           conversationId: params.conversationId,
           listingId: params.listingId,
           sellerId: ownerId,
           buyerId,
           buyerName: params.buyerName,
+          buyerEmail,
           buyerPhone: params.buyerPhone,
         })
         // Ignorera fel vid duplicate (record finns redan från submitLeadCardAction)

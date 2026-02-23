@@ -17,24 +17,28 @@ import {
 
 import type { DealerDashboardData } from '@/lib/features/dealer/dealer-analytics-service'
 import { formatCurrency } from '@/lib/features/listings/utils/price-utils'
+import LeadList from '@/app/components/LeadList'
 
 interface DealerDashboardClientProps {
   companyName: string
   data: DealerDashboardData
   userId: string
   orgOwnerId?: string
+  organizationId?: string
 }
 
 export default function DealerDashboardClient({
   companyName,
   data,
   orgOwnerId,
+  organizationId,
 }: DealerDashboardClientProps) {
   const router = useRouter()
   const sellerId = orgOwnerId ?? ''
+  const orgId = organizationId ?? ''
 
   useEffect(() => {
-    if (!sellerId) return
+    if (!sellerId || !orgId) return
     const supabase = createClient()
     const channel = supabase
       .channel('dealer-dashboard')
@@ -44,7 +48,7 @@ export default function DealerDashboardClient({
           event: 'INSERT',
           schema: 'public',
           table: 'leads',
-          filter: `seller_id=eq.${sellerId}`,
+          filter: `organization_id=eq.${orgId}`,
         },
         () => router.refresh()
       )
@@ -62,7 +66,7 @@ export default function DealerDashboardClient({
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [sellerId, router])
+  }, [sellerId, orgId, router])
 
   return (
     <div className="min-h-screen bg-brand-beige dark:bg-gray-900">
@@ -126,10 +130,10 @@ export default function DealerDashboardClient({
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                  Hot Leads (30 dagar)
+                  Total Leads
                 </p>
                 <p className="text-2xl font-bold text-brand-text dark:text-white">
-                  {data.hotLeadsLast30Days}
+                  {data.totalLeads}
                 </p>
               </div>
             </div>
@@ -242,6 +246,10 @@ export default function DealerDashboardClient({
               )}
             </div>
           </div>
+        </div>
+
+        <div className="mb-8">
+          <LeadList leads={data.leadActionItems} />
         </div>
 
         {/* Inventory Management */}

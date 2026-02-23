@@ -8,6 +8,12 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ### ✨ Tillagt
 
+#### Level 2 – Lead Action Center för handlare (feb 2026)
+- **Ny tabellvy i Dealer Dashboard:** `Lead Action Center` med kund (namn/e-post/telefon), intresse (annonslänk), relativ tid och inline status.
+- **Lead-statusflöde:** Nya statusar `new`, `contacted`, `qualified`, `sold`, `archived` (default `new`).
+- **Realtime-klar statistik:** Statkortet visar nu `Total Leads` per `organization_id`.
+- **Server actions:** `updateLeadStatusAction` för snabb statusändring direkt i listan.
+
 #### Step 1.4 – vehicle-agnostiskt listings-schema + snabbare filter (feb 2026)
 - **Dedikerade kolumner i `listings`:** `make`, `model`, `year`, `mileage`, `engine_hours`, `fuel_type`, `transmission`, `engine_power`, `length_cm` (utöver befintliga `category` och `price`).
 - **Backfill-migration:** `20260302100000_listings_vehicle_agnostic_columns.sql` mappar data från `attributes` (inkl. `mil`/`mätarställning` → `mileage`, `gångtimmar` → `engine_hours`, `längd` → `length_cm`).
@@ -131,6 +137,10 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 - **Bundle analyzer:** Lagt till `@next/bundle-analyzer` med script `npm run analyze` för att identifiera stora bundles och optimeringsmöjligheter
 
 ### 🔧 Ändrat / Buggfixar
+
+#### Lead-status migration – ordningsfix
+- **Fixat SQL-ordning:** Gamla status-check constraints tas nu bort **innan** migration till nya statusvärden (`hot -> new`, `closed -> archived`) för att undvika constraint-fel vid körning.
+- **Conversion readiness:** Lead-skapning blockeras utan `listing_id` i server action och migrationen lägger till check-constraint för framtida rader.
 
 #### Import-skydd för fel filtyp (CSV)
 - **API-route:** `app/api/import-smistabil/route.ts` validerar nu filtyp innan parsing (`text/csv` eller `text/plain`, alternativt `.csv`/`.txt`).

@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createLead } from '@/lib/features/leads/lead-service'
 import { triggerLeadNotification } from '@/app/actions/lead-notification-action'
 import { logAnalyticsEvent } from '@/lib/features/analytics/analytics-service'
+import type { LeadStatus } from '@/lib/features/dealer/dealer-analytics-service'
 
 export type SubmitLeadCardResult = { success: true } | { success: false; error: string }
 
@@ -42,7 +43,10 @@ export async function submitLeadCardAction(
     }
 
     const sellerId = (conv as { seller_id: string }).seller_id
-    const listingId = (conv as { listing_id: string }).listing_id
+    const listingId = (conv as { listing_id?: string | null }).listing_id
+    if (!listingId) {
+      return { success: false, error: 'Lead kan inte skapas utan kopplad annons.' }
+    }
 
     const leadResult = await createLead({
       conversationId,
@@ -50,6 +54,7 @@ export async function submitLeadCardAction(
       sellerId,
       buyerId: user.id,
       buyerName: buyerName.trim(),
+      buyerEmail: user.email ?? null,
       buyerPhone: buyerPhone.trim(),
     })
 
@@ -81,6 +86,49 @@ export async function submitLeadCardAction(
     console.error('submitLeadCardAction error', err)
     return { success: false, error: msg }
   }
+}
+
+export type UpdateLeadStatusResult = { success: true } | { success: false; error: string }
+
+export async function updateLeadStatusAction(
+  leadId: string,
+  status: LeadStatus
+): Promise<UpdateLeadStatusResult> {
+  const allowedStatuses: LeadStatus[] = ['new', 'contacted', 'qualified', 'sold', 'archived']
+  if (!allowedStatuses.includes(status)) {
+    return { success: false, error: 'Ogiltig lead-status.' }
+  }
+
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { success: false, error: 'Du måste vara inloggad.' }
+  }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('organization_id')
+    .eq('id', user.id)
+    .single()
+
+  const organizationId =
+    (profile as { organization_id?: string | null } | null)?.organization_id ?? user.id
+
+  const { error } = await supabase
+    .from('leads')
+    .update({ status })
+    .eq('id', leadId)
+    .eq('organization_id', organizationId)
+
+  if (error) {
+    return { success: false, error: 'Kunde inte uppdatera lead-status.' }
+  }
+
+  revalidatePath('/dashboard/dealer')
+  return { success: true }
 }
 
 export type GetLeadExistsResult = { exists: boolean } | { error: string }
