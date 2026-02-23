@@ -17,6 +17,7 @@ import {
   ArrowDownRight,
   Minus,
   CircleHelp,
+  Sparkles,
 } from 'lucide-react'
 
 import type { DealerDashboardData } from '@/lib/features/dealer/dealer-analytics-service'
@@ -78,6 +79,11 @@ export default function DealerDashboardClient({
     if (value <= 3) return 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
     return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400'
   }
+  const analyticsProTooltipText =
+    'Se exakt varifrån dina leads kommer (Facebook, Google, Instagram). Få veckovisa ROI-rapporter och optimera din annonsbudget. Klicka för att kontakta oss och aktivera Pro-vyn för din anläggning.'
+  const analyticsProMailto = `mailto:hej@kollahar.se?subject=${encodeURIComponent('Intresse: Analytics Pro (Beta)')}&body=${encodeURIComponent(
+    'Hej! Jag är intresserad av att höra mer om Analytics Pro för vår anläggning.'
+  )}`
   const InfoHint = ({ text }: { text: string }) => (
     <div className="group relative">
       <button
@@ -224,6 +230,18 @@ export default function DealerDashboardClient({
                   )}
                   {`${data.conversionTrendDelta >= 0 ? '+' : ''}${data.conversionTrendDelta.toFixed(2)} pp vs förra veckan`}
                 </p>
+                <div className="group relative mt-2 inline-flex">
+                  <a
+                    href={analyticsProMailto}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-indigo-200 bg-gradient-to-r from-indigo-50 to-amber-50 px-2.5 py-1 text-[11px] font-semibold text-indigo-700 transition hover:from-indigo-100 hover:to-amber-100 hover:text-indigo-800 dark:border-indigo-700/60 dark:from-indigo-900/30 dark:to-amber-900/20 dark:text-indigo-300 dark:hover:from-indigo-900/50 dark:hover:to-amber-900/30"
+                  >
+                    <Sparkles className="h-3.5 w-3.5" />
+                    Aktivera Analytics Pro (Beta)
+                  </a>
+                  <div className="pointer-events-none absolute bottom-[calc(100%+8px)] left-0 z-20 hidden w-72 rounded-lg border border-gray-200 bg-white p-3 text-xs normal-case text-brand-text shadow-lg group-hover:block group-focus-within:block dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200">
+                    {analyticsProTooltipText}
+                  </div>
+                </div>
               </div>
             </div>
           </div>

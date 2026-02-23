@@ -15,6 +15,7 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 - **Server actions:** `updateLeadStatusAction` för snabb statusändring direkt i listan.
 - **Conversion analytics:** Nytt statkort `Conversion Rate` (org-nivå) samt `Conv. %`-kolumn i inventariet med färgkodning (<1 röd, 1–3 gul, >3 grön).
 - **Trendindikator:** Konvertering visar nu trend upp/ner/flat jämfört med föregående vecka, både på org-nivå och per annons.
+- **Analytics Pro (Beta)-teaser:** CTA-knapp nära `Conversion Rate` i dealer-dashboard (`Aktivera Analytics Pro (Beta)`) med premium-styling, tooltip med värdebeskrivning och `mailto` till `hej@kollahar.se` för aktivering.
 
 #### Step 1.4 – vehicle-agnostiskt listings-schema + snabbare filter (feb 2026)
 - **Dedikerade kolumner i `listings`:** `make`, `model`, `year`, `mileage`, `engine_hours`, `fuel_type`, `transmission`, `engine_power`, `length_cm` (utöver befintliga `category` och `price`).
