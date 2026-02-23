@@ -138,6 +138,12 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ### 🔧 Ändrat / Buggfixar
 
+#### PostgREST schema cache efter leads-migration
+- **Symptom:** API kunde ge `Could not find the 'buyer_email' column of 'leads' in the schema cache` direkt efter deploy.
+- **Åtgärd:** Efter manuell kolumnändring i production kan schema-cache behöva laddas om:
+  - `NOTIFY pgrst, 'reload schema';`
+- **Resultat:** klienten hittar `buyer_email` utan att vänta på automatisk cache-refresh.
+
 #### Lead-status migration – ordningsfix
 - **Fixat SQL-ordning:** Gamla status-check constraints tas nu bort **innan** migration till nya statusvärden (`hot -> new`, `closed -> archived`) för att undvika constraint-fel vid körning.
 - **Conversion readiness:** Lead-skapning blockeras utan `listing_id` i server action och migrationen lägger till check-constraint för framtida rader.

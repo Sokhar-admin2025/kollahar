@@ -519,6 +519,18 @@ Migrations ligger i `supabase/migrations/`:
 - `20260302100000_listings_vehicle_agnostic_columns.sql`: Lägger till dedikerade vehicle-agnostiska filterkolumner på `listings`, backfill från `attributes` och B-tree-index på `category`, `make`, `model`, `year`, `price`.
 - `20260303100000_leads_action_center_status.sql`: Uppdaterar lead-statusflöde (`new/contacted/qualified/sold/archived`), lägger till `buyer_email`, index för org+status, samt policy för org-baserad statusuppdatering.
 
+### Production-notering (PostgREST schema cache)
+
+Efter manuella SQL-ändringar i production (t.ex. ny kolumn) kan API:t tillfälligt svara att kolumnen saknas i schema cache.
+
+Kör då:
+
+```sql
+NOTIFY pgrst, 'reload schema';
+```
+
+Exempel vid leads-utrullning: om `buyer_email` lagts till manuellt och klienten fortfarande får "column not found".
+
 Utöver migrations finns även manuella setup-skript:
 
 - `supabase/setup_profiles.sql`: Skapar `public.profiles` + trigger från `auth.users` + RLS
