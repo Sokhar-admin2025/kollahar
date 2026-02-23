@@ -29,6 +29,8 @@ export interface DealerDashboardData {
 export interface DealerDashboardOptions {
   /** Org-ägarens id (user_id på listings). För säljare: parent_organization_id ?? userId */
   orgOwnerId: string
+  /** Tenant-id (organization_id). Fallback till orgOwnerId för bakåtkompatibilitet. */
+  organizationId?: string | null
   /** true = admin ser alla listningar; false = säljare ser endast contact_email = userEmail */
   isAdmin: boolean
   /** Säljarens e-post – används för filtrering när isAdmin = false */
@@ -46,6 +48,7 @@ export async function getDealerDashboardData(
   options?: DealerDashboardOptions
 ): Promise<DealerDashboardData> {
   const orgOwnerId = options?.orgOwnerId ?? userId
+  const organizationId = options?.organizationId?.trim() || orgOwnerId
   const isAdmin = options?.isAdmin ?? true
   const userEmail = options?.userEmail?.trim() || null
 
@@ -72,19 +75,19 @@ export async function getDealerDashboardData(
   const { count: totalViewsCount, error: viewsError } = await supabaseAdmin
     .from('listing_views')
     .select('*', { count: 'exact', head: true })
-    .eq('seller_id', orgOwnerId)
+    .eq('organization_id', organizationId)
 
   if (viewsError) {
     console.error('[dealer-analytics] listing_views count error:', viewsError.message, 'code:', viewsError.code)
   }
   const totalViews = totalViewsCount ?? 0
-  console.log('[dealer-analytics] orgOwnerId:', orgOwnerId, 'totalViews (count):', totalViews)
+  console.log('[dealer-analytics] orgOwnerId:', orgOwnerId, 'organizationId:', organizationId, 'totalViews (count):', totalViews)
 
   // 2. Listings – supabaseAdmin, user_id = orgOwnerId, inga status-filter (alla: active, sold, deleted)
   let listingsQuery = supabaseAdmin
     .from('listings')
     .select('id, title, status, price, previous_price, bortskankes, images, description')
-    .eq('user_id', orgOwnerId)
+    .eq('organization_id', organizationId)
     .order('created_at', { ascending: false })
 
   if (!isAdmin && userEmail) {
@@ -111,13 +114,13 @@ export async function getDealerDashboardData(
     supabaseAdmin
       .from('leads')
       .select('listing_id')
-      .eq('seller_id', orgOwnerId)
+      .eq('organization_id', organizationId)
       .eq('status', 'hot')
       .gte('created_at', thirtyDaysAgo.toISOString()),
     supabaseAdmin
       .from('leads')
       .select('listing_id')
-      .eq('seller_id', orgOwnerId),
+      .eq('organization_id', organizationId),
   ])
 
   const leadsLast30 = (leadsLast30Res.data ?? []) as { listing_id: string }[]
@@ -128,7 +131,7 @@ export async function getDealerDashboardData(
   const { data: viewsDataRaw } = await supabaseAdmin
     .from('listing_views')
     .select('listing_id, created_at')
-    .eq('seller_id', orgOwnerId)
+    .eq('organization_id', organizationId)
 
   const viewsData = (viewsDataRaw ?? []) as { listing_id: string; created_at: string }[]
 

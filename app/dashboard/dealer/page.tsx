@@ -21,7 +21,7 @@ export default async function DealerDashboardPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('account_type, full_name, is_admin, parent_organization_id')
+    .select('account_type, full_name, is_admin, parent_organization_id, organization_id')
     .eq('id', user.id)
     .single()
 
@@ -32,18 +32,21 @@ export default async function DealerDashboardPage() {
 
   const companyName = (profile as { full_name?: string } | null)?.full_name ?? 'Företag'
   const parentOrgId = (profile as { parent_organization_id?: string | null } | null)?.parent_organization_id ?? null
+  const profileOrganizationId = (profile as { organization_id?: string | null } | null)?.organization_id ?? null
   const orgOwnerId = parentOrgId ?? user.id
+  const organizationId = profileOrganizationId ?? orgOwnerId
   // Org owner ser alltid alla listningar; sub-users filtreras på contact_email
   const isAdmin = orgOwnerId === user.id ? true : ((profile as { is_admin?: boolean } | null)?.is_admin ?? true)
   const userEmail = user.email?.trim() || null
 
   const data = await getDealerDashboardData(user.id, {
     orgOwnerId,
+    organizationId,
     isAdmin,
     userEmail,
   })
 
-  console.log('[dealer-dashboard] orgOwnerId:', orgOwnerId, 'Views from DB:', data.totalViews, 'avgHealth:', data.averageHealthPercent)
+  console.log('[dealer-dashboard] orgOwnerId:', orgOwnerId, 'organizationId:', organizationId, 'Views from DB:', data.totalViews, 'avgHealth:', data.averageHealthPercent)
 
   return (
     <DealerDashboardClient
