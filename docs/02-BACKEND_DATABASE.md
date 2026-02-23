@@ -185,7 +185,7 @@ CREATE TABLE public.listings (
 - `location`: Plats (t.ex. "Stockholm, Södermalm")
 - `category`: Kategori (`'Fordon'`, `'Elektronik'`, `'Kläder'`, `'Möbler'`, `'Övrigt'`)
 - `images`: Array av bild-URLs (från `listing-images` bucket)
-- `status`: Status (`'active'`, `'sold'`, `'deleted'`)
+- `status`: Status (`'active'`, `'sold'`, `'deleted'`, `'draft'`) – draft = gömd, endast ägare ser
 - `created_at`: Skapad datum
 - `deleted_at`: Borttagen datum (sätts inte vid `'sold'`; sålda annonser visas för alla med banner "Såld")
 

@@ -208,6 +208,7 @@ export async function getListingById(id: string): Promise<ServiceResult<Listing>
 
   try {
     const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
     const { data, error } = await supabase
       .from('listings')
@@ -227,6 +228,15 @@ export async function getListingById(id: string): Promise<ServiceResult<Listing>
     }
 
     if (!data) {
+      return { success: false, error: 'Annonsen hittades inte.' }
+    }
+
+    // Defensiv kontroll: även om RLS normalt blockerar draft för icke-ägare,
+    // returnera alltid "not found" om någon annan försöker läsa draft.
+    if (
+      (data as { status?: string; user_id?: string }).status === 'draft' &&
+      (data as { user_id?: string }).user_id !== (user?.id ?? null)
+    ) {
       return { success: false, error: 'Annonsen hittades inte.' }
     }
 

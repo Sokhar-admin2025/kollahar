@@ -14,6 +14,7 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 - **Dashboard:** Draft visas med badge "Gömd", klick öppnar redigera. Toggle växlar draft ↔ active.
 - **Dealer-dashboard:** Status "Gömd" i inventarietabellen.
 - **Migration:** `20260230000000_listings_draft_status.sql` – lägger till draft i status-check.
+- **Säkerhet:** Defensiv kontroll i `getListingById` returnerar "Annonsen hittades inte." om icke-ägare försöker läsa draft. Tillfällig serverlogg i `app/annons/[id]/layout.tsx`: `[Security Check] Accessing listing: ...`.
 
 #### Favoriträknare – dealer & annonssida (feb 2025)
 - **Dealer-dashboard:** Ny kolumn "Favoriter" i inventarietabellen – antal sparade per annons.
