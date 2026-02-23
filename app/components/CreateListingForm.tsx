@@ -95,18 +95,24 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
         setCondition(typeof attributes.condition === 'string' ? attributes.condition : '')
       }
       setRegNr(typeof attributes.reg_nr === 'string' ? attributes.reg_nr : '')
-      setMake(typeof attributes.make === 'string' ? attributes.make : '')
-      setModel(typeof attributes.model === 'string' ? attributes.model : '')
-      setFuel(typeof attributes.fuel === 'string' ? attributes.fuel : '')
-      setGearbox(typeof attributes.gearbox === 'string' ? attributes.gearbox : '')
-      setYear(attributes.year ? String(attributes.year) : '')
-      setMileage(attributes.mileage ? String(attributes.mileage) : '')
+      setMake(initialData.make ?? (typeof attributes.make === 'string' ? attributes.make : ''))
+      setModel(initialData.model ?? (typeof attributes.model === 'string' ? attributes.model : ''))
+      setFuel(initialData.fuel_type ?? (typeof attributes.fuel === 'string' ? attributes.fuel : ''))
+      setGearbox(initialData.transmission ?? (typeof attributes.gearbox === 'string' ? attributes.gearbox : ''))
+      setYear(initialData.year ? String(initialData.year) : (attributes.year ? String(attributes.year) : ''))
+      setMileage(initialData.mileage ? String(initialData.mileage) : (attributes.mileage ? String(attributes.mileage) : ''))
       setIsVisible(initialData.status !== 'draft')
       setBodyType(typeof attributes.body_type === 'string' ? attributes.body_type : '')
       setColor(typeof attributes.color === 'string' ? attributes.color : '')
       setColorCustom(typeof attributes.color_custom === 'string' ? attributes.color_custom : '')
       setDriveWheel(typeof attributes.drive_wheel === 'string' ? attributes.drive_wheel : '')
-      setHorsePower(typeof attributes.horse_power === 'string' ? String(attributes.horse_power) : (attributes.horse_power ? String(attributes.horse_power) : ''))
+      setHorsePower(
+        initialData.engine_power
+          ? String(initialData.engine_power)
+          : typeof attributes.horse_power === 'string'
+            ? String(attributes.horse_power)
+            : (attributes.horse_power ? String(attributes.horse_power) : '')
+      )
     }
   }, [initialData])
 
@@ -369,6 +375,13 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
         bortskankes,
         location: location.trim(),
         category,
+        make: isCarsCategory ? make.trim() || undefined : undefined,
+        model: isCarsCategory ? model.trim() || undefined : undefined,
+        year: isCarsCategory && year ? parseInt(year, 10) : undefined,
+        mileage: isCarsCategory && mileage ? parseInt(mileage, 10) : undefined,
+        fuel_type: isCarsCategory ? fuel || undefined : undefined,
+        transmission: isCarsCategory ? gearbox || undefined : undefined,
+        engine_power: isCarsCategory && horsePower ? parseInt(horsePower, 10) : undefined,
         images: allImageUrls,
         attributes: Object.keys(attributes).length > 0 ? attributes : undefined,
         status: (isVisible ? 'active' : 'draft') as 'active' | 'draft',

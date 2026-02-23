@@ -15,6 +15,12 @@ interface Listing {
   category: string;
   created_at: string;
   user_id?: string;
+  make?: string | null;
+  model?: string | null;
+  year?: number | null;
+  mileage?: number | null;
+  fuel_type?: string | null;
+  transmission?: string | null;
   attributes?: Record<string, unknown>;
   seller_type?: 'private' | 'company';
 }
@@ -82,12 +88,30 @@ export default function ListingCard({
   const attributes = listing.attributes || {};
   
   // Extrahera bil-specifika värden säkert
-  const carYear = typeof attributes.year === 'number' ? attributes.year : 
-                  typeof attributes.year === 'string' ? parseInt(attributes.year) : null;
-  const carMileage = typeof attributes.mileage === 'number' ? attributes.mileage :
-                     typeof attributes.mileage === 'string' ? parseInt(attributes.mileage) : null;
-  const carGearbox = typeof attributes.gearbox === 'string' ? attributes.gearbox : null;
-  const carFuel = typeof attributes.fuel === 'string' ? attributes.fuel : null;
+  const carYear = typeof listing.year === 'number'
+    ? listing.year
+    : typeof attributes.year === 'number'
+      ? attributes.year
+      : typeof attributes.year === 'string'
+        ? parseInt(attributes.year)
+        : null;
+  const carMileage = typeof listing.mileage === 'number'
+    ? listing.mileage
+    : typeof attributes.mileage === 'number'
+      ? attributes.mileage
+      : typeof attributes.mileage === 'string'
+        ? parseInt(attributes.mileage)
+        : null;
+  const carGearbox = typeof listing.transmission === 'string'
+    ? listing.transmission
+    : typeof attributes.gearbox === 'string'
+      ? attributes.gearbox
+      : null;
+  const carFuel = typeof listing.fuel_type === 'string'
+    ? listing.fuel_type
+    : typeof attributes.fuel === 'string'
+      ? attributes.fuel
+      : null;
   
   // Formatera miltal med mellanslag (t.ex. "45 000 mil")
   const formattedMileage = carMileage ? new Intl.NumberFormat('sv-SE').format(carMileage) + ' mil' : null;

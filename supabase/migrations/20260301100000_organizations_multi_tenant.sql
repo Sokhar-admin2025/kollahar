@@ -107,22 +107,26 @@ SET organization_id = user_id
 WHERE organization_id IS NULL;
 
 UPDATE public.listing_views lv
-SET organization_id = COALESCE(lv.organization_id, l.organization_id, p.organization_id, lv.seller_id)
-FROM public.listings l
-LEFT JOIN public.profiles p ON p.id = lv.seller_id
-WHERE l.id = lv.listing_id
-  AND lv.organization_id IS NULL;
+SET organization_id = COALESCE(
+  lv.organization_id,
+  (SELECT l.organization_id FROM public.listings l WHERE l.id = lv.listing_id),
+  (SELECT p.organization_id FROM public.profiles p WHERE p.id = lv.seller_id),
+  lv.seller_id
+)
+WHERE lv.organization_id IS NULL;
 
 UPDATE public.listing_views
 SET organization_id = seller_id
 WHERE organization_id IS NULL;
 
 UPDATE public.leads ld
-SET organization_id = COALESCE(ld.organization_id, l.organization_id, p.organization_id, ld.seller_id)
-FROM public.listings l
-LEFT JOIN public.profiles p ON p.id = ld.seller_id
-WHERE l.id = ld.listing_id
-  AND ld.organization_id IS NULL;
+SET organization_id = COALESCE(
+  ld.organization_id,
+  (SELECT l.organization_id FROM public.listings l WHERE l.id = ld.listing_id),
+  (SELECT p.organization_id FROM public.profiles p WHERE p.id = ld.seller_id),
+  ld.seller_id
+)
+WHERE ld.organization_id IS NULL;
 
 UPDATE public.leads
 SET organization_id = seller_id

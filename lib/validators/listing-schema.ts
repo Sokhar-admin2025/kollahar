@@ -3,6 +3,9 @@ import { z } from 'zod'
 const priceRefine = (data: { bortskankes?: boolean; price: number }) =>
   data.bortskankes || data.price >= 1
 
+const optionalText = z.string().trim().min(1).optional()
+const optionalInt = z.coerce.number().int().nonnegative().optional()
+
 // Bas-objekt för insert och update (ZodObject så att .extend() fungerar)
 const listingBaseSchema = z.object({
   title: z
@@ -29,6 +32,17 @@ const listingBaseSchema = z.object({
 
   images: z.array(z.string()).optional(),
   attributes: z.record(z.any()).optional(),
+
+  // Vehicle-agnostic dedicated columns (for indexed filtering)
+  make: optionalText,
+  model: optionalText,
+  year: z.coerce.number().int().min(1800).max(9999).optional(),
+  mileage: optionalInt,
+  engine_hours: optionalInt,
+  fuel_type: optionalText,
+  transmission: optionalText,
+  engine_power: optionalInt,
+  length_cm: optionalInt,
 
   // Import / inventory sync
   external_id: z.string().optional(),

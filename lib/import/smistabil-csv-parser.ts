@@ -26,6 +26,14 @@ function parseMileage(val: string | undefined): number | undefined {
   return Number.isNaN(num) ? undefined : num
 }
 
+function parseInteger(val: string | undefined): number | undefined {
+  if (!val?.trim()) return undefined
+  const cleaned = val.replace(/[^\d]/g, '')
+  if (!cleaned) return undefined
+  const num = parseInt(cleaned, 10)
+  return Number.isNaN(num) ? undefined : num
+}
+
 function mapGearbox(val: string | undefined): string | undefined {
   if (!val?.trim()) return undefined
   const v = val.toLowerCase()
@@ -132,14 +140,20 @@ export function parseSmistabilCsv(csvContent: string): SmistabilImportRow[] {
 
     const year = parseInt(row['Year'] || row['data2'] || '', 10)
     const mileage = parseMileage(row['Mileage'] || row['data3'] || '')
+    const make = row['Car_Make']?.trim() || undefined
+    const model = row['Car_Model']?.trim() || undefined
+    const fuelType = mapFuel(row['Fuel']) || row['Fuel']?.trim() || undefined
+    const transmission = mapGearbox(row['Gearbox']) || row['Gearbox']?.trim() || undefined
+    const enginePower = parseInteger(row['Horse_Power'] || row['Engine_Power'] || row['Power'])
 
     const attributes: Record<string, unknown> = {}
-    if (row['Car_Make']) attributes.make = row['Car_Make'].trim()
-    if (row['Car_Model']) attributes.model = row['Car_Model'].trim()
+    if (make) attributes.make = make
+    if (model) attributes.model = model
     if (year && !Number.isNaN(year)) attributes.year = year
     if (mileage != null) attributes.mileage = mileage
-    if (row['Fuel']) attributes.fuel = mapFuel(row['Fuel']) || row['Fuel'].trim()
-    if (row['Gearbox']) attributes.gearbox = mapGearbox(row['Gearbox']) || row['Gearbox'].trim()
+    if (fuelType) attributes.fuel = fuelType
+    if (transmission) attributes.gearbox = transmission
+    if (enginePower != null) attributes.horse_power = enginePower
     if (row['Color']) attributes.color = row['Color'].trim()
     if (row['Registration_Number']) attributes.reg_nr = row['Registration_Number'].trim()
 
@@ -159,6 +173,13 @@ export function parseSmistabilCsv(csvContent: string): SmistabilImportRow[] {
         status: 'active',
         category: CATEGORY_CARS,
         location: FIXED_LOCATION,
+        make,
+        model,
+        year: year && !Number.isNaN(year) ? year : undefined,
+        mileage,
+        fuel_type: fuelType,
+        transmission,
+        engine_power: enginePower,
         images: images.length > 0 ? images : undefined,
         attributes: Object.keys(attributes).length > 0 ? attributes : undefined,
         contact_email: DEMO_CONTACT_EMAIL,

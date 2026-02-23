@@ -299,6 +299,11 @@ export default function DealerDashboardClient({
                         >
                           {row.title}
                         </Link>
+                        {(row.make || row.model || row.year) && (
+                          <div className="mt-0.5 text-xs font-normal text-brand-text/60 dark:text-gray-400">
+                            {[row.year, row.make, row.model].filter(Boolean).join(' ')}
+                          </div>
+                        )}
                       </td>
                       <td className="px-4 py-3">
                         <span

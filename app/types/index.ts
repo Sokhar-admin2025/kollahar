@@ -7,6 +7,15 @@ export interface Listing {
   bortskankes?: boolean;
   location: string;
   category: string;
+  make?: string | null;
+  model?: string | null;
+  year?: number | null;
+  mileage?: number | null;
+  engine_hours?: number | null;
+  fuel_type?: string | null;
+  transmission?: string | null;
+  engine_power?: number | null;
+  length_cm?: number | null;
   attributes?: Record<string, unknown>;
   images: string[];
   user_id: string;

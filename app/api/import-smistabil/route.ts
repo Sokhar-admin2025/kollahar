@@ -8,6 +8,18 @@ import { revalidatePath } from 'next/cache'
 export const maxDuration = 60
 
 const delay = (ms: number) => new Promise((r) => setTimeout(r, ms))
+const ALLOWED_MIME_TYPES = new Set(['text/csv', 'text/plain'])
+
+function getFileExtension(name: string): string {
+  const lastDot = name.lastIndexOf('.')
+  if (lastDot < 0) return ''
+  return name.slice(lastDot + 1).toLowerCase()
+}
+
+function startsWithPkZipSignature(bytes: Uint8Array): boolean {
+  // ZIP magic bytes: 0x50 0x4B ("PK")
+  return bytes.length >= 2 && bytes[0] === 0x50 && bytes[1] === 0x4b
+}
 
 export async function POST(request: Request) {
   try {
@@ -32,6 +44,32 @@ export async function POST(request: Request) {
     const file = formData.get('file') as File | null
     if (!file || !(file instanceof File)) {
       return NextResponse.json({ error: 'Skicka en CSV-fil med fältet "file".' }, { status: 400 })
+    }
+
+    const extension = getFileExtension(file.name || '')
+    const headerBuffer = await file.slice(0, 4).arrayBuffer()
+    const headerBytes = new Uint8Array(headerBuffer)
+
+    if (startsWithPkZipSignature(headerBytes)) {
+      return NextResponse.json(
+        {
+          error:
+            'Detta verkar vara en Excel- eller Numbers-fil. Vänligen exportera den som CSV innan du laddar upp.',
+        },
+        { status: 400 }
+      )
+    }
+
+    const mimeType = (file.type || '').toLowerCase()
+    const hasAllowedMime = ALLOWED_MIME_TYPES.has(mimeType)
+    const hasAllowedExtension = extension === 'csv' || extension === 'txt'
+
+    // Endast textfiler av CSV-typ ska gå vidare till parsern.
+    if (!hasAllowedMime && !hasAllowedExtension) {
+      return NextResponse.json(
+        { error: 'Ogiltigt filformat. Ladda upp en CSV-fil (.csv) eller textfil (.txt).' },
+        { status: 400 }
+      )
     }
 
     const csvContent = await file.text()
@@ -60,6 +98,15 @@ export async function POST(request: Request) {
         price: isBortskankes ? 0 : d.price,
         location: d.location.trim(),
         category: d.category,
+        make: d.make,
+        model: d.model,
+        year: d.year,
+        mileage: d.mileage,
+        engine_hours: d.engine_hours,
+        fuel_type: d.fuel_type,
+        transmission: d.transmission,
+        engine_power: d.engine_power,
+        length_cm: d.length_cm,
         images: d.images ?? [],
         attributes: d.attributes ?? {},
         user_id: user.id,

@@ -25,8 +25,8 @@ function formatListingPrice(listing: Pick<Listing, 'price' | 'bortskankes'>): st
 
 function getSeoTitle(listing: Listing): string {
   const attrs = (listing.attributes ?? {}) as Record<string, unknown>
-  const make = typeof attrs.make === 'string' ? attrs.make.trim() : ''
-  const model = typeof attrs.model === 'string' ? attrs.model.trim() : ''
+  const make = (typeof listing.make === 'string' ? listing.make : typeof attrs.make === 'string' ? attrs.make : '').trim()
+  const model = (typeof listing.model === 'string' ? listing.model : typeof attrs.model === 'string' ? attrs.model : '').trim()
   const head = [make, model].filter(Boolean).join(' ')
   const namePart = head || listing.title
   return `${namePart} - ${formatListingPrice(listing)} | ${PLATFORM_NAME}`
@@ -51,7 +51,7 @@ export async function generateMetadata({
 
   const { data: row } = await supabaseAdmin
     .from('listings')
-    .select('id, title, description, price, bortskankes, status, user_id, attributes')
+    .select('id, title, description, price, bortskankes, status, user_id, attributes, make, model')
     .eq('id', id)
     .maybeSingle()
 

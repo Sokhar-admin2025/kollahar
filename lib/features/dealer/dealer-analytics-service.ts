@@ -5,6 +5,9 @@ export interface ListingWithStats {
   title: string
   status: string
   price: number
+  make?: string | null
+  model?: string | null
+  year?: number | null
   previous_price: number | null
   bortskankes: boolean
   views: number
@@ -86,7 +89,7 @@ export async function getDealerDashboardData(
   // 2. Listings – supabaseAdmin, user_id = orgOwnerId, inga status-filter (alla: active, sold, deleted)
   let listingsQuery = supabaseAdmin
     .from('listings')
-    .select('id, title, status, price, previous_price, bortskankes, images, description')
+    .select('id, title, status, price, make, model, year, previous_price, bortskankes, images, description')
     .eq('organization_id', organizationId)
     .order('created_at', { ascending: false })
 
@@ -154,6 +157,9 @@ export async function getDealerDashboardData(
       title: string
       status: string
       price: number
+      make?: string | null
+      model?: string | null
+      year?: number | null
       previous_price: number | null
       bortskankes: boolean
       images?: string[] | null
@@ -164,6 +170,9 @@ export async function getDealerDashboardData(
         title: l.title,
         status: l.status,
         price: l.price,
+        make: l.make ?? null,
+        model: l.model ?? null,
+        year: l.year ?? null,
         previous_price: l.previous_price,
         bortskankes: l.bortskankes,
         images: l.images ?? [],
@@ -235,6 +244,9 @@ export async function getDealerDashboardData(
       title: string
       status: string
       price: number
+      make?: string | null
+      model?: string | null
+      year?: number | null
       previous_price: number | null
       bortskankes: boolean
       images?: string[] | null
@@ -252,6 +264,9 @@ export async function getDealerDashboardData(
         title: l.title,
         status: l.status,
         price: l.price,
+        make: l.make ?? null,
+        model: l.model ?? null,
+        year: l.year ?? null,
         previous_price: l.previous_price,
         bortskankes: l.bortskankes,
         views,

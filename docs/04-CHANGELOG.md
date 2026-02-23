@@ -8,6 +8,12 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ### ✨ Tillagt
 
+#### Step 1.4 – vehicle-agnostiskt listings-schema + snabbare filter (feb 2026)
+- **Dedikerade kolumner i `listings`:** `make`, `model`, `year`, `mileage`, `engine_hours`, `fuel_type`, `transmission`, `engine_power`, `length_cm` (utöver befintliga `category` och `price`).
+- **Backfill-migration:** `20260302100000_listings_vehicle_agnostic_columns.sql` mappar data från `attributes` (inkl. `mil`/`mätarställning` → `mileage`, `gångtimmar` → `engine_hours`, `längd` → `length_cm`).
+- **Indexering (B-tree):** `category`, `make`, `model`, `year`, `price` för snabbare sök/filter.
+- **Import & service:** Smista CSV + listing-service sparar/läser de dedikerade kolumnerna explicit, med fallback mot `attributes` för bakåtkompatibilitet.
+
 #### Draft/gömd annons – handlare kan förbereda utan att visa (feb 2025)
 - **Status `draft`:** Ny status – annonsen är gömd från alla utom ägaren. Räknas inte i gränsen (20/200).
 - **Toggle:** "Synlig för alla" i create/edit-formuläret. Snabbtoggle (öga/öga-streck) i dashboard.
@@ -125,6 +131,11 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 - **Bundle analyzer:** Lagt till `@next/bundle-analyzer` med script `npm run analyze` för att identifiera stora bundles och optimeringsmöjligheter
 
 ### 🔧 Ändrat / Buggfixar
+
+#### Import-skydd för fel filtyp (CSV)
+- **API-route:** `app/api/import-smistabil/route.ts` validerar nu filtyp innan parsing (`text/csv` eller `text/plain`, alternativt `.csv`/`.txt`).
+- **Binärdetektion:** Om filen börjar med ZIP-signaturen `PK` (vanligt för Excel/Numbers) returneras tydligt fel:
+  - `Detta verkar vara en Excel- eller Numbers-fil. Vänligen exportera den som CSV innan du laddar upp.`
 
 #### Chatt – scroll, läst-status, mobil tangentbord
 - **Scroll:** Ingen auto-scroll av hela sidan vid mottagande meddelande. Endast chattflödet scrollar till senaste meddelande (messagesContainerRef.scrollTo).

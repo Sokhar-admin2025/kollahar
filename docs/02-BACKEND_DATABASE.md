@@ -166,9 +166,18 @@ CREATE TABLE public.listings (
   user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   title text NOT NULL,
   description text NOT NULL,
-  price integer NOT NULL,
+  price bigint NOT NULL,
   location text NOT NULL,
   category text NOT NULL,
+  make text,
+  model text,
+  year integer,
+  mileage integer,
+  engine_hours integer,
+  fuel_type text,
+  transmission text,
+  engine_power integer,
+  length_cm integer,
   images text[] DEFAULT '{}',
   status text NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'sold', 'deleted', 'draft')),
   created_at timestamptz DEFAULT now(),
@@ -181,9 +190,14 @@ CREATE TABLE public.listings (
 - `user_id`: Ägare av annonsen (FK till `auth.users`)
 - `title`: Annonsrubrik
 - `description`: Detaljerad beskrivning
-- `price`: Pris i SEK (integer)
+- `price`: Pris i SEK (`bigint`) – dedikerad kolumn för snabb sortering/filter
 - `location`: Plats (t.ex. "Stockholm, Södermalm")
-- `category`: Kategori (`'Fordon'`, `'Elektronik'`, `'Kläder'`, `'Möbler'`, `'Övrigt'`)
+- `category`: Kategori-id (t.ex. `cars`, `boats`, `mc`)
+- `make`, `model`, `year`: Märke/modell/årsmodell för fordon och andra produktkategorier där relevant
+- `mileage`: Mätarställning/mil (primärt bilar)
+- `engine_hours`: Gångtimmar (primärt båtar)
+- `fuel_type`, `transmission`, `engine_power`: Drivmedel, växellåda/drivtyp, motoreffekt
+- `length_cm`: Längd i cm (viktig för båt/släp)
 - `images`: Array av bild-URLs (från `listing-images` bucket)
 - `status`: Status (`'active'`, `'sold'`, `'deleted'`, `'draft'`) – draft = gömd, endast ägare ser
 - `created_at`: Skapad datum
@@ -502,6 +516,7 @@ Migrations ligger i `supabase/migrations/`:
 - `20260223100000_listing_views.sql`: Skapar `listing_views` för view-tracker (Total Views i Dealer Command Center).
 - `20260228000000_listing_views_listing_set_null.sql`: `listing_views.listing_id` nullable + ON DELETE SET NULL – Total Views behålls när annons raderas.
 - `20260229000000_listings_seller_type.sql`: `listings.seller_type` – private/company för filter och sortering; backfill från profiles.account_type; triggers för INSERT och profiluppgradering.
+- `20260302100000_listings_vehicle_agnostic_columns.sql`: Lägger till dedikerade vehicle-agnostiska filterkolumner på `listings`, backfill från `attributes` och B-tree-index på `category`, `make`, `model`, `year`, `price`.
 
 Utöver migrations finns även manuella setup-skript:
 

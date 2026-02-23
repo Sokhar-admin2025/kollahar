@@ -544,8 +544,13 @@ export default function ListingDetailsClient({ initialListing, listingId }: List
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {/* Modellår */}
                     {(() => {
-                      const year = typeof ad.attributes.year === 'number' ? ad.attributes.year :
-                                  typeof ad.attributes.year === 'string' ? parseInt(ad.attributes.year) : null;
+                      const year = typeof ad.year === 'number'
+                        ? ad.year
+                        : typeof ad.attributes?.year === 'number'
+                          ? ad.attributes.year
+                          : typeof ad.attributes?.year === 'string'
+                            ? parseInt(ad.attributes.year)
+                            : null;
                       return year ? (
                         <div className="flex items-center gap-2 bg-brand-beige/50 p-3 rounded-lg border border-gray-200">
                           <Calendar className="w-4 h-4 text-brand-green flex-shrink-0" />
@@ -559,8 +564,13 @@ export default function ListingDetailsClient({ initialListing, listingId }: List
 
                     {/* Miltal */}
                     {(() => {
-                      const mileage = typeof ad.attributes.mileage === 'number' ? ad.attributes.mileage :
-                                     typeof ad.attributes.mileage === 'string' ? parseInt(ad.attributes.mileage) : null;
+                      const mileage = typeof ad.mileage === 'number'
+                        ? ad.mileage
+                        : typeof ad.attributes?.mileage === 'number'
+                          ? ad.attributes.mileage
+                          : typeof ad.attributes?.mileage === 'string'
+                            ? parseInt(ad.attributes.mileage)
+                            : null;
                       const formattedMileage = mileage ? new Intl.NumberFormat('sv-SE').format(mileage) + ' mil' : null;
                       return formattedMileage ? (
                         <div className="flex items-center gap-2 bg-brand-beige/50 p-3 rounded-lg border border-gray-200">
@@ -575,7 +585,11 @@ export default function ListingDetailsClient({ initialListing, listingId }: List
 
                     {/* Växellåda */}
                     {(() => {
-                      const gearbox = typeof ad.attributes.gearbox === 'string' ? ad.attributes.gearbox : null;
+                      const gearbox = typeof ad.transmission === 'string'
+                        ? ad.transmission
+                        : typeof ad.attributes?.gearbox === 'string'
+                          ? ad.attributes.gearbox
+                          : null;
                       return gearbox ? (
                         <div className="flex items-center gap-2 bg-brand-beige/50 p-3 rounded-lg border border-gray-200">
                           <Settings2 className="w-4 h-4 text-brand-green flex-shrink-0" />
@@ -589,7 +603,11 @@ export default function ListingDetailsClient({ initialListing, listingId }: List
 
                     {/* Drivmedel */}
                     {(() => {
-                      const fuel = typeof ad.attributes.fuel === 'string' ? ad.attributes.fuel : null;
+                      const fuel = typeof ad.fuel_type === 'string'
+                        ? ad.fuel_type
+                        : typeof ad.attributes?.fuel === 'string'
+                          ? ad.attributes.fuel
+                          : null;
                       return fuel ? (
                         <div className="flex items-center gap-2 bg-brand-beige/50 p-3 rounded-lg border border-gray-200">
                           <Fuel className="w-4 h-4 text-brand-green flex-shrink-0" />
@@ -654,8 +672,13 @@ export default function ListingDetailsClient({ initialListing, listingId }: List
 
                     {/* Hästkrafter */}
                     {(() => {
-                      const horsePower = typeof ad.attributes.horse_power === 'number' ? ad.attributes.horse_power :
-                                        typeof ad.attributes.horse_power === 'string' ? parseInt(ad.attributes.horse_power) : null;
+                      const horsePower = typeof ad.engine_power === 'number'
+                        ? ad.engine_power
+                        : typeof ad.attributes?.horse_power === 'number'
+                          ? ad.attributes.horse_power
+                          : typeof ad.attributes?.horse_power === 'string'
+                            ? parseInt(ad.attributes.horse_power)
+                            : null;
                       return horsePower ? (
                         <div className="flex items-center gap-2 bg-brand-beige/50 p-3 rounded-lg border border-gray-200">
                           <Zap className="w-4 h-4 text-brand-green flex-shrink-0" />
@@ -683,8 +706,16 @@ export default function ListingDetailsClient({ initialListing, listingId }: List
 
                     {/* Märke & Modell */}
                     {(() => {
-                      const make = typeof ad.attributes.make === 'string' ? ad.attributes.make : null;
-                      const model = typeof ad.attributes.model === 'string' ? ad.attributes.model : null;
+                      const make = typeof ad.make === 'string'
+                        ? ad.make
+                        : typeof ad.attributes?.make === 'string'
+                          ? ad.attributes.make
+                          : null;
+                      const model = typeof ad.model === 'string'
+                        ? ad.model
+                        : typeof ad.attributes?.model === 'string'
+                          ? ad.attributes.model
+                          : null;
                       return make && model ? (
                         <div className="flex items-center gap-2 bg-brand-beige/50 p-3 rounded-lg border border-gray-200 col-span-2 md:col-span-1">
                           <Car className="w-4 h-4 text-brand-green flex-shrink-0" />

@@ -37,6 +37,73 @@ export interface ListingSearchFilters {
 
 const DEFAULT_LIMIT = 24
 
+function asTrimmedString(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined
+  const v = value.trim()
+  return v.length > 0 ? v : undefined
+}
+
+function asNonNegativeInt(value: unknown): number | undefined {
+  if (typeof value === 'number' && Number.isFinite(value) && value >= 0) {
+    return Math.trunc(value)
+  }
+  if (typeof value === 'string') {
+    const onlyDigits = value.replace(/[^\d]/g, '')
+    if (!onlyDigits) return undefined
+    const parsed = Number.parseInt(onlyDigits, 10)
+    if (Number.isFinite(parsed) && parsed >= 0) return parsed
+  }
+  return undefined
+}
+
+function getAttrText(attrs: Record<string, unknown> | undefined, keys: string[]): string | undefined {
+  if (!attrs) return undefined
+  for (const key of keys) {
+    const val = asTrimmedString(attrs[key])
+    if (val) return val
+  }
+  return undefined
+}
+
+function getAttrInt(attrs: Record<string, unknown> | undefined, keys: string[]): number | undefined {
+  if (!attrs) return undefined
+  for (const key of keys) {
+    const val = asNonNegativeInt(attrs[key])
+    if (typeof val === 'number') return val
+  }
+  return undefined
+}
+
+function extractVehicleColumns(
+  data: Pick<
+    InsertListingInput,
+    | 'attributes'
+    | 'make'
+    | 'model'
+    | 'year'
+    | 'mileage'
+    | 'engine_hours'
+    | 'fuel_type'
+    | 'transmission'
+    | 'engine_power'
+    | 'length_cm'
+  >
+) {
+  const attrs = data.attributes as Record<string, unknown> | undefined
+
+  return {
+    make: asTrimmedString(data.make) ?? getAttrText(attrs, ['make']),
+    model: asTrimmedString(data.model) ?? getAttrText(attrs, ['model']),
+    year: asNonNegativeInt(data.year) ?? getAttrInt(attrs, ['year', 'model_year']),
+    mileage: asNonNegativeInt(data.mileage) ?? getAttrInt(attrs, ['mileage', 'mil', 'mätarställning', 'matarstallning']),
+    engine_hours: asNonNegativeInt(data.engine_hours) ?? getAttrInt(attrs, ['engine_hours', 'gångtimmar', 'gangtimmar']),
+    fuel_type: asTrimmedString(data.fuel_type) ?? getAttrText(attrs, ['fuel_type', 'fuel']),
+    transmission: asTrimmedString(data.transmission) ?? getAttrText(attrs, ['transmission', 'gearbox', 'drive_type']),
+    engine_power: asNonNegativeInt(data.engine_power) ?? getAttrInt(attrs, ['engine_power', 'horse_power', 'hp', 'kw']),
+    length_cm: asNonNegativeInt(data.length_cm) ?? getAttrInt(attrs, ['length_cm', 'längd', 'langd', 'length']),
+  } as const
+}
+
 /**
  * Server Action: Hämta aktiva annonser utifrån givna filter.
  * Bygger Supabase-queryn dynamiskt och returnerar ett ServiceResult<Listing[]>.
@@ -78,31 +145,31 @@ export async function getListings(
       query = query.lte('price', filters.maxPrice)
     }
 
-    // Årsmodell (om ni lagrar i attributes->>'year')
+    // Årsmodell
     if (typeof filters.minYear === 'number') {
-      query = query.gte("attributes->>year", String(filters.minYear))
+      query = query.gte('year', filters.minYear)
     }
     if (typeof filters.maxYear === 'number') {
-      query = query.lte("attributes->>year", String(filters.maxYear))
+      query = query.lte('year', filters.maxYear)
     }
 
-    // Miltal (om ni lagrar i attributes->>'mileage')
+    // Miltal
     if (typeof filters.maxMileage === 'number') {
-      query = query.lte("attributes->>mileage", String(filters.maxMileage))
+      query = query.lte('mileage', filters.maxMileage)
     }
 
-    // Bilfilter (attributes JSONB)
+    // Bilfilter (dedikerade kolumner)
     if (filters.make?.trim()) {
-      query = query.eq("attributes->>make", filters.make.trim())
+      query = query.eq('make', filters.make.trim())
     }
     if (filters.model?.trim()) {
-      query = query.eq("attributes->>model", filters.model.trim())
+      query = query.eq('model', filters.model.trim())
     }
     if (filters.fuel?.trim()) {
-      query = query.eq("attributes->>fuel", filters.fuel.trim())
+      query = query.eq('fuel_type', filters.fuel.trim())
     }
     if (filters.gearbox?.trim()) {
-      query = query.eq("attributes->>gearbox", filters.gearbox.trim())
+      query = query.eq('transmission', filters.gearbox.trim())
     }
     if (filters.bodyType?.trim()) {
       query = query.eq("attributes->>body_type", filters.bodyType.trim())
@@ -114,10 +181,10 @@ export async function getListings(
       query = query.ilike("attributes->>color", `%${filters.color.trim()}%`)
     }
     if (typeof filters.horsepowerMin === 'number') {
-      query = query.gte("attributes->>horse_power", String(filters.horsepowerMin))
+      query = query.gte('engine_power', filters.horsepowerMin)
     }
     if (typeof filters.horsepowerMax === 'number') {
-      query = query.lte("attributes->>horse_power", String(filters.horsepowerMax))
+      query = query.lte('engine_power', filters.horsepowerMax)
     }
 
     // Plats (enklare textmatch mot location-fältet)
@@ -265,6 +332,7 @@ export async function createListing(
     const supabase = await createClient()
 
     const isBortskankes = Boolean(data.bortskankes)
+    const vehicleColumns = extractVehicleColumns(data)
     const insertPayload = {
       title: data.title.trim(),
       description: data.description.trim(),
@@ -273,6 +341,7 @@ export async function createListing(
       category: data.category,
       images: data.images ?? [],
       attributes: data.attributes ?? {},
+      ...vehicleColumns,
       user_id: userId,
       status: (data as { status?: string }).status === 'draft' ? 'draft' : 'active',
     } as Record<string, unknown>
@@ -347,6 +416,7 @@ export async function updateListing(
 
     const isBortskankes = Boolean(data.bortskankes)
     const newPrice = isBortskankes ? 0 : data.price
+    const vehicleColumns = extractVehicleColumns(data)
 
     const { data: current } = await supabase
       .from('listings')
@@ -365,6 +435,7 @@ export async function updateListing(
       category: data.category,
       images: data.images ?? [],
       attributes: data.attributes ?? {},
+      ...vehicleColumns,
     }
 
     const statusVal = (data as { status?: string }).status
