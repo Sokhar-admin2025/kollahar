@@ -583,6 +583,15 @@ export default function LoginPageContent() {
             </div>
           )}
 
+          {reason === 'reauth_required' && (
+            <div
+              className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800"
+              role="alert"
+            >
+              Av säkerhetsskäl behöver du logga in igen för att fortsätta med den åtgärden.
+            </div>
+          )}
+
           {searchParams.get('upgrade') === 'email_sent' && (
             <div
               className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800"

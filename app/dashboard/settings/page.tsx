@@ -11,6 +11,7 @@ import Button from '@/app/components/atoms/Button'
 import LocationInput from '@/app/components/LocationInput'
 import { createClient } from '@/lib/supabase/client'
 import { validateDomainMatch } from '@/lib/utils'
+import { buildReauthLoginUrl, hasRecentSignIn } from '@/lib/security/session-step-up'
 
 // Supabase-klient via delad SSR-kompatibel wrapper
 const supabase = createClient()
@@ -108,6 +109,24 @@ export default function SettingsPage() {
     getProfile()
   }, [router])
 
+  const ensureRecentAuthForSensitiveAction = async (): Promise<boolean> => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      router.push(buildReauthLoginUrl('/dashboard/settings'))
+      return false
+    }
+
+    if (hasRecentSignIn(user.last_sign_in_at)) {
+      return true
+    }
+
+    router.push(buildReauthLoginUrl('/dashboard/settings'))
+    return false
+  }
+
   // 2. Spara ändringar (UPPDATERAD MED UPSERT)
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -182,6 +201,13 @@ export default function SettingsPage() {
   const handleUpgradeToCompany = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!userId || !email) return
+    if (!(await ensureRecentAuthForSensitiveAction())) {
+      setUpgradeMessage({
+        text: 'Av säkerhetsskäl behöver du logga in igen innan du ändrar e-post eller kontotyp.',
+        type: 'error',
+      })
+      return
+    }
     if (!upgradeCompanyName.trim() || !upgradeOrgNumber.trim() || !upgradeWebsite.trim() || !upgradeEmail.trim()) {
       setUpgradeMessage({ text: 'Fyll i alla fält: företagsnamn, orgnummer, webbplats och ny företags-e-post.', type: 'error' })
       return
@@ -612,7 +638,11 @@ export default function SettingsPage() {
                 type="button"
                 variant="danger"
                 className="w-full"
-                onClick={() => {
+                onClick={async () => {
+                  if (!(await ensureRecentAuthForSensitiveAction())) {
+                    setDeleteError('Av säkerhetsskäl behöver du logga in igen innan kontot kan raderas.')
+                    return
+                  }
                   setDeleteConfirmText('')
                   setDeleteError(null)
                   setShowDeleteModal(true)
@@ -678,6 +708,11 @@ export default function SettingsPage() {
                 onClick={async () => {
                   if (deleteConfirmText !== 'RADERA') {
                     setDeleteError('Du måste skriva RADERA för att bekräfta.')
+                    return
+                  }
+
+                  if (!(await ensureRecentAuthForSensitiveAction())) {
+                    setDeleteError('Din session är för gammal för denna åtgärd. Logga in igen och försök på nytt.')
                     return
                   }
 

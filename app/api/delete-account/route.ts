@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
+import { hasRecentSignIn } from '@/lib/security/session-step-up'
 
 /**
  * Rensar all användardata i public-schemat innan auth.users raderas.
@@ -45,6 +46,15 @@ export async function POST() {
 
     if (userError || !user) {
       return NextResponse.json({ error: 'Ingen inloggad användare.' }, { status: 401 })
+    }
+    if (!hasRecentSignIn(user.last_sign_in_at)) {
+      return NextResponse.json(
+        {
+          error:
+            'Din session är för gammal för denna åtgärd. Logga in igen och försök på nytt.',
+        },
+        { status: 403 }
+      )
     }
 
     const userId = user.id

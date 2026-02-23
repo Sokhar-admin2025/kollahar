@@ -114,6 +114,17 @@ import { createClient } from '@/lib/supabase/server'
 const supabase = await createClient()
 ```
 
+### Session & step-up policy (v1)
+
+- **Primär session:** Hanteras av Supabase Auth via cookies (`@supabase/ssr`).
+- **Ingen aggressiv idle-logout i UI:** Vanliga flöden hålls friktionsfria.
+- **Känsliga åtgärder kräver färsk inloggning (15 min):**
+  - byta lösenord
+  - radera konto
+  - byta e-post/kontotyp i settings (privat -> företag)
+- **Teknisk kontroll:** `hasRecentSignIn(user.last_sign_in_at)` i både klientflöden och server-API (`/api/delete-account`) för defense-in-depth.
+- **Reauth-redirect:** `/login?reason=reauth_required&next=...` med användarvänlig banner i login-vyn.
+
 ## 🗃️ Supabase Schema
 
 ### Tabeller

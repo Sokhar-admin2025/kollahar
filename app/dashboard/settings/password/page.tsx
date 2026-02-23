@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import { DASHBOARD_TEXTS } from '@/app/lib/content'
 import { AUTH_CONFIG } from '@/lib/constants'
 import Button from '@/app/components/atoms/Button'
+import { buildReauthLoginUrl, hasRecentSignIn } from '@/lib/security/session-step-up'
 
 const supabase = createClient()
 const t = DASHBOARD_TEXTS.settings.password
@@ -85,6 +86,17 @@ export default function PasswordSettingsPage() {
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!email) return
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user || !hasRecentSignIn(user.last_sign_in_at)) {
+      setChangeMessage({
+        text: 'Av säkerhetsskäl behöver du logga in igen innan du kan byta lösenord.',
+        type: 'error',
+      })
+      router.push(buildReauthLoginUrl('/dashboard/settings/password'))
+      return
+    }
     if (!currentPassword || !newPassword || !confirmPassword) {
       setChangeMessage({ text: t.errors.required, type: 'error' })
       return
