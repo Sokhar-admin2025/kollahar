@@ -542,6 +542,22 @@ Använd denna checklista vid alla ändringar kring multi-tenancy (`organization_
 5. **Lead/View arv:** `leads` och `listing_views` ska ärva `organization_id` från listing när det finns; privat kan vara `NULL`.
 6. **Migrationstest:** verifiera både privat användare och företagsanvändare i staging innan production.
 
+### Expert Technical Review Gate (obligatorisk vid kritiska ändringar)
+
+Aktivera denna gate när en PR innehåller något av följande:
+- Ändringar i `supabase/migrations/*` som berör `organization_id`, RLS, FK, triggers eller auth-kopplad access.
+- Ändringar i serverlogik som påverkar ägarskap/tenant-isolering (`listing-service`, dealer-analytics, lead-flöden).
+
+**Krav före merge:**
+1. **App/Marketplace-arkitekt sign-off**  
+   - Bekräftar privat vs företag-regeln (`organization_id` endast där det ska användas).
+2. **Security sign-off**  
+   - Bekräftar RLS, accesskontroll och att inga nya tenant-läckor introducerats.
+3. **Data/SQL sign-off**  
+   - Bekräftar migrationens ordning/idempotens och att FK/trigger-beteende är säkert i production.
+4. **Staging-bevis (obligatoriskt)**  
+   - Testfall körda för både privat och företag (create/update/read), inklusive lead/view-paths.
+
 Utöver migrations finns även manuella setup-skript:
 
 - `supabase/setup_profiles.sql`: Skapar `public.profiles` + trigger från `auth.users` + RLS
