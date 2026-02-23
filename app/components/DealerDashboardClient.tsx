@@ -8,7 +8,6 @@ import {
   TrendingUp,
   Users,
   Package,
-  Ship,
   ArrowLeft,
   Upload,
   BarChart3,
@@ -127,13 +126,18 @@ export default function DealerDashboardClient({
               <Upload size={18} />
               Importera CSV
             </Link>
-            <Link
-              href="/dashboard/create"
-              className="inline-flex items-center gap-2 rounded-xl bg-brand-green px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-green/90"
-            >
-              <Ship size={18} />
-              Ny annons
-            </Link>
+            <div className="group relative inline-flex">
+              <a
+                href={analyticsProMailto}
+                className="inline-flex items-center gap-2 rounded-xl border border-indigo-200 bg-gradient-to-r from-indigo-50 to-amber-50 px-4 py-2.5 text-sm font-semibold text-indigo-700 shadow-sm transition hover:from-indigo-100 hover:to-amber-100 hover:text-indigo-800 dark:border-indigo-700/60 dark:from-indigo-900/30 dark:to-amber-900/20 dark:text-indigo-300 dark:hover:from-indigo-900/50 dark:hover:to-amber-900/30"
+              >
+                <Sparkles size={18} />
+                Aktivera Analytics Pro (Beta)
+              </a>
+              <div className="pointer-events-none absolute right-0 top-[calc(100%+8px)] z-20 hidden w-80 rounded-lg border border-gray-200 bg-white p-3 text-xs normal-case text-brand-text shadow-lg group-hover:block group-focus-within:block dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200">
+                {analyticsProTooltipText}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -230,18 +234,6 @@ export default function DealerDashboardClient({
                   )}
                   {`${data.conversionTrendDelta >= 0 ? '+' : ''}${data.conversionTrendDelta.toFixed(2)} pp vs förra veckan`}
                 </p>
-                <div className="group relative mt-2 inline-flex">
-                  <a
-                    href={analyticsProMailto}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-indigo-200 bg-gradient-to-r from-indigo-50 to-amber-50 px-2.5 py-1 text-[11px] font-semibold text-indigo-700 transition hover:from-indigo-100 hover:to-amber-100 hover:text-indigo-800 dark:border-indigo-700/60 dark:from-indigo-900/30 dark:to-amber-900/20 dark:text-indigo-300 dark:hover:from-indigo-900/50 dark:hover:to-amber-900/30"
-                  >
-                    <Sparkles className="h-3.5 w-3.5" />
-                    Aktivera Analytics Pro (Beta)
-                  </a>
-                  <div className="pointer-events-none absolute bottom-[calc(100%+8px)] left-0 z-20 hidden w-72 rounded-lg border border-gray-200 bg-white p-3 text-xs normal-case text-brand-text shadow-lg group-hover:block group-focus-within:block dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200">
-                    {analyticsProTooltipText}
-                  </div>
-                </div>
               </div>
             </div>
           </div>
