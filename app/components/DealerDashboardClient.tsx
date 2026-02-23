@@ -16,6 +16,7 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Minus,
+  CircleHelp,
 } from 'lucide-react'
 
 import type { DealerDashboardData } from '@/lib/features/dealer/dealer-analytics-service'
@@ -77,6 +78,20 @@ export default function DealerDashboardClient({
     if (value <= 3) return 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
     return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400'
   }
+  const InfoHint = ({ text }: { text: string }) => (
+    <div className="group relative">
+      <button
+        type="button"
+        aria-label="Visa mer info"
+        className="inline-flex h-6 w-6 items-center justify-center rounded-full text-gray-500 hover:text-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/30"
+      >
+        <CircleHelp className="h-4 w-4" />
+      </button>
+      <div className="pointer-events-none absolute right-0 top-7 z-20 hidden w-64 rounded-lg border border-gray-200 bg-white p-3 text-xs normal-case text-brand-text shadow-lg group-hover:block group-focus-within:block dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200">
+        {text}
+      </div>
+    </div>
+  )
 
   return (
     <div className="min-h-screen bg-brand-beige dark:bg-gray-900">
@@ -166,7 +181,10 @@ export default function DealerDashboardClient({
               </div>
             </div>
           </Link>
-          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+          <div className="relative rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+            <div className="absolute right-3 top-3">
+              <InfoHint text="Inventory Health visar hur attraktiv en annons är. Poängen bygger på >3 bilder, >100 tecken i beskrivningen och ≥1 visning." />
+            </div>
             <div className="flex items-center gap-3">
               <div className="rounded-lg bg-green-100 p-2.5 dark:bg-green-900/30">
                 <Package className="h-6 w-6 text-green-600 dark:text-green-400" />
@@ -176,7 +194,7 @@ export default function DealerDashboardClient({
                   Inventory Health
                 </p>
                 <p className="text-2xl font-bold text-brand-text dark:text-white">
-                  {data.averageHealthPercent}% snitt
+                  {data.averageHealthPercent}% ∅
                 </p>
                 <p className="text-xs text-gray-400 dark:text-gray-500" title="+40% &gt;3 bilder, +30% beskrivning &gt;100 tecken, +30% minst 1 visning">
                   &gt;3 bilder · &gt;100 tecken · ≥1 visning
@@ -184,7 +202,10 @@ export default function DealerDashboardClient({
               </div>
             </div>
           </div>
-          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+          <div className="relative rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+            <div className="absolute right-3 top-3">
+              <InfoHint text="Conversion Rate = leads / views. Färger: röd <1%, gul 1–3%, grön >3%. Trenden jämför senaste veckan med veckan innan." />
+            </div>
             <div className="flex items-center gap-3">
               <div className="rounded-lg bg-violet-100 p-2.5 dark:bg-violet-900/30">
                 <TrendingUp className="h-6 w-6 text-violet-600 dark:text-violet-400" />
