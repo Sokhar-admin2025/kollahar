@@ -501,8 +501,8 @@ export default function ListingDetailsClient({ initialListing, listingId }: List
                       />
                     )}
                     {favoritesCount !== null && (
-                      <span className="text-sm text-brand-text/70 tabular-nums" aria-label={`${favoritesCount} sparade`}>
-                        {favoritesCount} sparade
+                      <span className="text-sm text-brand-text/70 tabular-nums" aria-label={`Antal: ${favoritesCount}`}>
+                        Antal: {favoritesCount}
                       </span>
                     )}
                   </div>
