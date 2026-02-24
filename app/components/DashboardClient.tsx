@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
-import { MessageSquare, Settings, LogOut, Edit, Trash2, BarChart3, Upload, Eye, EyeOff } from 'lucide-react'
+import { MessageSquare, Settings, LogOut, Edit, Trash2, BarChart3, Upload, Eye, EyeOff, Images } from 'lucide-react'
 
 import { DASHBOARD_TEXTS } from '@/app/lib/content'
 import Button from '@/app/components/atoms/Button'
@@ -50,6 +50,16 @@ export default function DashboardClient({
   const [adToDelete, setAdToDelete] = useState<Listing | null>(null)
   const [deleteReason, setDeleteReason] = useState('sold_here')
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isBackfillingImages, setIsBackfillingImages] = useState(false)
+  const [backfillSummary, setBackfillSummary] = useState<{
+    message: string
+    processedListings: number
+    updatedListings: number
+    replacedImages: number
+    failedImages: number
+    remainingCandidates: number
+  } | null>(null)
+  const [backfillError, setBackfillError] = useState<string | null>(null)
 
   const t = DASHBOARD_TEXTS
 
@@ -111,6 +121,39 @@ export default function DashboardClient({
     }
   }
 
+  const handleProcessLegacyImages = async () => {
+    setIsBackfillingImages(true)
+    setBackfillError(null)
+    try {
+      const res = await fetch('/api/admin/backfill-images', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ limit: 10 }),
+      })
+      const json = await res.json()
+      if (!res.ok) {
+        setBackfillSummary(null)
+        setBackfillError(json?.error ?? 'Kunde inte köra legacy image-backfill.')
+        return
+      }
+      setBackfillSummary({
+        message: json?.message ?? 'Legacy image-backfill slutförd.',
+        processedListings: Number(json?.processedListings ?? 0),
+        updatedListings: Number(json?.updatedListings ?? 0),
+        replacedImages: Number(json?.replacedImages ?? 0),
+        failedImages: Number(json?.failedImages ?? 0),
+        remainingCandidates: Number(json?.remainingCandidates ?? 0),
+      })
+      router.refresh()
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Okänt fel vid legacy image-backfill.'
+      setBackfillSummary(null)
+      setBackfillError(msg)
+    } finally {
+      setIsBackfillingImages(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-brand-beige flex flex-col">
       <div className="p-6 relative flex-grow">
@@ -132,6 +175,17 @@ export default function DashboardClient({
               <Upload size={18} />
               Importera CSV
             </Link>
+          )}
+          {accountType === 'company' && (
+            <Button
+              type="button"
+              onClick={handleProcessLegacyImages}
+              disabled={isBackfillingImages}
+              className="inline-flex items-center gap-2"
+            >
+              <Images size={18} />
+              {isBackfillingImages ? 'Processar...' : 'Process Legacy Images'}
+            </Button>
           )}
           {accountType === 'company' && (
             <>
@@ -168,6 +222,30 @@ export default function DashboardClient({
             {t.header.logout}
           </Button>
         </div>
+
+        {accountType === 'company' && (backfillSummary || backfillError) && (
+          <div className="mx-auto max-w-4xl mb-6">
+            <div className={`rounded-xl border p-4 text-sm ${
+              backfillError
+                ? 'border-red-200 bg-red-50 text-red-700'
+                : 'border-gray-200 bg-white text-brand-text'
+            }`}>
+              {backfillError ? (
+                <p className="antialiased">{backfillError}</p>
+              ) : backfillSummary ? (
+                <div className="space-y-1 antialiased">
+                  <p className="font-medium">{backfillSummary.message}</p>
+                  <p>
+                    Processade annonser: {backfillSummary.processedListings} · Uppdaterade annonser: {backfillSummary.updatedListings}
+                  </p>
+                  <p>
+                    Ersatta bilder: {backfillSummary.replacedImages} · Bildfel: {backfillSummary.failedImages} · Kvar: {backfillSummary.remainingCandidates}
+                  </p>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        )}
 
         <main className="mx-auto max-w-4xl space-y-6">
           <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200 flex items-center justify-between">
