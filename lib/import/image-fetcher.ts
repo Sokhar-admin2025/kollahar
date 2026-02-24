@@ -161,6 +161,10 @@ export async function fetchAndUploadImageFromUrl(params: {
     throw new Error('Kunde inte skapa publik URL för uppladdad bild')
   }
 
+  console.log(
+    `[image-fetcher] ${error ? 'reused-existing' : 'uploaded'} source=${sourceUrl} path=${finalPath}`
+  )
+
   params.requestCache?.set(sourceUrl, publicUrl)
   return {
     sourceUrl,
