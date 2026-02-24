@@ -9,7 +9,8 @@ export const maxDuration = 300
 const DEFAULT_LIMIT = 10
 const MAX_LIMIT = 50
 const CANDIDATE_SCAN_LIMIT = 500
-const TEMPORARY_DISABLE_ADMIN_GUARD = true
+// Sätt till true endast för kortvarig felsökning i kontrollerad miljö.
+const TEMPORARY_DISABLE_ADMIN_GUARD = false
 
 type ListingRow = {
   id: string
@@ -77,9 +78,6 @@ export async function POST(request: Request) {
         { status: 403 }
       )
     }
-    if (allowBypass) {
-      console.log('[backfill-images] TEMP bypass active for user:', user.id)
-    }
 
     const body = (await request.json().catch(() => ({}))) as { limit?: number }
     const limit = normalizeLimit(body.limit)
@@ -109,6 +107,7 @@ export async function POST(request: Request) {
       processedListings: 0,
       updatedListings: 0,
       replacedImages: 0,
+      removedBrokenImages: 0,
       failedImages: 0,
       listingErrors: [] as string[],
     }
@@ -139,15 +138,24 @@ export async function POST(request: Request) {
         } catch (err) {
           results.failedImages++
           const message = err instanceof Error ? err.message : 'Okänt fel'
+          // Permanenta fel: ta bort trasig URL så den inte fortsätter ta plats i galleriet.
+          if (/HTTP\s+(404|410)\b/.test(message)) {
+            nextImages[idx] = ''
+            listingChanged = true
+            results.removedBrokenImages++
+            results.listingErrors.push(`${listing.title}: ${sourceUrl} (borttagen, ${message})`)
+            continue
+          }
           results.listingErrors.push(`${listing.title}: ${sourceUrl} (${message})`)
         }
       }
 
+      const normalizedImages = nextImages.map((v) => v.trim()).filter(Boolean)
       if (!listingChanged) continue
 
       const { error: updateError } = await supabaseAdmin
         .from('listings')
-        .update({ images: nextImages })
+        .update({ images: normalizedImages })
         .eq('id', listing.id)
 
       if (updateError) {

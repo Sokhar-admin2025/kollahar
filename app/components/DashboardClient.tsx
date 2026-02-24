@@ -51,6 +51,7 @@ export default function DashboardClient({
   const [deleteReason, setDeleteReason] = useState('sold_here')
   const [isDeleting, setIsDeleting] = useState(false)
   const [isBackfillingImages, setIsBackfillingImages] = useState(false)
+  const [backfillLiveMessage, setBackfillLiveMessage] = useState<string | null>(null)
   const [backfillSummary, setBackfillSummary] = useState<{
     message: string
     processedListings: number
@@ -58,6 +59,7 @@ export default function DashboardClient({
     replacedImages: number
     failedImages: number
     remainingCandidates: number
+    listingErrors: string[]
   } | null>(null)
   const [backfillError, setBackfillError] = useState<string | null>(null)
 
@@ -124,16 +126,19 @@ export default function DashboardClient({
   const handleProcessLegacyImages = async () => {
     setIsBackfillingImages(true)
     setBackfillError(null)
+    setBackfillLiveMessage('Startar batch... (max 10 annonser)')
     try {
       const res = await fetch('/api/admin/backfill-images', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ limit: 10 }),
       })
+      setBackfillLiveMessage('Bearbetar bilder och uppdaterar annonser...')
       const json = await res.json()
       if (!res.ok) {
         setBackfillSummary(null)
         setBackfillError(json?.error ?? 'Kunde inte köra legacy image-backfill.')
+        setBackfillLiveMessage(null)
         return
       }
       setBackfillSummary({
@@ -143,12 +148,15 @@ export default function DashboardClient({
         replacedImages: Number(json?.replacedImages ?? 0),
         failedImages: Number(json?.failedImages ?? 0),
         remainingCandidates: Number(json?.remainingCandidates ?? 0),
+        listingErrors: Array.isArray(json?.listingErrors) ? json.listingErrors : [],
       })
+      setBackfillLiveMessage(null)
       router.refresh()
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Okänt fel vid legacy image-backfill.'
       setBackfillSummary(null)
       setBackfillError(msg)
+      setBackfillLiveMessage(null)
     } finally {
       setIsBackfillingImages(false)
     }
@@ -180,11 +188,12 @@ export default function DashboardClient({
             <Button
               type="button"
               onClick={handleProcessLegacyImages}
-              disabled={isBackfillingImages}
-              className="inline-flex items-center gap-2"
+              disabled
+              title="Legacy-bildbackfill är slutförd och knappen är låst."
+              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-gray-100 px-2 py-1 text-xs font-medium text-gray-500 cursor-not-allowed"
             >
-              <Images size={18} />
-              {isBackfillingImages ? 'Processar...' : 'Process Legacy Images'}
+              <Images size={14} />
+              Process Legacy Images
             </Button>
           )}
           {accountType === 'company' && (
@@ -223,14 +232,20 @@ export default function DashboardClient({
           </Button>
         </div>
 
-        {accountType === 'company' && (backfillSummary || backfillError) && (
+        {accountType === 'company' && (isBackfillingImages || backfillSummary || backfillError) && (
           <div className="mx-auto max-w-4xl mb-6">
             <div className={`rounded-xl border p-4 text-sm ${
               backfillError
                 ? 'border-red-200 bg-red-50 text-red-700'
                 : 'border-gray-200 bg-white text-brand-text'
             }`}>
-              {backfillError ? (
+              {isBackfillingImages ? (
+                <div className="space-y-1 antialiased">
+                  <p className="font-medium text-brand-green animate-pulse">Process Legacy Images körs...</p>
+                  <p>{backfillLiveMessage ?? 'Bearbetar batch i bakgrunden.'}</p>
+                  <p className="text-brand-text/70">Tips: en batch tar vanligtvis 20-90 sekunder beroende på antal och storlek på bilder.</p>
+                </div>
+              ) : backfillError ? (
                 <p className="antialiased">{backfillError}</p>
               ) : backfillSummary ? (
                 <div className="space-y-1 antialiased">
@@ -241,6 +256,11 @@ export default function DashboardClient({
                   <p>
                     Ersatta bilder: {backfillSummary.replacedImages} · Bildfel: {backfillSummary.failedImages} · Kvar: {backfillSummary.remainingCandidates}
                   </p>
+                  {backfillSummary.listingErrors.length > 0 && (
+                    <p className="text-xs text-amber-700">
+                      Exempel på bildfel: {backfillSummary.listingErrors.slice(0, 2).join(' | ')}
+                    </p>
+                  )}
                 </div>
               ) : null}
             </div>

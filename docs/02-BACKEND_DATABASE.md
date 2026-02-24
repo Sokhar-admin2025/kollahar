@@ -544,6 +544,15 @@ Migrations ligger i `supabase/migrations/`:
 - `20260305153000_profiles_add_phone_for_contact_channels.sql`: Lägger till valfritt `profiles.phone` för dataminimerad prefill av privat säljares telefon i annonsformulär.
 - `20260305153000_profiles_add_phone_for_contact_channels.sql`: Lägger till valfritt `profiles.phone` för privat annonsörs telefonkanal (opt-in i annonsformulär).
 
+### Legacy image backfill (engångskörning)
+
+- **Route:** `POST /api/admin/backfill-images`
+- **Syfte:** Migrera befintliga externa bild-URL:er i `listings.images` till interna URL:er i Supabase-bucket (`listing-images`).
+- **Batchlimit:** Körs i mindre batchar (default 10) för att minska timeout-risk.
+- **Dedupe:** Återanvänder hash-baserad filpath från `lib/import/image-fetcher.ts` så samma käll-URL inte laddas upp dubbelt.
+- **Felhantering:** Enskilda bildfel stoppar inte hela batchen. `HTTP 404/410` tas bort från `images` så trasiga länkar inte tar plats i UI.
+- **Säkerhet:** Kräver inloggad företagsadmin (temporär bypass ska vara avstängd i normal drift).
+
 ### Production-notering (PostgREST schema cache)
 
 Efter manuella SQL-ändringar i production (t.ex. ny kolumn) kan API:t tillfälligt svara att kolumnen saknas i schema cache.

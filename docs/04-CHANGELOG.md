@@ -21,6 +21,10 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 - **Privacy-first kontaktkanaler (privata annonser):** Nya annonsflaggor för `contact_via_chat`, `show_phone`, `show_email` och `contact_phone`. Privata säljare kan styra kontaktkanal per annons; minst en kanal krävs. Detaljsidan visar endast explicit aktiverade kanaler.
 - **Kontaktkanaler återanvänder befintlig chatt:** Ingen ny chattmotor införs; samma konversationsflöde används och styrs enbart via `contact_via_chat` på annonsen.
 - **Profiltelefon för opt-in:** Ny migration `20260305153000_profiles_add_phone_for_contact_channels.sql` lägger till valfritt `profiles.phone` som kan förifyllas i create/edit för privata annonser.
+- **Automated image fetching (Zero Admin):** Smista-importen hämtar nu externa bild-URL:er server-side, laddar upp till Supabase `listing-images` och sparar interna URL:er i `listings.images`.
+- **Legacy image backfill:** Ny admin-route `POST /api/admin/backfill-images` migrerar befintliga externa bildlänkar batchvis (default 10), återanvänder hash-baserad dedupe och fortsätter vid enskilda bildfel.
+- **404/410-rensning i backfill:** Trasiga externa bilder tas bort från `images` så de inte upptar plats i annonsgalleriet.
+- **Efterkörning:** Temporär test-bypass i backfill-route är avstängd igen; dashboard-knappen visas nu som mindre grå/inaktiv kom-ihåg-markering.
 
 #### Step 1.4 – vehicle-agnostiskt listings-schema + snabbare filter (feb 2026)
 - **Dedikerade kolumner i `listings`:** `make`, `model`, `year`, `mileage`, `engine_hours`, `fuel_type`, `transmission`, `engine_power`, `length_cm` (utöver befintliga `category` och `price`).
