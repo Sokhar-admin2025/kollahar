@@ -25,6 +25,7 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 - **Legacy image backfill:** Ny admin-route `POST /api/admin/backfill-images` migrerar befintliga externa bildlänkar batchvis (default 10), återanvänder hash-baserad dedupe och fortsätter vid enskilda bildfel.
 - **404/410-rensning i backfill:** Trasiga externa bilder tas bort från `images` så de inte upptar plats i annonsgalleriet.
 - **Efterkörning:** Temporär test-bypass i backfill-route är avstängd igen; dashboard-knappen visas nu som mindre grå/inaktiv kom-ihåg-markering.
+- **Dashboard finjustering:** `Process Legacy Images` visas nu som ren ikon+text i brandgrönt direkt under "Inloggad som" (2px ned), utan knapp-UI eller hover-effekt.
 
 #### Step 1.4 – vehicle-agnostiskt listings-schema + snabbare filter (feb 2026)
 - **Dedikerade kolumner i `listings`:** `make`, `model`, `year`, `mileage`, `engine_hours`, `fuel_type`, `transmission`, `engine_power`, `length_cm` (utöver befintliga `category` och `price`).

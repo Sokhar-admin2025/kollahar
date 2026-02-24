@@ -165,37 +165,35 @@ export default function DashboardClient({
   return (
     <div className="min-h-screen bg-brand-beige flex flex-col">
       <div className="p-6 relative flex-grow">
-        <div id="dashboard-header" className="mx-auto max-w-4xl mb-8">
+        <div id="dashboard-header" className="mx-auto max-w-4xl mb-8 relative">
           <h1 className="text-3xl font-display text-brand-green mb-2">{t.header.title}</h1>
           <p className="text-brand-text antialiased">
             {t.header.welcome}{' '}
             <span className="font-semibold">{user.email ?? '...'}</span>
           </p>
-        </div>
-
-        <div className="mx-auto max-w-4xl mb-6 flex items-center gap-4 justify-end">
           {accountType === 'company' && (
-            <Link
-              href="/dashboard/import"
-              title="Importera CSV"
-              className="inline-flex items-center gap-2 rounded-xl bg-brand-green/10 px-3 py-2 text-sm font-medium text-brand-green hover:bg-brand-green/20"
-            >
-              <Upload size={18} />
-              Importera CSV
-            </Link>
-          )}
-          {accountType === 'company' && (
-            <Button
-              type="button"
-              onClick={handleProcessLegacyImages}
-              disabled
+            <span
               title="Legacy-bildbackfill är slutförd och knappen är låst."
-              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-gray-100 px-2 py-1 text-xs font-medium text-gray-500 cursor-not-allowed"
+              className="absolute left-0 top-full -mt-1 translate-y-[2px] inline-flex items-center gap-1.5 p-0 text-xs font-medium text-brand-green select-none"
             >
               <Images size={14} />
               Process Legacy Images
-            </Button>
+            </span>
           )}
+        </div>
+
+        <div className="mx-auto max-w-4xl mb-6 flex items-center gap-4 justify-end">
+          <div className="flex items-center gap-4">
+            {accountType === 'company' && (
+              <Link
+                href="/dashboard/import"
+                title="Importera CSV"
+                className="inline-flex items-center gap-2 rounded-xl bg-brand-green/10 px-3 py-2 text-sm font-medium text-brand-green hover:bg-brand-green/20"
+              >
+                <Upload size={18} />
+                Importera CSV
+              </Link>
+            )}
           {accountType === 'company' && (
             <>
               <Link
@@ -230,6 +228,7 @@ export default function DashboardClient({
             <LogOut size={18} />
             {t.header.logout}
           </Button>
+          </div>
         </div>
 
         {accountType === 'company' && (isBackfillingImages || backfillSummary || backfillError) && (
