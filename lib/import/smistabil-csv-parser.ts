@@ -60,13 +60,17 @@ function extractExternalId(url: string | undefined): string | undefined {
 }
 
 function collectImages(row: Record<string, string>): string[] {
-  const cols = ['image', 'image_2', 'image_3', 'image_4', 'image_5']
+  // Smistabil-exporter kan ha flera varianter, t.ex. image, image_2 eller comma-separated listor.
+  const cols = Object.keys(row).filter((key) => key.toLowerCase().includes('image'))
   const seen = new Set<string>()
   const urls: string[] = []
   for (const col of cols) {
     const val = row[col]
     if (!val?.trim()) continue
-    const lines = val.split(/\s+/).map((s) => s.trim()).filter(Boolean)
+    const lines = val
+      .split(/[,\n;\s]+/)
+      .map((s) => s.trim())
+      .filter(Boolean)
     for (const url of lines) {
       if (url.startsWith('http') && !seen.has(url)) {
         seen.add(url)

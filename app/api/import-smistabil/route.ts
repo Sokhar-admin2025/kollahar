@@ -2,10 +2,12 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import { parseSmistabilCsv } from '@/lib/import/smistabil-csv-parser'
+import { processImageQueue } from '@/lib/import/image-fetcher'
 import { insertListingSchema } from '@/lib/validators/listing-schema'
 import { revalidatePath } from 'next/cache'
 
-export const maxDuration = 60
+// Bildhämtning kan ta tid; tillåt längre exekvering för importjobb.
+export const maxDuration = 300
 
 const delay = (ms: number) => new Promise((r) => setTimeout(r, ms))
 const ALLOWED_MIME_TYPES = new Set(['text/csv', 'text/plain'])
@@ -93,10 +95,32 @@ export async function POST(request: Request) {
     }
 
     const results = { created: 0, failed: 0, errors: [] as string[] }
+    const imageUrlCache = new Map<string, string>()
 
     for (let i = 0; i < rows.length; i++) {
       const { listing } = rows[i]
-      const parsed = insertListingSchema.safeParse(listing)
+      // Enkel kö-logik: processa bild-URL:er sekventiellt per rad för att undvika timeout-spikes.
+      const externalImageUrls = Array.isArray(listing.images) ? listing.images : []
+      let internalImageUrls: string[] = []
+      if (externalImageUrls.length > 0) {
+        const { internalUrls, failures } = await processImageQueue({
+          userId: user.id,
+          sourceUrls: externalImageUrls,
+          requestCache: imageUrlCache,
+        })
+        internalImageUrls = internalUrls
+        for (const failure of failures) {
+          results.errors.push(
+            `[Bildfel] ${listing.title}: ${failure.sourceUrl} (${failure.error})`
+          )
+        }
+      }
+
+      const listingWithInternalImages = {
+        ...listing,
+        images: internalImageUrls,
+      }
+      const parsed = insertListingSchema.safeParse(listingWithInternalImages)
       if (!parsed.success) {
         results.failed++
         results.errors.push(`${listing.title}: ${parsed.error.errors.map((e) => e.message).join(', ')}`)
@@ -124,6 +148,9 @@ export async function POST(request: Request) {
         attributes: d.attributes ?? {},
         user_id: user.id,
         status: 'active',
+        contact_via_chat: d.contact_via_chat,
+        show_phone: d.show_phone,
+        show_email: d.show_email,
       }
       payload.bortskankes = isBortskankes
       if (d.external_id?.trim()) payload.external_id = d.external_id.trim()
