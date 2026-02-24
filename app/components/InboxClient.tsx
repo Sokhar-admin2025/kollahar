@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 
 import { DASHBOARD_TEXTS } from '@/app/lib/content'
 import type { Conversation, Message } from '@/app/types'
@@ -121,7 +122,7 @@ export default function InboxClient({
     }
 
     load()
-  }, [selectedConversation?.id, userId])
+  }, [selectedConversation, userId])
 
   // Visa senaste meddelandet i chattflödet vid nya meddelanden (scrollar endast chat-rutan, inte sidan)
   useEffect(() => {
@@ -179,7 +180,7 @@ export default function InboxClient({
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [selectedConversation?.id])
+  }, [selectedConversation, userId])
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -325,12 +326,14 @@ export default function InboxClient({
                         }`}
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 bg-gray-200 rounded overflow-hidden flex-shrink-0">
+                          <div className="relative w-12 h-12 bg-gray-200 rounded overflow-hidden flex-shrink-0">
                             {conv.listing?.images?.[0] && (
-                              <img
+                              <Image
                                 src={conv.listing.images[0]}
                                 alt=""
-                                className="w-full h-full object-cover"
+                                fill
+                                sizes="48px"
+                                className="object-cover"
                               />
                             )}
                           </div>
@@ -390,12 +393,14 @@ export default function InboxClient({
                   {/* Zon 1: Header — får aldrig krympa */}
                   <div className="flex-shrink-0 p-4 border-b border-gray-200 bg-brand-beige flex items-center justify-between gap-4">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-12 h-12 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
+                      <div className="relative w-12 h-12 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
                         {selectedConversation.listing?.images?.[0] && (
-                          <img
+                          <Image
                             src={selectedConversation.listing.images[0]}
                             alt={selectedConversation.listing.title || 'Annonsbild'}
-                            className="w-full h-full object-cover"
+                            fill
+                            sizes="48px"
+                            className="object-cover"
                           />
                         )}
                       </div>

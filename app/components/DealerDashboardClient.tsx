@@ -31,6 +31,23 @@ interface DealerDashboardClientProps {
   organizationId?: string
 }
 
+function InfoHint({ text }: { text: string }) {
+  return (
+    <div className="group relative">
+      <button
+        type="button"
+        aria-label="Visa mer info"
+        className="inline-flex h-6 w-6 items-center justify-center rounded-full text-gray-500 hover:text-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/30"
+      >
+        <CircleHelp className="h-4 w-4" />
+      </button>
+      <div className="pointer-events-none absolute right-0 top-7 z-20 hidden w-64 rounded-lg border border-gray-200 bg-white p-3 text-xs normal-case text-brand-text shadow-lg group-hover:block group-focus-within:block dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200">
+        {text}
+      </div>
+    </div>
+  )
+}
+
 export default function DealerDashboardClient({
   companyName,
   data,
@@ -83,20 +100,6 @@ export default function DealerDashboardClient({
   const analyticsProMailto = `mailto:hej@kollahar.se?subject=${encodeURIComponent('Intresse: Analytics Pro (Beta)')}&body=${encodeURIComponent(
     'Hej! Jag är intresserad av att höra mer om Analytics Pro för vår anläggning.'
   )}`
-  const InfoHint = ({ text }: { text: string }) => (
-    <div className="group relative">
-      <button
-        type="button"
-        aria-label="Visa mer info"
-        className="inline-flex h-6 w-6 items-center justify-center rounded-full text-gray-500 hover:text-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/30"
-      >
-        <CircleHelp className="h-4 w-4" />
-      </button>
-      <div className="pointer-events-none absolute right-0 top-7 z-20 hidden w-64 rounded-lg border border-gray-200 bg-white p-3 text-xs normal-case text-brand-text shadow-lg group-hover:block group-focus-within:block dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200">
-        {text}
-      </div>
-    </div>
-  )
 
   return (
     <div className="min-h-screen bg-brand-beige dark:bg-gray-900">
@@ -259,7 +262,7 @@ export default function DealerDashboardClient({
                 </p>
               ) : (
                 <ul className="space-y-2">
-                  {data.trendingListings.map((l, i) => (
+                  {data.trendingListings.map((l) => (
                     <li
                       key={l.id}
                       className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 dark:border-gray-700 dark:bg-gray-700/50"

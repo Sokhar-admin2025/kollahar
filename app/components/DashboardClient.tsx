@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from 'react'
 import type { MouseEvent } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { MessageSquare, Settings, LogOut, Edit, Trash2, BarChart3, Upload, Eye, EyeOff } from 'lucide-react'
 
@@ -230,9 +231,9 @@ export default function DashboardClient({
                       onClick={() => router.push(ad.status === 'draft' ? `/dashboard/edit/${ad.id}` : `/annons/${ad.id}`)}
                       className="group flex gap-4 p-4 border rounded-xl hover:bg-brand-beige transition cursor-pointer relative"
                     >
-                      <div className="h-20 w-20 flex-shrink-0 bg-gray-200 rounded overflow-hidden">
+                      <div className="h-20 w-20 flex-shrink-0 bg-gray-200 rounded overflow-hidden relative">
                         {ad.images && ad.images[0] ? (
-                          <img src={ad.images[0]} alt={ad.title} className="h-full w-full object-cover" />
+                          <Image src={ad.images[0]} alt={ad.title} fill sizes="80px" className="object-cover" />
                         ) : (
                           <div className="h-full w-full flex items-center justify-center text-brand-text text-xs antialiased">
                             {t.listing.noImage}

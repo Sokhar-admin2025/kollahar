@@ -19,7 +19,7 @@ export default function CookiesPage() {
             <div className="space-y-6 text-brand-text leading-relaxed antialiased">
               <section>
                 <p className="mb-4">
-                  Vi använder cookies (\"kakor\") för att få sajten att fungera, hålla dig inloggad och – om du
+                  Vi använder cookies (&quot;kakor&quot;) för att få sajten att fungera, hålla dig inloggad och – om du
                   vill – hjälpa oss att förstå hur tjänsten används så att vi kan förbättra den. Här förklarar
                   vi kort vilka typer av cookies vi använder.
                 </p>

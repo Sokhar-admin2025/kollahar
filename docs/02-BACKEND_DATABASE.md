@@ -145,6 +145,7 @@ CREATE TABLE public.profiles (
   id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   full_name text,
   location text,
+  phone text,
   avatar_url text,
   consent_marketing boolean DEFAULT false,
   consent_analytics boolean DEFAULT false,
@@ -156,6 +157,7 @@ CREATE TABLE public.profiles (
 - `id`: Kopplad till `auth.users.id`
 - `full_name`: Visningsnamn eller företagsnamn
 - `location`: Valfri hemvist / plats (t.ex. "Huddinge, Stockholm")
+- `phone`: Valfritt telefonnummer för kontaktkanaler (används endast när säljaren aktivt väljer "Visa telefon")
 - `avatar_url`: URL till profilbild (från `avatars` bucket)
 - `consent_marketing`: GDPR-samtycke för marknadsföring
 - `consent_analytics`: GDPR-samtycke för analytics
@@ -164,6 +166,7 @@ CREATE TABLE public.profiles (
 - `website`: Företagswebb (valfritt)
 - `is_company_verified`: Verifieringsbricka för företag (BadgeCheck)
 - `org_number`: Organisationsnummer (valfritt)
+- `phone`: Valfritt profiltelefonnummer (används som prefill för privata annonsers opt-in kontaktkanaler)
 
 **Publika säljprofiler:** Se `lib/features/profiles/profile-service.ts` (`getPublicProfile`, `getProfileStats`) och sidan `/profil/[id]`.
 
@@ -189,6 +192,10 @@ CREATE TABLE public.listings (
   transmission text,
   engine_power integer,
   length_cm integer,
+  contact_via_chat boolean NOT NULL DEFAULT true,
+  show_phone boolean NOT NULL DEFAULT false,
+  show_email boolean NOT NULL DEFAULT false,
+  contact_phone text,
   images text[] DEFAULT '{}',
   status text NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'sold', 'deleted', 'draft')),
   created_at timestamptz DEFAULT now(),
@@ -209,6 +216,9 @@ CREATE TABLE public.listings (
 - `engine_hours`: Gångtimmar (primärt båtar)
 - `fuel_type`, `transmission`, `engine_power`: Drivmedel, växellåda/drivtyp, motoreffekt
 - `length_cm`: Längd i cm (viktig för båt/släp)
+- `contact_via_chat`: Om befintlig chatt via plattformen får användas för annonsen
+- `show_phone`, `show_email`: Explicit opt-in för publika kontaktkanaler på annonsnivå
+- `contact_phone`: Annons-specifikt telefonnummer (lagras endast när telefon är aktiverad)
 - `images`: Array av bild-URLs (från `listing-images` bucket)
 - `status`: Status (`'active'`, `'sold'`, `'deleted'`, `'draft'`) – draft = gömd, endast ägare ser
 - `created_at`: Skapad datum
@@ -528,7 +538,11 @@ Migrations ligger i `supabase/migrations/`:
 - `20260228000000_listing_views_listing_set_null.sql`: `listing_views.listing_id` nullable + ON DELETE SET NULL – Total Views behålls när annons raderas.
 - `20260229000000_listings_seller_type.sql`: `listings.seller_type` – private/company för filter och sortering; backfill från profiles.account_type; triggers för INSERT och profiluppgradering.
 - `20260302100000_listings_vehicle_agnostic_columns.sql`: Lägger till dedikerade vehicle-agnostiska filterkolumner på `listings`, backfill från `attributes` och B-tree-index på `category`, `make`, `model`, `year`, `price`.
-- `20260303100000_leads_action_center_status.sql`: Uppdaterar lead-statusflöde (`new/contacted/qualified/sold/archived`), lägger till `buyer_email`, index för org+status, samt policy för org-baserad statusuppdatering.
+- `20260303100000_leads_action_center_status.sql`: Uppdaterar lead-statusflöde (`new/contacted/qualified/sold/archived`), lägger till `buyer_email`-kolumn, index för org+status, samt policy för org-baserad statusuppdatering.
+- `20260305120000_leads_remove_auto_buyer_email.sql`: GDPR-hotfix som nollar historiska `buyer_email`-värden i leads och tydliggör att e-post endast får sparas vid uttryckligt samtycke i lead-formulär.
+- `20260305140000_listings_contact_channel_controls.sql`: Lägger till privacy-first kontaktkanaler per annons (`contact_via_chat`, `show_phone`, `show_email`, `contact_phone`) och constraint för minst en aktiv kanal.
+- `20260305153000_profiles_add_phone_for_contact_channels.sql`: Lägger till valfritt `profiles.phone` för dataminimerad prefill av privat säljares telefon i annonsformulär.
+- `20260305153000_profiles_add_phone_for_contact_channels.sql`: Lägger till valfritt `profiles.phone` för privat annonsörs telefonkanal (opt-in i annonsformulär).
 
 ### Production-notering (PostgREST schema cache)
 

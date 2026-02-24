@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { formatPrice, parsePrice } from '@/lib/features/listings/price-utils'
 
 interface PriceInputProps {
@@ -19,15 +19,13 @@ export default function PriceInput({
   placeholder,
 }: PriceInputProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
   const [inputValue, setInputValue] = useState('')
-
-  useEffect(() => {
-    if (typeof value === 'number') {
-      setInputValue(formatPrice(value))
-    } else {
-      setInputValue('')
-    }
-  }, [value])
+  const displayValue = isEditing
+    ? inputValue
+    : typeof value === 'number'
+      ? formatPrice(value)
+      : ''
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value
@@ -38,13 +36,16 @@ export default function PriceInput({
 
   const handleOptionClick = (price: number) => {
     onChange(price)
-    setInputValue(formatPrice(price))
+    setInputValue('')
+    setIsEditing(false)
     setIsOpen(false)
   }
 
   const handleBlur = () => {
     // Fördröj stängning så att klick på förslag hinner registreras
     setTimeout(() => setIsOpen(false), 100)
+    setIsEditing(false)
+    setInputValue('')
   }
 
   return (
@@ -55,9 +56,13 @@ export default function PriceInput({
       <input
         type="text"
         inputMode="numeric"
-        value={inputValue}
+        value={displayValue}
         onChange={handleInputChange}
-        onFocus={() => setIsOpen(true)}
+        onFocus={() => {
+          setIsEditing(true)
+          setInputValue(typeof value === 'number' ? formatPrice(value) : '')
+          setIsOpen(true)
+        }}
         onBlur={handleBlur}
         placeholder={placeholder}
         className="w-full p-3 border border-gray-300 rounded-xl bg-white text-brand-text antialiased placeholder:text-gray-400"

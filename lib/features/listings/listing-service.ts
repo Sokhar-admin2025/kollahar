@@ -307,9 +307,16 @@ export async function getListingById(id: string): Promise<ServiceResult<Listing>
       return { success: false, error: 'Annonsen hittades inte.' }
     }
 
+    const listing = data as Listing
+    const isOwner = Boolean(user?.id && listing.user_id === user.id)
+    if (!isOwner) {
+      if (!listing.show_email) listing.contact_email = null
+      if (!listing.show_phone) listing.contact_phone = null
+    }
+
     return {
       success: true,
-      data: data as Listing,
+      data: listing,
     }
   } catch (err) {
     console.error('getListingById unexpected error', err)
@@ -333,6 +340,9 @@ export async function createListing(
 
     const isBortskankes = Boolean(data.bortskankes)
     const vehicleColumns = extractVehicleColumns(data)
+    const contactViaChat = (data as { contact_via_chat?: boolean }).contact_via_chat !== false
+    const showPhone = Boolean((data as { show_phone?: boolean }).show_phone)
+    const showEmail = Boolean((data as { show_email?: boolean }).show_email)
     const insertPayload = {
       title: data.title.trim(),
       description: data.description.trim(),
@@ -344,11 +354,21 @@ export async function createListing(
       ...vehicleColumns,
       user_id: userId,
       status: (data as { status?: string }).status === 'draft' ? 'draft' : 'active',
+      contact_via_chat: contactViaChat,
+      show_phone: showPhone,
+      show_email: showEmail,
     } as Record<string, unknown>
     insertPayload.bortskankes = isBortskankes
     if (data.external_id?.trim()) insertPayload.external_id = data.external_id.trim()
     if (data.external_url?.trim()) insertPayload.external_url = data.external_url.trim()
-    if (data.contact_email?.trim()) insertPayload.contact_email = data.contact_email.trim()
+    if (Object.prototype.hasOwnProperty.call(data, 'contact_email')) {
+      insertPayload.contact_email = data.contact_email?.trim() ? data.contact_email.trim() : null
+    } else if (data.contact_email?.trim()) {
+      insertPayload.contact_email = data.contact_email.trim()
+    }
+    if (Object.prototype.hasOwnProperty.call(data, 'contact_phone')) {
+      insertPayload.contact_phone = data.contact_phone?.trim() ? data.contact_phone.trim() : null
+    }
     if (data.contact_name?.trim()) insertPayload.contact_name = data.contact_name.trim()
 
     let row: { id: string } | null = null
@@ -436,6 +456,21 @@ export async function updateListing(
       images: data.images ?? [],
       attributes: data.attributes ?? {},
       ...vehicleColumns,
+    }
+    if (Object.prototype.hasOwnProperty.call(data, 'contact_via_chat')) {
+      updatePayload.contact_via_chat = (data as { contact_via_chat?: boolean }).contact_via_chat !== false
+    }
+    if (Object.prototype.hasOwnProperty.call(data, 'show_phone')) {
+      updatePayload.show_phone = Boolean((data as { show_phone?: boolean }).show_phone)
+    }
+    if (Object.prototype.hasOwnProperty.call(data, 'show_email')) {
+      updatePayload.show_email = Boolean((data as { show_email?: boolean }).show_email)
+    }
+    if (Object.prototype.hasOwnProperty.call(data, 'contact_email')) {
+      updatePayload.contact_email = data.contact_email?.trim() ? data.contact_email.trim() : null
+    }
+    if (Object.prototype.hasOwnProperty.call(data, 'contact_phone')) {
+      updatePayload.contact_phone = data.contact_phone?.trim() ? data.contact_phone.trim() : null
     }
 
     const statusVal = (data as { status?: string }).status

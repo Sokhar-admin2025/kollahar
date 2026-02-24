@@ -95,7 +95,6 @@ export default function LeadList({ leads }: LeadListProps) {
                   <tr key={lead.id} className="border-b border-gray-100 dark:border-gray-700">
                     <td className="px-4 py-3 align-top">
                       <p className="font-medium text-brand-text dark:text-white">{current.buyer_name}</p>
-                      <p className="text-xs text-brand-text/70 dark:text-gray-400">{current.buyer_email || 'Ingen e-post'}</p>
                       <p className="text-xs text-brand-text/70 dark:text-gray-400">{current.buyer_phone}</p>
                     </td>
                     <td className="px-4 py-3 align-top">

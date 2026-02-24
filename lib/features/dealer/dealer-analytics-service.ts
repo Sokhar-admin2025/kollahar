@@ -46,7 +46,6 @@ export interface LeadActionItem {
   listing_model: string | null
   listing_year: number | null
   buyer_name: string
-  buyer_email: string | null
   buyer_phone: string
   status: LeadStatus
   created_at: string
@@ -142,7 +141,7 @@ export async function getDealerDashboardData(
   // 4. Leads
   const { data: leadsAllData } = await supabaseAdmin
     .from('leads')
-    .select('id, listing_id, buyer_name, buyer_email, buyer_phone, status, created_at, listing:listings(id, title, make, model, year)')
+    .select('id, listing_id, buyer_name, buyer_phone, status, created_at, listing:listings(id, title, make, model, year)')
     .eq('organization_id', organizationId)
     .order('created_at', { ascending: false })
 
@@ -150,7 +149,6 @@ export async function getDealerDashboardData(
     id: string
     listing_id: string | null
     buyer_name: string
-    buyer_email?: string | null
     buyer_phone: string
     status?: string | null
     created_at: string
@@ -171,7 +169,6 @@ export async function getDealerDashboardData(
     listing_model: lead.listing?.model ?? null,
     listing_year: lead.listing?.year ?? null,
     buyer_name: lead.buyer_name,
-    buyer_email: lead.buyer_email ?? null,
     buyer_phone: lead.buyer_phone,
     status: (lead.status === 'contacted' || lead.status === 'qualified' || lead.status === 'sold' || lead.status === 'archived'
       ? lead.status

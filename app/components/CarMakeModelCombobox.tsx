@@ -19,8 +19,8 @@ export default function CarMakeModelCombobox({
 }: CarMakeModelComboboxProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedMake, setSelectedMake] = useState<string>(value.make || '')
-  const [selectedModel, setSelectedModel] = useState<string>(value.model || '')
+  const selectedMake = value.make || ''
+  const selectedModel = value.model || ''
   
   const containerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -53,8 +53,6 @@ export default function CarMakeModelCombobox({
 
   // Hantera val av märke
   const handleSelectMake = (make: string) => {
-    setSelectedMake(make)
-    setSelectedModel('')
     setSearchQuery('')
     setIsOpen(false)
     onChange({ make, model: '' })
@@ -62,7 +60,6 @@ export default function CarMakeModelCombobox({
 
   // Hantera val av modell
   const handleSelectModel = (model: string) => {
-    setSelectedModel(model)
     setSearchQuery('')
     setIsOpen(false)
     onChange({ make: selectedMake, model })
@@ -71,8 +68,6 @@ export default function CarMakeModelCombobox({
   // Rensa val
   const handleClear = (e: React.MouseEvent) => {
     e.stopPropagation()
-    setSelectedMake('')
-    setSelectedModel('')
     setSearchQuery('')
     onChange({ make: '', model: '' })
     inputRef.current?.focus()
@@ -92,14 +87,6 @@ export default function CarMakeModelCombobox({
       return () => document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [isOpen])
-
-  // Uppdatera selectedMake/selectedModel när value prop ändras
-  useEffect(() => {
-    if (value.make !== selectedMake || value.model !== selectedModel) {
-      setSelectedMake(value.make || '')
-      setSelectedModel(value.model || '')
-    }
-  }, [value.make, value.model])
 
   return (
     <div ref={containerRef} className={`relative ${className}`}>
@@ -178,8 +165,9 @@ export default function CarMakeModelCombobox({
                       key={`model-${result.brand}-${result.value}-${index}`}
                       type="button"
                       onClick={() => {
-                        setSelectedMake(result.brand!)
-                        handleSelectModel(result.value)
+                        setSearchQuery('')
+                        setIsOpen(false)
+                        onChange({ make: result.brand || '', model: result.value })
                       }}
                       className={`w-full text-left px-4 py-2 hover:bg-brand-beige rounded-lg transition-colors ${
                         selectedMake === result.brand && selectedModel === result.value

@@ -26,7 +26,6 @@ export async function createLead(params: {
   sellerId: string
   buyerId: string
   buyerName: string
-  buyerEmail?: string | null
   buyerPhone: string
 }): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient()
@@ -37,7 +36,8 @@ export async function createLead(params: {
     seller_id: params.sellerId,
     buyer_id: params.buyerId,
     buyer_name: params.buyerName.trim(),
-    buyer_email: params.buyerEmail?.trim() || null,
+    // GDPR: do not auto-collect buyer email for leads.
+    buyer_email: null,
     buyer_phone: params.buyerPhone.trim(),
     status: 'new',
   })

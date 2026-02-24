@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import imageCompression from 'browser-image-compression'
 import { Loader2 } from 'lucide-react'
 
@@ -415,7 +416,7 @@ export default function SettingsPage() {
                     <div className="flex items-center gap-6 mb-6">
                         <div className="w-20 h-20 rounded-full bg-gray-200 overflow-hidden border border-gray-300 relative">
                             {avatarUrl ? (
-                                <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                                <Image src={avatarUrl} alt="Avatar" fill sizes="80px" className="object-cover" />
                             ) : (
                                 <div className="w-full h-full flex items-center justify-center text-brand-text text-2xl">👤</div>
                             )}

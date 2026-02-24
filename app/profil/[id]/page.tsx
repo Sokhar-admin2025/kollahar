@@ -1,5 +1,6 @@
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
 import { getPublicProfile, getProfileStats } from '@/lib/features/profiles/profile-service'
 import { getActiveListingsByUserId } from '@/lib/features/listings/listing-service'
@@ -66,12 +67,14 @@ export default async function PublicProfilePage({ params }: PageProps) {
         {/* Profile Header */}
         <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6 md:p-8 mb-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            <div className="w-20 h-20 rounded-full overflow-hidden flex-shrink-0 border-2 border-gray-200 bg-brand-beige flex items-center justify-center">
+            <div className="relative w-20 h-20 rounded-full overflow-hidden flex-shrink-0 border-2 border-gray-200 bg-brand-beige flex items-center justify-center">
               {profile.avatar_url ? (
-                <img
+                <Image
                   src={profile.avatar_url}
                   alt={displayName}
-                  className="w-full h-full object-cover"
+                  fill
+                  sizes="80px"
+                  className="object-cover"
                 />
               ) : (
                 <span className="text-2xl font-display font-semibold text-brand-green">

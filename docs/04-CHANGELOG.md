@@ -17,6 +17,10 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 - **Trendindikator:** Konvertering visar nu trend upp/ner/flat jämfört med föregående vecka, både på org-nivå och per annons.
 - **Analytics Pro (Beta)-teaser:** CTA-knapp (`Aktivera Analytics Pro (Beta)`) flyttad till header-actions i dealer-dashboard och ersätter `Ny annons`-knappen. Premium-styling, tooltip med värdebeskrivning och `mailto` till `hej@kollahar.se` för aktivering.
 - **Step-up auth för känsliga åtgärder:** Kräver färsk inloggning (15 min) för kontoradering, byte av lösenord och e-post-/kontotypsändring i inställningar. Redirect till login med reason `reauth_required`.
+- **GDPR hotfix (leads):** Automatisk insamling/visning av privat köpares e-post i `Lead Action Center` borttagen. Leads sparar inte längre `buyer_email` från auth-konto. Ny migration nollar historiska `buyer_email`-värden: `20260305120000_leads_remove_auto_buyer_email.sql`.
+- **Privacy-first kontaktkanaler (privata annonser):** Nya annonsflaggor för `contact_via_chat`, `show_phone`, `show_email` och `contact_phone`. Privata säljare kan styra kontaktkanal per annons; minst en kanal krävs. Detaljsidan visar endast explicit aktiverade kanaler.
+- **Kontaktkanaler återanvänder befintlig chatt:** Ingen ny chattmotor införs; samma konversationsflöde används och styrs enbart via `contact_via_chat` på annonsen.
+- **Profiltelefon för opt-in:** Ny migration `20260305153000_profiles_add_phone_for_contact_channels.sql` lägger till valfritt `profiles.phone` som kan förifyllas i create/edit för privata annonser.
 
 #### Step 1.4 – vehicle-agnostiskt listings-schema + snabbare filter (feb 2026)
 - **Dedikerade kolumner i `listings`:** `make`, `model`, `year`, `mileage`, `engine_hours`, `fuel_type`, `transmission`, `engine_power`, `length_cm` (utöver befintliga `category` och `price`).

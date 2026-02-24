@@ -13,7 +13,7 @@
 export function parseEquipmentList(raw: string): string[] {
   if (!raw?.trim()) return []
 
-  let text = raw.trim()
+  const text = raw.trim()
 
   // Om redan kommaseparerat eller radbrytet, använd det
   const hasDelimiters = /[,;\n]/.test(text)

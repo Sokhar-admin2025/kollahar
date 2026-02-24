@@ -208,19 +208,6 @@ export default function CarMakeModelFields({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [make, model])
 
-  // Uppdatera queries när make/model ändras externt
-  useEffect(() => {
-    if (!make) {
-      setMakeQuery('')
-    }
-  }, [make])
-
-  useEffect(() => {
-    if (!model) {
-      setModelQuery('')
-    }
-  }, [model])
-
   return (
     <div className={className}>
       {/* Märke-fält */}

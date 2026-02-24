@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 
 import { DASHBOARD_TEXTS } from '@/app/lib/content'
 import Button from '@/app/components/atoms/Button'
@@ -301,6 +302,9 @@ export default function ListingDetailsClient({ initialListing, listingId }: List
   const isSold = ad.status === 'sold' || !!ad.deleted_at
   const images = ad.images || []
   const activeImage = images[activeImageIndex] || null
+  const canShowChat = ad.contact_via_chat !== false
+  const canShowPhone = Boolean(ad.show_phone && ad.contact_phone?.trim())
+  const canShowEmail = Boolean(ad.show_email && ad.contact_email?.trim())
 
   const goToPrevious = () => {
     if (images.length === 0) return
@@ -355,7 +359,7 @@ export default function ListingDetailsClient({ initialListing, listingId }: List
                   className="w-full h-full block cursor-zoom-in focus:outline-none focus:ring-2 focus:ring-brand-green focus:ring-inset"
                   aria-label="Förstora bild"
                 >
-                  <img src={activeImage} alt={ad.title} className="w-full h-full object-cover object-center transition-all duration-300" />
+                  <Image src={activeImage} alt={ad.title} fill sizes="(max-width: 768px) 100vw, 66vw" className="object-cover object-center transition-all duration-300" />
                 </button>
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-brand-beige text-brand-text/60">
@@ -418,10 +422,12 @@ export default function ListingDetailsClient({ initialListing, listingId }: List
                       aria-label={`Bild ${index + 1} av ${images.length}${activeImageIndex === index ? ', vald' : ''}`}
                       aria-current={activeImageIndex === index ? 'true' : undefined}
                     >
-                      <img
+                      <Image
                         src={img}
                         alt=""
-                        className="w-full h-full object-cover"
+                        fill
+                        sizes="80px"
+                        className="object-cover"
                       />
                     </button>
                   ))}
@@ -732,6 +738,30 @@ export default function ListingDetailsClient({ initialListing, listingId }: List
 
               {/* --- SÄLJARKORT --- */}
               <div className="mt-auto">
+                {(canShowPhone || canShowEmail) && !isSold && (
+                  <div className="mb-4 pt-6 border-t border-gray-100">
+                    <p className="text-xs font-bold text-brand-text/60 uppercase tracking-widest mb-3">Kontaktkanaler</p>
+                    <div className="space-y-2">
+                      {canShowPhone && (
+                        <a
+                          href={`tel:${ad.contact_phone}`}
+                          className="block rounded-xl border border-gray-200 px-3 py-2 text-sm text-brand-text hover:border-brand-green/40 hover:bg-brand-beige/40 transition"
+                        >
+                          Telefon: {ad.contact_phone}
+                        </a>
+                      )}
+                      {canShowEmail && (
+                        <a
+                          href={`mailto:${ad.contact_email}`}
+                          className="block rounded-xl border border-gray-200 px-3 py-2 text-sm text-brand-text hover:border-brand-green/40 hover:bg-brand-beige/40 transition break-all"
+                        >
+                          E-post: {ad.contact_email}
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 <div className="mb-4 pt-6 border-t border-gray-100">
                   <p className="text-xs font-bold text-brand-text/60 uppercase tracking-widest mb-3">Säljare</p>
                   
@@ -739,9 +769,9 @@ export default function ListingDetailsClient({ initialListing, listingId }: List
                     href={`/profil/${ad.user_id}`}
                     className="flex items-center gap-4 bg-brand-beige p-3 rounded-xl border border-gray-200 hover:border-brand-green/30 transition"
                   >
-                    <div className="w-12 h-12 rounded-full bg-white border border-gray-200 overflow-hidden flex-shrink-0">
+                    <div className="w-12 h-12 rounded-full bg-white border border-gray-200 overflow-hidden flex-shrink-0 relative">
                       {sellerProfile?.avatar_url ? (
-                        <img src={sellerProfile.avatar_url} alt="Säljare" className="w-full h-full object-cover" />
+                        <Image src={sellerProfile.avatar_url} alt="Säljare" fill sizes="48px" className="object-cover" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-300 text-xl">👤</div>
                       )}
@@ -769,7 +799,7 @@ export default function ListingDetailsClient({ initialListing, listingId }: List
                 </div>
 
                 {/* Kontaktknapp (döljs när annonsen är såld/borttagen) */}
-                {!isSold ? (
+                {!isSold && canShowChat ? (
                   <Button 
                     onClick={handleContact} 
                     className="w-full py-4 text-lg font-bold shadow-lg"
@@ -777,6 +807,10 @@ export default function ListingDetailsClient({ initialListing, listingId }: List
                   >
                     {contacting ? 'Öppnar chatt...' : t.contact.button}
                   </Button>
+                ) : !isSold ? (
+                  <div className="bg-brand-beige p-4 rounded-xl text-center text-brand-text/70 font-medium">
+                    Säljaren tar inte emot chatt för denna annons.
+                  </div>
                 ) : (
                    <div className="bg-brand-beige p-4 rounded-xl text-center text-brand-text/70 font-medium">
                      Denna vara är inte längre till salu.
@@ -784,7 +818,7 @@ export default function ListingDetailsClient({ initialListing, listingId }: List
                 )}
                 
                 <p className="text-xs text-center text-gray-400 mt-4">
-                  🔒 Handla tryggt. All kommunikation sker via Kolla här!.
+                  🔒 Handla tryggt. Dela bara information du är bekväm med.
                 </p>
               </div>
 
@@ -839,10 +873,12 @@ export default function ListingDetailsClient({ initialListing, listingId }: List
               </button>
             </>
           )}
-          <img
+          <Image
             src={activeImage}
             alt={ad.title}
-            className="max-w-full max-h-[90vh] object-contain"
+            width={1600}
+            height={1200}
+            className="max-w-full max-h-[90vh] h-auto w-auto object-contain"
             onClick={(e) => e.stopPropagation()}
           />
         </div>

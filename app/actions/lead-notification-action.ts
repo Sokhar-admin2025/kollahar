@@ -40,7 +40,6 @@ export async function triggerLeadNotification(params: {
 
     const ownerId = (listing as { user_id: string }).user_id
     const contactEmail = (listing as { contact_email?: string | null }).contact_email?.trim() || null
-    const contactName = (listing as { contact_name?: string | null }).contact_name?.trim() || null
     const listingTitle = (listing as { title: string }).title ?? 'Okänd annons'
 
     let ownerEmail: string | null = null
@@ -74,18 +73,12 @@ export async function triggerLeadNotification(params: {
         .single()
       const buyerId = (conv as { buyer_id: string } | null)?.buyer_id
       if (buyerId && params.buyerPhone) {
-        let buyerEmail: string | null = null
-        if (supabaseAdmin) {
-          const buyerUserRes = await supabaseAdmin.auth.admin.getUserById(buyerId)
-          buyerEmail = buyerUserRes.data?.user?.email ?? null
-        }
         await createLead({
           conversationId: params.conversationId,
           listingId: params.listingId,
           sellerId: ownerId,
           buyerId,
           buyerName: params.buyerName,
-          buyerEmail,
           buyerPhone: params.buyerPhone,
         })
         // Ignorera fel vid duplicate (record finns redan från submitLeadCardAction)

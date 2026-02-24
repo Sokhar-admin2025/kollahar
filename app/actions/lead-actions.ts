@@ -54,7 +54,6 @@ export async function submitLeadCardAction(
       sellerId,
       buyerId: user.id,
       buyerName: buyerName.trim(),
-      buyerEmail: user.email ?? null,
       buyerPhone: buyerPhone.trim(),
     })
 

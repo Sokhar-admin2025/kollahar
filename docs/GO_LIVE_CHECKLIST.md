@@ -96,6 +96,20 @@ Detta är en checklista för åtgärder som ska göras **precis innan eller vid 
   - [x] Vad händer om användare försöker läsa meddelanden de inte har tillgång till?
   - [x] Vad händer vid nätverksfel? (visas tydliga felmeddelanden?)
 
+### Privacy-first kontaktkanaler (privata annonser)
+- [ ] **Validering create/edit**
+  - [ ] Minst en kanal måste vara aktiv (`chat`/`telefon`/`e-post`)
+  - [ ] Telefon kräver nummer när `Visa telefon` är aktiv
+  - [ ] E-post kräver adress när `Visa e-post` är aktiv
+- [ ] **Dataminimering**
+  - [ ] `contact_phone` sparas som `NULL` när telefonkanal är av
+  - [ ] `contact_email` sparas som `NULL` när e-postkanal är av
+  - [ ] Ingen ny chattmotor skapad; befintlig chatt styrs endast via `contact_via_chat`
+- [ ] **Annonssida-visning**
+  - [ ] Telefonlänk visas endast om `show_phone=true` och telefon finns
+  - [ ] E-postlänk visas endast om `show_email=true` och e-post finns
+  - [ ] Chattknapp visas endast om `contact_via_chat=true`
+
 ### Cross-browser & Enheter
 - [x] **Testa på olika webbläsare**
   - [x] Chrome (desktop + mobil)

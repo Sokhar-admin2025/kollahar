@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import imageCompression from 'browser-image-compression'
 
@@ -57,6 +58,12 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
   const [compressing, setCompressing] = useState(false)
   const [errors, setErrors] = useState<Record<string, string[]>>({})
   const [isVisible, setIsVisible] = useState(true)
+  const [accountType, setAccountType] = useState<'private' | 'company'>('private')
+  const [contactViaChat, setContactViaChat] = useState(true)
+  const [showPhone, setShowPhone] = useState(false)
+  const [showEmail, setShowEmail] = useState(false)
+  const [contactPhone, setContactPhone] = useState('')
+  const [contactEmail, setContactEmail] = useState('')
 
   // Ref för att hålla koll på preview URLs för cleanup
   const previewUrlsRef = useRef<string[]>([])
@@ -102,6 +109,12 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
       setYear(initialData.year ? String(initialData.year) : (attributes.year ? String(attributes.year) : ''))
       setMileage(initialData.mileage ? String(initialData.mileage) : (attributes.mileage ? String(attributes.mileage) : ''))
       setIsVisible(initialData.status !== 'draft')
+      setAccountType(initialData.seller_type === 'company' ? 'company' : 'private')
+      setContactViaChat(initialData.contact_via_chat !== false)
+      setShowPhone(Boolean(initialData.show_phone))
+      setShowEmail(Boolean(initialData.show_email))
+      setContactPhone(initialData.contact_phone ?? '')
+      setContactEmail(initialData.contact_email ?? '')
       setBodyType(typeof attributes.body_type === 'string' ? attributes.body_type : '')
       setColor(typeof attributes.color === 'string' ? attributes.color : '')
       setColorCustom(typeof attributes.color_custom === 'string' ? attributes.color_custom : '')
@@ -129,10 +142,10 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
     setColor('')
   }, [isCarsCategory])
 
-  // Förifyll plats med stad/ort (city) – aldrig postnummer. För företag: city; för privat: location
+  // Förifyll kontotyp/kontakt från profil + plats för create-mode.
   useEffect(() => {
-    const prefillLocationFromProfile = async () => {
-      if (isEditMode || location) return
+    const prefillFromProfile = async () => {
+      const shouldPrefillLocation = !isEditMode && !location
 
       try {
         const { data: { user } } = await supabase.auth.getUser()
@@ -140,29 +153,42 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
 
         const { data: profile } = await supabase
           .from('profiles')
-          .select('city, location')
+          .select('city, location, account_type, phone')
           .eq('id', user.id)
           .maybeSingle()
 
         const rawCity = (profile as { city?: string | null } | null)?.city?.trim() || ''
         let rawLocation = (profile as { location?: string | null } | null)?.location?.trim() || ''
-        // Ta bort ledande postnummer (12345 eller 123 45) om location används som fallback
-        const withoutZip = rawLocation.replace(/^(\d{5}|\d{3}\s\d{2})\s+/, '').trim()
-        rawLocation = withoutZip || rawLocation
+        const profileAccountType = ((profile as { account_type?: 'private' | 'company' } | null)?.account_type ?? 'private')
+        const profilePhone = (profile as { phone?: string | null } | null)?.phone?.trim() || ''
+        setAccountType(profileAccountType)
 
-        // Företag: använd city (stad/ort) – aldrig postnummer. Privat: location (utan postnr om det fanns)
-        const toUse = rawCity || rawLocation
-        if (toUse && !/\S+@\S+\.\S+/.test(toUse)) {
-          setLocation(toUse)
+        if (!isEditMode && profileAccountType === 'private') {
+          setContactEmail(user.email ?? '')
+          if (!contactPhone && profilePhone) {
+            setContactPhone(profilePhone)
+          }
+        }
+
+        if (shouldPrefillLocation) {
+          // Ta bort ledande postnummer (12345 eller 123 45) om location används som fallback
+          const withoutZip = rawLocation.replace(/^(\d{5}|\d{3}\s\d{2})\s+/, '').trim()
+          rawLocation = withoutZip || rawLocation
+
+          // Företag: använd city (stad/ort) – aldrig postnummer. Privat: location (utan postnr om det fanns)
+          const toUse = rawCity || rawLocation
+          if (toUse && !/\S+@\S+\.\S+/.test(toUse)) {
+            setLocation(toUse)
+          }
         }
       } catch (error) {
         console.error('Kunde inte förifylla plats från profil:', error)
       }
     }
 
-    prefillLocationFromProfile()
+    prefillFromProfile()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isEditMode])
+  }, [isEditMode, location, contactPhone])
 
   // Cleanup: Rensa preview URLs när komponenten unmountas
   useEffect(() => {
@@ -304,6 +330,23 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
         }
       }
 
+      const contactErrors: Record<string, string[]> = {}
+      if (!contactViaChat && !showPhone && !showEmail) {
+        contactErrors.contact_via_chat = ['Välj minst en kontaktkanal.']
+      }
+      if (showPhone && !contactPhone.trim()) {
+        contactErrors.contact_phone = ['Ange telefonnummer eller stäng av Visa telefon.']
+      }
+      if (showEmail && !contactEmail.trim()) {
+        contactErrors.contact_email = ['Ange e-post eller stäng av Visa e-post.']
+      }
+      if (Object.keys(contactErrors).length > 0) {
+        setErrors((prev) => ({ ...prev, ...contactErrors }))
+        setLoading(false)
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+        return
+      }
+
       setUploading(true)
 
       const uploadedImageUrls: string[] = []
@@ -382,6 +425,11 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
         fuel_type: isCarsCategory ? fuel || undefined : undefined,
         transmission: isCarsCategory ? gearbox || undefined : undefined,
         engine_power: isCarsCategory && horsePower ? parseInt(horsePower, 10) : undefined,
+        contact_via_chat: contactViaChat,
+        show_phone: showPhone,
+        show_email: showEmail,
+        contact_phone: showPhone ? contactPhone.trim() : '',
+        contact_email: showEmail ? contactEmail.trim() : '',
         images: allImageUrls,
         attributes: Object.keys(attributes).length > 0 ? attributes : undefined,
         status: (isVisible ? 'active' : 'draft') as 'active' | 'draft',
@@ -435,14 +483,6 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
     // Ta bort allt utom siffror
     const numericOnly = e.target.value.replace(/\D/g, '')
     setPrice(numericOnly) // Spara som ren siffra
-  }
-
-  const handlePriceBlur = () => {
-    // Formatera med tusentalsavgränsare vid blur
-    if (price) {
-      const formatted = formatPrice(price)
-      // Uppdatera input-värdet visuellt (men behåll price som ren siffra)
-    }
   }
 
   const allImages = [...existingImageUrls, ...imagePreviews]
@@ -521,7 +561,6 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
             placeholder={bortskankes ? '' : t.form.price.placeholder}
             value={bortskankes ? '' : (price ? formatPrice(price) : '')}
             onChange={(e) => { if (!bortskankes) { handlePriceChange(e); clearFieldError('price') } }}
-            onBlur={handlePriceBlur}
           />
           <label className="flex items-center gap-2 mt-2 cursor-pointer">
             <input
@@ -736,7 +775,7 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
             {/* Visa befintliga bilder först */}
             {existingImageUrls.map((url, index) => (
               <div key={`existing-${index}`} className="w-24 h-24 relative rounded-lg overflow-hidden border border-gray-200 group">
-                <img src={url} alt="Befintlig bild" className="w-full h-full object-cover" />
+                <Image src={url} alt="Befintlig bild" fill sizes="96px" className="object-cover" />
                 <button
                   type="button"
                   onClick={() => removeImage(index, true)}
@@ -750,7 +789,7 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
             {/* Visa nya previews */}
             {imagePreviews.map((url, index) => (
               <div key={`preview-${index}`} className="w-24 h-24 relative rounded-lg overflow-hidden border border-gray-200 group">
-                <img src={url} alt="Ny uppladdad" className="w-full h-full object-cover" />
+                <Image src={url} alt="Ny uppladdad" fill sizes="96px" className="object-cover" />
                 <button
                   type="button"
                   onClick={() => removeImage(index, false)}
@@ -805,6 +844,108 @@ export default function CreateListingForm({ initialData, onSuccess }: CreateList
             </p>
           )}
         </div>
+
+        {accountType === 'private' && (
+          <div className="pt-2 border-t border-gray-100">
+            <h3 className="text-sm font-semibold text-brand-text antialiased mb-3">Kontaktinställningar</h3>
+            <p className="text-xs text-brand-text/70 antialiased mb-4">
+              Välj hur köpare får kontakta dig i just den här annonsen. Endast valda kanaler visas publikt.
+            </p>
+
+            <div className="space-y-3">
+              <label className="flex items-start gap-3 cursor-pointer p-3 rounded-xl border border-gray-200 hover:bg-brand-beige/40">
+                <input
+                  type="checkbox"
+                  checked={contactViaChat}
+                  onChange={(e) => {
+                    setContactViaChat(e.target.checked)
+                    clearFieldError('contact_via_chat')
+                  }}
+                  className="mt-0.5 w-4 h-4 text-brand-green rounded focus:ring-brand-green"
+                />
+                <span className="text-sm text-brand-text antialiased">
+                  Tillåt chatt via Kolla här
+                </span>
+              </label>
+
+              <label className="flex items-start gap-3 cursor-pointer p-3 rounded-xl border border-gray-200 hover:bg-brand-beige/40">
+                <input
+                  type="checkbox"
+                  checked={showPhone}
+                  onChange={(e) => {
+                    setShowPhone(e.target.checked)
+                    clearFieldError('contact_via_chat')
+                    clearFieldError('contact_phone')
+                  }}
+                  className="mt-0.5 w-4 h-4 text-brand-green rounded focus:ring-brand-green"
+                />
+                <span className="text-sm text-brand-text antialiased">Visa telefon</span>
+              </label>
+              {showPhone && (
+                <input
+                  type="tel"
+                  value={contactPhone}
+                  onChange={(e) => {
+                    setContactPhone(e.target.value)
+                    clearFieldError('contact_phone')
+                  }}
+                  placeholder="Telefonnummer"
+                  className={`w-full p-3 border rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-brand-text antialiased ${
+                    getFieldError('contact_phone') ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                />
+              )}
+
+              <label className="flex items-start gap-3 cursor-pointer p-3 rounded-xl border border-gray-200 hover:bg-brand-beige/40">
+                <input
+                  type="checkbox"
+                  checked={showEmail}
+                  onChange={(e) => {
+                    setShowEmail(e.target.checked)
+                    clearFieldError('contact_via_chat')
+                    clearFieldError('contact_email')
+                  }}
+                  className="mt-0.5 w-4 h-4 text-brand-green rounded focus:ring-brand-green"
+                />
+                <span className="text-sm text-brand-text antialiased">Visa e-post</span>
+              </label>
+              {showEmail && (
+                <input
+                  type="email"
+                  value={contactEmail}
+                  onChange={(e) => {
+                    setContactEmail(e.target.value)
+                    clearFieldError('contact_email')
+                  }}
+                  placeholder="E-postadress"
+                  className={`w-full p-3 border rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-brand-text antialiased ${
+                    getFieldError('contact_email') ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                />
+              )}
+            </div>
+
+            {(getFieldError('contact_via_chat') || getFieldError('contact_phone') || getFieldError('contact_email')) && (
+              <div className="mt-2 space-y-1">
+                {getFieldError('contact_via_chat') && (
+                  <p className="text-sm text-red-600 antialiased" role="alert">
+                    {getFieldError('contact_via_chat')}
+                  </p>
+                )}
+                {getFieldError('contact_phone') && (
+                  <p className="text-sm text-red-600 antialiased" role="alert">
+                    {getFieldError('contact_phone')}
+                  </p>
+                )}
+                {getFieldError('contact_email') && (
+                  <p className="text-sm text-red-600 antialiased" role="alert">
+                    {getFieldError('contact_email')}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Sektion B: Fler detaljer (Collapsible) */}

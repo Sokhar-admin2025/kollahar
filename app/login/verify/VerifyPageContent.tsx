@@ -213,7 +213,7 @@ export default function VerifyPageContent() {
       })
       setLoading(false)
     }
-  }, [code, codeExpired, attemptsLeft, email, type])
+  }, [code, codeExpired, attemptsLeft, email])
 
   // Auto-verify när alla 6 siffror är ifyllda
   useEffect(() => {

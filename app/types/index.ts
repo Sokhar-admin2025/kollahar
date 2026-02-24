@@ -32,8 +32,14 @@ export interface Listing {
   price_updated_at?: string | null;
   /** E-post för specifik säljare – används för lead-notiser */
   contact_email?: string | null;
+  /** Telefonnummer för specifik säljare */
+  contact_phone?: string | null;
   /** Namn på specifik säljare */
   contact_name?: string | null;
+  /** Kontaktkanaler för annonsen */
+  contact_via_chat?: boolean;
+  show_phone?: boolean;
+  show_email?: boolean;
 }
 
 export interface Conversation {

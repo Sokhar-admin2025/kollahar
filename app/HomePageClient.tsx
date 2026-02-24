@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
-import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Search, X, SlidersHorizontal, ChevronDown, ChevronUp, ArrowUpDown } from 'lucide-react'
 
@@ -39,7 +39,6 @@ export default function HomePageClient({
 }: HomePageClientProps) {
   const searchParams = useSearchParams()
   const pathname = usePathname()
-  const router = useRouter()
 
   const [ads, setAds] = useState<Listing[]>(initialAds)
   const [totalCount, setTotalCount] = useState<number | undefined>(initialTotalCount)
@@ -47,7 +46,6 @@ export default function HomePageClient({
   const [loadingMore, setLoadingMore] = useState(false)
   const [hasMore, setHasMore] = useState(initialAds.length === PAGE_SIZE)
   const [serverError, setServerError] = useState<string | null>(initialError ?? null)
-  const [isPending, startTransition] = useTransition()
 
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [currentUserName, setCurrentUserName] = useState<string | null>(null)
@@ -130,6 +128,18 @@ export default function HomePageClient({
       window.history.replaceState({}, '', newUrl)
     }
   }, [initialLoggedOut, initialLoggedIn, searchParams])
+
+  useEffect(() => {
+    if (!showLoggedOutToast) return
+    const timer = setTimeout(() => setShowLoggedOutToast(false), 3000)
+    return () => clearTimeout(timer)
+  }, [showLoggedOutToast])
+
+  useEffect(() => {
+    if (!showLoggedInToast) return
+    const timer = setTimeout(() => setShowLoggedInToast(false), 3000)
+    return () => clearTimeout(timer)
+  }, [showLoggedInToast])
 
   useEffect(() => {
     let isMounted = true
@@ -275,7 +285,7 @@ export default function HomePageClient({
     window.history.replaceState({}, '', newUrl)
   }, [searchQuery, selectedCategory, priceMin, priceMax, bortskankesOnly, sellerType, yearFrom, yearTo, maxMileage, makeFilter, modelFilter, sort, locationFilter])
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = useCallback((e: React.FormEvent) => {
     e.preventDefault()
     setSearchSubmitted(true)
     if (filteredAds.length > 0) {
@@ -284,14 +294,14 @@ export default function HomePageClient({
         resultsElement.scrollIntoView({ behavior: 'smooth', block: 'start' })
       }
     }
-  }
+  }, [filteredAds.length])
 
-  const handleSearchInputChange = (value: string) => {
+  const handleSearchInputChange = useCallback((value: string) => {
     setSearchQuery(value)
     if (searchSubmitted) {
       setSearchSubmitted(false)
     }
-  }
+  }, [searchSubmitted])
 
   const { setOptions: setHeaderOptions } = useHeaderOptions()
   useEffect(() => {
@@ -304,7 +314,7 @@ export default function HomePageClient({
       onClearSearch: () => setSearchQuery(''),
     })
     return () => setHeaderOptions({ showSearch: false })
-  }, [pathname, searchQuery, setHeaderOptions])
+  }, [pathname, searchQuery, setHeaderOptions, handleSearchInputChange, handleSearch])
 
   const resetCarFilters = () => {
     setYearFrom('')
@@ -354,7 +364,7 @@ export default function HomePageClient({
   }, [isSortMenuOpen])
 
   /** Bygger serverfilter från aktuellt state (samma logik som page.tsx). */
-  const buildFilters = (offset: number): ListingSearchFilters => {
+  const buildFilters = useCallback((offset: number): ListingSearchFilters => {
     const minPrice = priceMin ? parsePrice(priceMin) ?? undefined : undefined
     const maxPrice = priceMax ? parsePrice(priceMax) ?? undefined : undefined
     const minYear = yearFrom ? parseInt(yearFrom, 10) : undefined
@@ -401,7 +411,28 @@ export default function HomePageClient({
       limit: PAGE_SIZE,
       sort,
     }
-  }
+  }, [
+    priceMin,
+    priceMax,
+    yearFrom,
+    yearTo,
+    maxMileage,
+    horsepowerMin,
+    horsepowerMax,
+    locationFilter,
+    searchQuery,
+    selectedCategory,
+    bortskankesOnly,
+    sellerType,
+    makeFilter,
+    modelFilter,
+    fuelFilter,
+    gearboxFilter,
+    bodyTypeFilter,
+    driveWheelFilter,
+    colorFilter,
+    sort,
+  ])
 
   // Refetch första sidan när användaren ändrar filter (hoppar över initial mount).
   useEffect(() => {
@@ -468,6 +499,7 @@ export default function HomePageClient({
     colorFilter,
     horsepowerMin,
     horsepowerMax,
+    buildFilters,
   ])
 
   const handleLoadMore = async () => {
@@ -907,7 +939,7 @@ export default function HomePageClient({
     </div>
   )
 
-  const isLoadingList = loading || isPending
+  const isLoadingList = loading
 
   return (
     <div className="min-h-screen bg-brand-beige flex flex-col">
