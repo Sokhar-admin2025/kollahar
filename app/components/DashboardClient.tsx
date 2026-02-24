@@ -123,45 +123,6 @@ export default function DashboardClient({
     }
   }
 
-  const handleProcessLegacyImages = async () => {
-    setIsBackfillingImages(true)
-    setBackfillError(null)
-    setBackfillLiveMessage('Startar batch... (max 10 annonser)')
-    try {
-      const res = await fetch('/api/admin/backfill-images', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ limit: 10 }),
-      })
-      setBackfillLiveMessage('Bearbetar bilder och uppdaterar annonser...')
-      const json = await res.json()
-      if (!res.ok) {
-        setBackfillSummary(null)
-        setBackfillError(json?.error ?? 'Kunde inte köra legacy image-backfill.')
-        setBackfillLiveMessage(null)
-        return
-      }
-      setBackfillSummary({
-        message: json?.message ?? 'Legacy image-backfill slutförd.',
-        processedListings: Number(json?.processedListings ?? 0),
-        updatedListings: Number(json?.updatedListings ?? 0),
-        replacedImages: Number(json?.replacedImages ?? 0),
-        failedImages: Number(json?.failedImages ?? 0),
-        remainingCandidates: Number(json?.remainingCandidates ?? 0),
-        listingErrors: Array.isArray(json?.listingErrors) ? json.listingErrors : [],
-      })
-      setBackfillLiveMessage(null)
-      router.refresh()
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Okänt fel vid legacy image-backfill.'
-      setBackfillSummary(null)
-      setBackfillError(msg)
-      setBackfillLiveMessage(null)
-    } finally {
-      setIsBackfillingImages(false)
-    }
-  }
-
   return (
     <div className="min-h-screen bg-brand-beige flex flex-col">
       <div className="p-6 relative flex-grow">

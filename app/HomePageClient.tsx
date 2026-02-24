@@ -12,7 +12,7 @@ import ScrollToSearch from './components/ScrollToSearch'
 import type { Listing } from './types'
 import { CATEGORY_GROUPS, getCategoryLabel } from '@/lib/categories'
 import { getCountyByValue, getMunicipalityLabel } from '@/lib/swedish-locations'
-import CarMakeModelCombobox from './components/CarMakeModelCombobox'
+import CarMakeModelFields from './components/CarMakeModelFields'
 import LocationFilter, { type LocationFilterValue } from './components/LocationFilter'
 import { PriceInput } from '@/components/listings/filters/price-input'
 import { formatCurrency, getPriceOptions, parsePrice } from '@/lib/features/listings/utils/price-utils'
@@ -713,19 +713,35 @@ export default function HomePageClient({
         {isCarsCategory && (
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-brand-text mb-2 antialiased">
-                Märke & modell
-              </label>
-              <CarMakeModelCombobox
-                value={{ make: makeFilter, model: modelFilter }}
-                onChange={(v) => {
-                  setMakeFilter(v.make)
-                  setModelFilter(v.model)
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <label className="block text-sm font-medium text-brand-text antialiased">
+                  Märke och modell
+                </label>
+                {(makeFilter || modelFilter) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMakeFilter('')
+                      setModelFilter('')
+                    }}
+                    className="text-xs text-brand-green underline hover:text-brand-green/80 antialiased"
+                  >
+                    Rensa märke/modell
+                  </button>
+                )}
+              </div>
+              <CarMakeModelFields
+                make={makeFilter}
+                model={modelFilter}
+                onMakeChange={(v) => {
+                  setMakeFilter(v)
                 }}
-                className=""
+                onModelChange={(v) => {
+                  setModelFilter(v)
+                }}
               />
               <p className="mt-1 text-xs text-brand-text/60">
-                Sök med text, eller steg 1 märke och steg 2 modell. Tomt=alla.
+                Välj först märke och därefter modell. Tomt = alla.
               </p>
             </div>
 
