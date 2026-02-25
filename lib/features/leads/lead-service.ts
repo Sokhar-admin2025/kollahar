@@ -39,6 +39,9 @@ export async function createLead(params: {
     // GDPR: do not auto-collect buyer email for leads.
     buyer_email: null,
     buyer_phone: params.buyerPhone.trim(),
+    assigned_to: params.sellerId,
+    is_guest: false,
+    source: 'lead_card',
     status: 'new',
   })
 

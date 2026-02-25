@@ -102,6 +102,13 @@ export default function ListingDetailsClient({ initialListing, listingId }: List
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(false)
   const [favoritesCount, setFavoritesCount] = useState<number | null>(null)
+  const [showGuestLeadForm, setShowGuestLeadForm] = useState(false)
+  const [guestName, setGuestName] = useState('')
+  const [guestPhone, setGuestPhone] = useState('')
+  const [guestEmail, setGuestEmail] = useState('')
+  const [guestSubmitting, setGuestSubmitting] = useState(false)
+  const [guestSubmitted, setGuestSubmitted] = useState(false)
+  const [guestError, setGuestError] = useState<string | null>(null)
 
   useEffect(() => {
     let isMounted = true
@@ -199,13 +206,22 @@ export default function ListingDetailsClient({ initialListing, listingId }: List
     if (!ad) return
 
     if (!currentUser) {
-      alert(DASHBOARD_TEXTS.messages.actions.loginToChat)
-      router.push('/login')
+      const isCompanySeller =
+        sellerProfile?.account_type === 'company' || (ad as any).seller_type === 'company'
+
+      if (isCompanySeller) {
+        setShowGuestLeadForm(true)
+        setGuestError(null)
+        return
+      }
+
+      const next = encodeURIComponent(`/annons/${listingId}`)
+      router.push(`/login?reason=login_to_chat&next=${next}`)
       return
     }
 
     if (currentUser.id === ad.user_id) {
-      alert("Du kan inte chatta på din egen annons! 😅")
+      alert('Du kan inte chatta på din egen annons! 😅')
       return
     }
 
@@ -216,11 +232,11 @@ export default function ListingDetailsClient({ initialListing, listingId }: List
       if (result.success) {
         router.push('/dashboard/messages')
       } else {
-        alert(result.error ?? "Kunde inte starta chatten just nu.")
+        alert(result.error ?? 'Kunde inte starta chatten just nu.')
       }
     } catch (error) {
       console.error(error)
-      alert("Kunde inte starta chatten just nu.")
+      alert('Kunde inte starta chatten just nu.')
     } finally {
       setContacting(false)
     }
@@ -332,6 +348,36 @@ export default function ListingDetailsClient({ initialListing, listingId }: List
       ? (sellerProfile.city || sellerProfile.address)?.trim() || null
       : sellerProfile.location
     : null
+
+  const handleGuestLeadSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!guestName.trim() || !guestPhone.trim()) return
+    setGuestSubmitting(true)
+    setGuestError(null)
+    try {
+      const res = await fetch('/api/public/guest-lead', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          listingId: ad.id,
+          buyerName: guestName.trim(),
+          buyerPhone: guestPhone.trim(),
+          buyerEmail: guestEmail.trim() || undefined,
+        }),
+      })
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok || json?.error) {
+        setGuestError(json?.error ?? 'Kunde inte skicka dina uppgifter just nu.')
+        return
+      }
+      setGuestSubmitted(true)
+    } catch (err) {
+      console.error('[guest-lead] submit error', err)
+      setGuestError('Kunde inte skicka dina uppgifter just nu.')
+    } finally {
+      setGuestSubmitting(false)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-brand-beige flex flex-col overflow-x-hidden">
@@ -800,21 +846,98 @@ export default function ListingDetailsClient({ initialListing, listingId }: List
 
                 {/* Kontaktknapp (döljs när annonsen är såld/borttagen) */}
                 {!isSold && canShowChat ? (
-                  <Button 
-                    onClick={handleContact} 
-                    className="w-full py-4 text-lg font-bold shadow-lg"
-                    disabled={contacting}
-                  >
-                    {contacting ? 'Öppnar chatt...' : t.contact.button}
-                  </Button>
+                  <>
+                    {showGuestLeadForm && !currentUser && (
+                      <div className="mb-4 rounded-xl border border-brand-green/30 bg-brand-beige/60 p-4">
+                        <p className="mb-2 text-sm font-semibold text-brand-text">
+                          Du är inte inloggad – därför kan du inte chatta direkt.
+                        </p>
+                        <p className="mb-3 text-sm text-brand-text/80">
+                          Lämna dina uppgifter så kan företaget återkomma till dig via telefon eller
+                          e-post. Vill du chatta i realtid kan du alltid logga in och använda
+                          chattfunktionen.
+                        </p>
+                        {guestSubmitted ? (
+                          <p className="text-sm font-medium text-brand-green">
+                            Tack! Dina uppgifter är skickade till säljaren.
+                          </p>
+                        ) : (
+                          <form onSubmit={handleGuestLeadSubmit} className="space-y-2">
+                            <div className="grid grid-cols-1 gap-2">
+                              <input
+                                type="text"
+                                value={guestName}
+                                onChange={(e) => setGuestName(e.target.value)}
+                                placeholder="Namn"
+                                className="w-full rounded-lg border border-gray-300 p-2.5 text-sm text-brand-text focus:border-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/20"
+                                required
+                                disabled={guestSubmitting}
+                              />
+                              <input
+                                type="tel"
+                                value={guestPhone}
+                                onChange={(e) => setGuestPhone(e.target.value)}
+                                placeholder="Telefonnummer"
+                                className="w-full rounded-lg border border-gray-300 p-2.5 text-sm text-brand-text focus:border-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/20"
+                                required
+                                disabled={guestSubmitting}
+                              />
+                              <input
+                                type="email"
+                                value={guestEmail}
+                                onChange={(e) => setGuestEmail(e.target.value)}
+                                placeholder="E-post (valfritt)"
+                                className="w-full rounded-lg border border-gray-300 p-2.5 text-sm text-brand-text focus:border-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/20"
+                                disabled={guestSubmitting}
+                              />
+                            </div>
+                            {guestError && (
+                              <p className="text-xs text-red-600">{guestError}</p>
+                            )}
+                            <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                              <Button
+                                type="submit"
+                                disabled={
+                                  guestSubmitting ||
+                                  !guestName.trim() ||
+                                  !guestPhone.trim()
+                                }
+                                className="w-full sm:w-auto"
+                              >
+                                {guestSubmitting ? 'Skickar...' : 'Skicka uppgifter'}
+                              </Button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const next = encodeURIComponent(`/annons/${listingId}`)
+                                  router.push(`/login?reason=login_to_chat&next=${next}`)
+                                }}
+                                className="text-xs text-brand-text/70 underline hover:text-brand-green"
+                              >
+                                Logga in för att chatta istället
+                              </button>
+                            </div>
+                          </form>
+                        )}
+                      </div>
+                    )}
+
+                    <Button
+                      onClick={handleContact}
+                      className="w-full py-4 text-lg font-bold shadow-lg"
+                      disabled={contacting}
+                    >
+                      {contacting ? 'Öppnar chatt...' : t.contact.button}
+                    </Button>
+                  </>
                 ) : !isSold ? (
                   <div className="bg-brand-beige p-4 rounded-xl text-center text-brand-text/70 font-medium">
                     Säljaren tar inte emot chatt för denna annons.
                   </div>
                 ) : (
-                   <div className="bg-brand-beige p-4 rounded-xl text-center text-brand-text/70 font-medium">
-                     Denna vara är inte längre till salu.
-                   </div>
+                  <div className="bg-brand-beige p-4 rounded-xl text-center text-brand-text/70 font-medium">
+                    Denna vara är inte längre till salu.
+                  </div>
                 )}
                 
                 <p className="text-xs text-center text-gray-400 mt-4">

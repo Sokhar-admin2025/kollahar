@@ -17,7 +17,25 @@ export async function createConversation(
     .eq('seller_id', sellerId)
     .maybeSingle()
 
-  if (existing) return existing.id
+  if (existing) {
+    // Om konversationen tidigare har dolts för köparen (soft delete),
+    // återaktiverar vi den genom att ta bort raden i user_hidden_conversations.
+    const existingId = (existing as { id: string }).id
+    const { error: unhideError } = await supabase
+      .from('user_hidden_conversations')
+      .delete()
+      .eq('user_id', buyerId)
+      .eq('conversation_id', existingId)
+
+    if (unhideError) {
+      console.error(
+        '[messages] Failed to unhide conversation for buyer',
+        unhideError.message
+      )
+    }
+
+    return existingId
+  }
 
   const { data, error } = await supabase
     .from('conversations')

@@ -47,6 +47,7 @@ export default function InboxClient({
   const [leadSubmitted, setLeadSubmitted] = useState(false)
   const [leadName, setLeadName] = useState('')
   const [leadPhone, setLeadPhone] = useState('')
+  const [leadCardCollapsed, setLeadCardCollapsed] = useState(false)
   const [mounted, setMounted] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
@@ -209,6 +210,7 @@ export default function InboxClient({
     setShowInboxMobile(false)
     setLeadName('')
     setLeadPhone('')
+    setLeadCardCollapsed(false)
   }
 
   const showLeadCard =
@@ -216,7 +218,6 @@ export default function InboxClient({
     selectedConversation &&
     selectedConversation.seller_account_type === 'company' &&
     selectedConversation.buyer_id === userId &&
-    messages.length === 0 &&
     !leadExists &&
     !leadSubmitted &&
     !isListingClosed(selectedConversation)
@@ -478,76 +479,98 @@ export default function InboxClient({
                       <div className="text-center text-brand-text text-sm antialiased">
                         Laddar meddelanden...
                       </div>
-                    ) : showLeadCard ? (
-                      <div className="flex justify-start">
-                        <div className="max-w-[85%] rounded-xl px-4 py-3 bg-white border border-brand-green/20 shadow-sm">
-                          <p className="text-sm text-brand-text mb-3 antialiased">
-                            Lämna namn och telefonnummer så kan säljaren återkomma till dig om chatten är obemannad.
-                          </p>
-                          <form onSubmit={handleSubmitLeadCard} className="space-y-2">
-                            <input
-                              type="text"
-                              value={leadName}
-                              onChange={(e) => setLeadName(e.target.value)}
-                              placeholder="Namn"
-                              className="w-full p-2.5 border border-gray-300 rounded-lg text-sm text-brand-text focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none antialiased"
-                              disabled={leadSubmitting}
-                              required
-                            />
-                            <input
-                              type="tel"
-                              value={leadPhone}
-                              onChange={(e) => setLeadPhone(e.target.value)}
-                              placeholder="Telefonnummer"
-                              className="w-full p-2.5 border border-gray-300 rounded-lg text-sm text-brand-text focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none antialiased"
-                              disabled={leadSubmitting}
-                              required
-                            />
-                            <Button
-                              type="submit"
-                              disabled={leadSubmitting || !leadName.trim() || !leadPhone.trim()}
-                              className="w-full mt-2"
-                            >
-                              {leadSubmitting ? 'Skickar...' : 'Skicka'}
-                            </Button>
-                          </form>
-                        </div>
-                      </div>
-                    ) : messages.length === 0 ? (
-                      <div className="text-center text-brand-text/70 text-sm py-4 antialiased">
-                        Inga meddelanden än. Skriv ett meddelande nedan.
-                      </div>
                     ) : (
                       <>
-                      {messages.map((msg) => {
-                        const isMe = msg.sender_id === userId
-                        return (
-                          <div
-                            key={msg.id}
-                            className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}
-                          >
-                            <div
-                              className={`max-w-[70%] rounded-xl px-4 py-2 shadow-sm text-sm ${
-                                isMe
-                                  ? 'bg-brand-green text-white rounded-br-none'
-                                  : 'bg-white text-brand-text border border-brand-green/10 rounded-bl-none'
-                              }`}
-                            >
-                              <p>{msg.content}</p>
-                              <span
-                                className={`text-[10px] block mt-1 opacity-70 antialiased ${
-                                  isMe ? 'text-white/80' : 'text-brand-text'
-                                }`}
-                              >
-                                {new Date(msg.created_at).toLocaleTimeString('sv-SE', {
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                })}
-                              </span>
+                        {showLeadCard && (
+                          <div className="mb-3 flex justify-start">
+                            <div className="max-w-[85%] rounded-xl px-4 py-3 bg-white border border-brand-green/20 shadow-sm">
+                              <div className="mb-2 flex items-center justify-between gap-3">
+                                <p className="text-xs font-semibold text-brand-text antialiased">
+                                  Lämna kontaktuppgifter till säljaren.
+                                </p>
+                                <button
+                                  type="button"
+                                  onClick={() => setLeadCardCollapsed((v) => !v)}
+                                  className="text-[11px] text-brand-green hover:text-brand-green/80 underline"
+                                >
+                                  {leadCardCollapsed ? 'Visa formulär' : 'Minimera'}
+                                </button>
+                              </div>
+                              {!leadCardCollapsed && (
+                                <>
+                                  <p className="text-sm text-brand-text mb-3 antialiased">
+                                    Lämna namn och telefonnummer så kan säljaren återkomma till dig även om du inte är inloggad eller chatten är obemannad. Som gäst visar vi först detta formulär istället för full chatt.
+                                  </p>
+                                  <form onSubmit={handleSubmitLeadCard} className="space-y-2">
+                                    <input
+                                      type="text"
+                                      value={leadName}
+                                      onChange={(e) => setLeadName(e.target.value)}
+                                      placeholder="Namn"
+                                      className="w-full p-2.5 border border-gray-300 rounded-lg text-sm text-brand-text focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none antialiased"
+                                      disabled={leadSubmitting}
+                                      required
+                                    />
+                                    <input
+                                      type="tel"
+                                      value={leadPhone}
+                                      onChange={(e) => setLeadPhone(e.target.value)}
+                                      placeholder="Telefonnummer"
+                                      className="w-full p-2.5 border border-gray-300 rounded-lg text-sm text-brand-text focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none antialiased"
+                                      disabled={leadSubmitting}
+                                      required
+                                    />
+                                    <Button
+                                      type="submit"
+                                      disabled={leadSubmitting || !leadName.trim() || !leadPhone.trim()}
+                                      className="w-full mt-2"
+                                    >
+                                      {leadSubmitting ? 'Skickar...' : 'Skicka'}
+                                    </Button>
+                                  </form>
+                                </>
+                              )}
                             </div>
                           </div>
-                        )
-                      })}
+                        )}
+
+                        {messages.length === 0 ? (
+                          <div className="text-center text-brand-text/70 text-sm py-4 antialiased">
+                            Inga meddelanden än. Skriv ett meddelande nedan.
+                          </div>
+                        ) : (
+                          <>
+                            {messages.map((msg) => {
+                              const isMe = msg.sender_id === userId
+                              return (
+                                <div
+                                  key={msg.id}
+                                  className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}
+                                >
+                                  <div
+                                    className={`max-w-[70%] rounded-xl px-4 py-2 shadow-sm text-sm ${
+                                      isMe
+                                        ? 'bg-brand-green text-white rounded-br-none'
+                                        : 'bg-white text-brand-text border border-brand-green/10 rounded-bl-none'
+                                    }`}
+                                  >
+                                    <p>{msg.content}</p>
+                                    <span
+                                      className={`text-[10px] block mt-1 opacity-70 antialiased ${
+                                        isMe ? 'text-white/80' : 'text-brand-text'
+                                      }`}
+                                    >
+                                      {new Date(msg.created_at).toLocaleTimeString('sv-SE', {
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                      })}
+                                    </span>
+                                  </div>
+                                </div>
+                              )
+                            })}
+                          </>
+                        )}
                       </>
                     )}
                   </div>

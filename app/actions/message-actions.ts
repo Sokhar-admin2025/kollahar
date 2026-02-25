@@ -46,6 +46,23 @@ export async function sendMessageAction(
           ? (conv as { buyer_id: string }).buyer_id
           : null
 
+    // När säljaren skickar sitt första svar i en lead-relaterad konversation
+    // sätter vi first_response_at på lead:en (idempotent via WHERE first_response_at IS NULL).
+    if (conv && (conv as { seller_id: string }).seller_id === user.id) {
+      const { error: firstResponseError } = await supabase
+        .from('leads')
+        .update({ first_response_at: new Date().toISOString() })
+        .eq('conversation_id', conversationId)
+        .is('first_response_at', null)
+
+      if (firstResponseError) {
+        console.error(
+          '[leados] Failed to set first_response_at for lead',
+          firstResponseError.message
+        )
+      }
+    }
+
     if (recipientId) {
       triggerNewMessageNotification({
         conversationId,
