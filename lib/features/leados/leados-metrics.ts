@@ -48,9 +48,30 @@ export function computeLeadStats(leads: LeadOSLead[], now: Date): LeadOSStats {
     }
   }
 
-  const averageResponseTimeMs = respondedCount > 0 ? totalResponseMs / respondedCount : 0
-  const percentWithinSla =
-    respondedCount > 0 ? (respondedWithinSlaCount / respondedCount) * 100 : 0
+  if (respondedCount === 0) {
+    return {
+      missedCount,
+      newCount,
+      activeCount,
+      averageResponseTimeMs: null,
+      respondedCount,
+      respondedWithinSlaCount,
+      percentWithinSla: null,
+      slaStatus: 'no-data',
+    }
+  }
+
+  const averageResponseTimeMs = totalResponseMs / respondedCount
+  const percentWithinSla = (respondedWithinSlaCount / respondedCount) * 100
+
+  let slaStatus: LeadOSStats['slaStatus']
+  if (percentWithinSla >= 80) {
+    slaStatus = 'good'
+  } else if (percentWithinSla >= 50) {
+    slaStatus = 'warn'
+  } else {
+    slaStatus = 'bad'
+  }
 
   return {
     missedCount,
@@ -60,6 +81,34 @@ export function computeLeadStats(leads: LeadOSLead[], now: Date): LeadOSStats {
     respondedCount,
     respondedWithinSlaCount,
     percentWithinSla,
+    slaStatus,
   }
 }
+
+/**
+ * QA-checklista (LeadOS Seller Mode SLA / response stats)
+ *
+ * 1) 0 leads
+ *    - SLA-kort visar neutral färg
+ *    - Text: "Ingen data ännu" och "0 av 0 svar inom 15 min"
+ *    - averageResponseTimeMs = null, percentWithinSla = null, slaStatus = 'no-data'
+ *
+ * 2) 1 lead, ny, <15 min, ej svar
+ *    - newCount = 1, missedCount = 0
+ *    - respondedCount = 0, percentWithinSla = null, slaStatus = 'no-data'
+ *
+ * 3) Markera lead som kontaktad inom 15 min
+ *    - first_response_at sätts (via statusupdate eller första meddelande)
+ *    - respondedCount = 1
+ *    - percentWithinSla ≈ 100, slaStatus = 'good'
+ *    - averageResponseTimeMs motsvarar 1–15 min
+ *    - lead flyttar från 'new' till 'active'
+ *
+ * 4) Lead äldre än 15 min utan svar
+ *    - bucket = 'missed' → missedCount = 1
+ *
+ * 5) Första meddelandet i chatten
+ *    - Om lead.first_response_at var NULL, sätts till now()
+ *    - respondedCount/percentWithinSla uppdateras vid nästa fetch till Seller Mode
+ */
 

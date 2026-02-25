@@ -545,6 +545,7 @@ Migrations ligger i `supabase/migrations/`:
 - `20260305153000_profiles_add_phone_for_contact_channels.sql`: Lägger till valfritt `profiles.phone` för privat annonsörs telefonkanal (opt-in i annonsformulär).
 - `20260306100000_leados_seller_mode_fields.sql`: Lägger till `assigned_to` och `first_response_at` på `leads` + index på `(organization_id, assigned_to, status, created_at)` som bas för LeadOS Seller Mode och 15-minuters SLA.
 - `20260306105000_leads_guest_flags.sql`: Lägger till `is_guest` (boolean) och `source` (text) på `leads` för att kunna särskilja gästleads (skapade utan konto) och teknisk leadkälla (t.ex. `guest_form`, `lead_card`).
+ - `20260306111000_leads_internal_note.sql`: Lägger till `internal_note` och `internal_note_updated_at` på `leads` för intern säljaranteckning i Lead Detail-vyn (endast intern, ej synlig för köpare).
 
 ### Legacy image backfill (engångskörning)
 

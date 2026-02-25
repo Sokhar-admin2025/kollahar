@@ -9,6 +9,41 @@ import type { LeadStatus } from '@/lib/features/dealer/dealer-analytics-service'
 
 export type SubmitLeadCardResult = { success: true } | { success: false; error: string }
 
+interface CompanyGuardContext {
+  supabase: Awaited<ReturnType<typeof createClient>>
+  organizationId: string
+}
+
+async function getCompanyGuard(): Promise<{ ok: true; ctx: CompanyGuardContext } | { ok: false; error: string }> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { ok: false, error: 'Du måste vara inloggad.' }
+  }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('account_type, organization_id')
+    .eq('id', user.id)
+    .single()
+
+  const accountType = (profile as { account_type?: string } | null)?.account_type ?? 'private'
+  const organizationId =
+    (profile as { organization_id?: string | null } | null)?.organization_id ?? null
+
+  if (accountType !== 'company' || !organizationId) {
+    return {
+      ok: false,
+      error: 'Endast företagskonton med organisation kan använda Seller Mode och LeadOS-åtgärder.',
+    }
+  }
+
+  return { ok: true, ctx: { supabase, organizationId } }
+}
+
 export async function submitLeadCardAction(
   conversationId: string,
   buyerName: string,
@@ -98,35 +133,60 @@ export async function updateLeadStatusAction(
     return { success: false, error: 'Ogiltig lead-status.' }
   }
 
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    return { success: false, error: 'Du måste vara inloggad.' }
+  const guard = await getCompanyGuard()
+  if (!guard.ok) {
+    return { success: false, error: guard.error }
   }
+  const { supabase, organizationId } = guard.ctx
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('organization_id')
-    .eq('id', user.id)
-    .single()
+  try {
+    const needsFirstResponse =
+      status === 'contacted' || status === 'qualified' || status === 'sold'
 
-  const organizationId =
-    (profile as { organization_id?: string | null } | null)?.organization_id ?? user.id
+    if (needsFirstResponse) {
+      const nowIso = new Date().toISOString()
 
-  const { error } = await supabase
-    .from('leads')
-    .update({ status })
-    .eq('id', leadId)
-    .eq('organization_id', organizationId)
+      // 1) Sätt status + first_response_at där first_response_at fortfarande är NULL.
+      const { error: updateWithResponseError } = await supabase
+        .from('leads')
+        .update({ status, first_response_at: nowIso })
+        .eq('id', leadId)
+        .eq('organization_id', organizationId)
+        .is('first_response_at', null)
 
-  if (error) {
+      if (updateWithResponseError) {
+        return { success: false, error: 'Kunde inte uppdatera lead-status.' }
+      }
+
+      // 2) Om raden redan har first_response_at, uppdatera bara status.
+      const { error: updateStatusOnlyError } = await supabase
+        .from('leads')
+        .update({ status })
+        .eq('id', leadId)
+        .eq('organization_id', organizationId)
+        .not('first_response_at', 'is', null)
+
+      if (updateStatusOnlyError) {
+        return { success: false, error: 'Kunde inte uppdatera lead-status.' }
+      }
+    } else {
+      const { error } = await supabase
+        .from('leads')
+        .update({ status })
+        .eq('id', leadId)
+        .eq('organization_id', organizationId)
+
+      if (error) {
+        return { success: false, error: 'Kunde inte uppdatera lead-status.' }
+      }
+    }
+  } catch (err) {
+    console.error('updateLeadStatusAction error', err)
     return { success: false, error: 'Kunde inte uppdatera lead-status.' }
   }
 
   revalidatePath('/dashboard/dealer')
+  revalidatePath('/dashboard/seller')
   return { success: true }
 }
 
@@ -157,3 +217,39 @@ export async function getLeadExistsAction(
     return { error: 'Kunde inte kontrollera lead.' }
   }
 }
+
+export type UpdateLeadInternalNoteResult = { success: true } | { success: false; error: string }
+
+export async function updateLeadInternalNoteAction(
+  leadId: string,
+  note: string
+): Promise<UpdateLeadInternalNoteResult> {
+  const guard = await getCompanyGuard()
+  if (!guard.ok) {
+    return { success: false, error: guard.error }
+  }
+  const { supabase, organizationId } = guard.ctx
+
+  try {
+    const nowIso = new Date().toISOString()
+    const { error } = await supabase
+      .from('leads')
+      .update({
+        internal_note: note,
+        internal_note_updated_at: nowIso,
+      })
+      .eq('id', leadId)
+      .eq('organization_id', organizationId)
+
+    if (error) {
+      return { success: false, error: 'Kunde inte spara anteckning.' }
+    }
+  } catch (err) {
+    console.error('updateLeadInternalNoteAction error', err)
+    return { success: false, error: 'Kunde inte spara anteckning.' }
+  }
+
+  revalidatePath('/dashboard/seller')
+  return { success: true }
+}
+

@@ -7,9 +7,11 @@ const DEMO_MODE = process.env.DEMO_MODE === 'true'
 
 type DbLeadRow = {
   id: string
+  conversation_id: string | null
   listing_id: string | null
   buyer_name: string
   buyer_phone: string
+  source?: string | null
   status: LeadStatus | null
   created_at: string
   first_response_at: string | null
@@ -68,11 +70,13 @@ function mapDbLeadToLeadOS(row: DbLeadRow, bucket: LeadOSBucket): LeadOSLead {
 
   return {
     id: row.id,
+    conversationId: row.conversation_id,
     listingId: row.listing_id,
     listingTitle,
     listingSubtitle: buildListingSubtitle(row),
     buyerName: row.buyer_name,
     buyerPhone: row.buyer_phone,
+    source: row.source ?? null,
     status:
       row.status === 'contacted' ||
       row.status === 'qualified' ||
@@ -97,9 +101,11 @@ function buildDemoData(now: Date, userId: string, organizationId: string): Selle
     // Missed (äldre än 15 min, inget svar)
     {
       id: 'demo-missed-1',
+      conversation_id: 'demo-conv-1',
       listing_id: 'demo-listing-1',
       buyer_name: 'Anna Andersson',
       buyer_phone: '070-123 45 67',
+      source: 'guest_form',
       status: 'new',
       created_at: new Date(baseCreated.getTime()).toISOString(),
       first_response_at: null,
@@ -109,9 +115,11 @@ function buildDemoData(now: Date, userId: string, organizationId: string): Selle
     },
     {
       id: 'demo-missed-2',
+      conversation_id: 'demo-conv-2',
       listing_id: 'demo-listing-2',
       buyer_name: 'Bilförmedlingen AB',
       buyer_phone: '08-555 55 55',
+      source: 'guest_form',
       status: 'new',
       created_at: new Date(baseCreated.getTime() - 20 * 60 * 1000).toISOString(),
       first_response_at: null,
@@ -122,9 +130,11 @@ function buildDemoData(now: Date, userId: string, organizationId: string): Selle
     // New (inom 15 min, inget svar)
     {
       id: 'demo-new-1',
+      conversation_id: 'demo-conv-3',
       listing_id: 'demo-listing-3',
       buyer_name: 'Kalle Karlsson',
       buyer_phone: '073-333 44 55',
+      source: 'chat_lead',
       status: 'new',
       created_at: new Date(now.getTime() - 5 * 60 * 1000).toISOString(),
       first_response_at: null,
@@ -134,9 +144,11 @@ function buildDemoData(now: Date, userId: string, organizationId: string): Selle
     },
     {
       id: 'demo-new-2',
+      conversation_id: 'demo-conv-4',
       listing_id: 'demo-listing-4',
       buyer_name: 'Maria Mobil',
       buyer_phone: '076-777 88 99',
+      source: 'chat_lead',
       status: 'new',
       created_at: new Date(now.getTime() - 10 * 60 * 1000).toISOString(),
       first_response_at: null,
@@ -147,9 +159,11 @@ function buildDemoData(now: Date, userId: string, organizationId: string): Selle
     // Active (besvarade leads)
     {
       id: 'demo-active-1',
+      conversation_id: 'demo-conv-5',
       listing_id: 'demo-listing-5',
       buyer_name: 'Sara Snabb',
       buyer_phone: '070-999 00 11',
+      source: 'chat_lead',
       status: 'contacted',
       created_at: new Date(now.getTime() - 25 * 60 * 1000).toISOString(),
       first_response_at: new Date(now.getTime() - 20 * 60 * 1000).toISOString(),
@@ -159,9 +173,11 @@ function buildDemoData(now: Date, userId: string, organizationId: string): Selle
     },
     {
       id: 'demo-active-2',
+      conversation_id: 'demo-conv-6',
       listing_id: 'demo-listing-6',
       buyer_name: 'Demo Demo',
       buyer_phone: '070-000 00 00',
+      source: 'guest_form',
       status: 'qualified',
       created_at: new Date(now.getTime() - 60 * 60 * 1000).toISOString(),
       first_response_at: new Date(now.getTime() - 50 * 60 * 1000).toISOString(),
@@ -230,7 +246,7 @@ export async function getSellerLeadOSData(userId: string): Promise<SellerLeadOSD
   const { data, error } = await supabase
     .from('leads')
     .select(
-      'id, listing_id, buyer_name, buyer_phone, status, created_at, first_response_at, assigned_to, organization_id, listing:listings(title, make, model, year)'
+      'id, conversation_id, listing_id, buyer_name, buyer_phone, source, status, created_at, first_response_at, assigned_to, organization_id, listing:listings(title, make, model, year)'
     )
     .eq('organization_id', organizationId)
     .eq('assigned_to', userId)
