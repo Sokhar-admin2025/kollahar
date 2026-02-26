@@ -283,11 +283,28 @@ export async function getSellerLeadOSData(userId: string): Promise<SellerLeadOSD
         return emptySellerLeadOSData(now)
       }
 
-      rows = (legacyData ?? []).map((row) => ({
-        ...(row as Omit<DbLeadRow, 'first_response_at' | 'assigned_to'>),
-        first_response_at: null,
-        assigned_to: null,
-      })) as DbLeadRow[]
+      rows = (legacyData ?? []).map((row: any) => {
+        const listing =
+          // Supabase kan returnera relationer som array eller objekt beroende på query-shape
+          Array.isArray(row.listing) ? row.listing[0] ?? null : row.listing ?? null
+
+        const mapped: DbLeadRow = {
+          id: row.id,
+          conversation_id: null,
+          listing_id: row.listing_id,
+          buyer_name: row.buyer_name,
+          buyer_phone: row.buyer_phone,
+          source: null,
+          status: row.status,
+          created_at: row.created_at,
+          first_response_at: null,
+          assigned_to: null,
+          organization_id: row.organization_id,
+          listing,
+        }
+
+        return mapped
+      })
     } else {
       console.error('[leados] Failed to load leads for seller mode', message)
       return emptySellerLeadOSData(now)
