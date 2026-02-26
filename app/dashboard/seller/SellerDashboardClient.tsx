@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { AlertTriangle, Clock, CheckCircle2, Activity, ChevronRight } from 'lucide-react'
+import { AlertTriangle, Clock, CheckCircle2, Activity, ChevronRight, Info } from 'lucide-react'
 import type { SellerLeadOSData, LeadOSLead } from '@/lib/features/leados/leados-types'
 import type { LeadStatus } from '@/lib/features/dealer/dealer-analytics-service'
 import { updateLeadStatusAction } from '@/app/actions/lead-actions'
@@ -307,8 +307,20 @@ export default function SellerDashboardClient({ sellerName, data }: SellerDashbo
               : 'bg-white ring-gray-100 dark:bg-gray-900 dark:ring-gray-800'
           }`}
         >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-red-700 dark:text-red-300">Missade</span>
+          <div className="flex items-center justify-between gap-1">
+            <div className="flex items-center gap-1">
+              <span className="text-xs font-medium text-red-700 dark:text-red-300">
+                Missade
+              </span>
+              <button
+                type="button"
+                className="group"
+                aria-label="Förklaring av missade leads"
+                title="Leads som väntat mer än 15 minuter utan första svar. Dessa ska prioriteras direkt."
+              >
+                <Info className="h-3.5 w-3.5 text-red-400 group-hover:text-red-500" />
+              </button>
+            </div>
             <AlertTriangle className="h-4 w-4 text-red-500" />
           </div>
           <p className="mt-2 text-2xl font-semibold text-brand-text dark:text-white">
@@ -325,8 +337,20 @@ export default function SellerDashboardClient({ sellerName, data }: SellerDashbo
         </div>
 
         <div className="rounded-xl bg-white p-3 shadow-sm ring-1 ring-amber-100 dark:bg-gray-900 dark:ring-amber-900/40">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-amber-800 dark:text-amber-200">Nya</span>
+          <div className="flex items-center justify-between gap-1">
+            <div className="flex items-center gap-1">
+              <span className="text-xs font-medium text-amber-800 dark:text-amber-200">
+                Nya (SLA)
+              </span>
+              <button
+                type="button"
+                className="group"
+                aria-label="Förklaring av nya leads"
+                title="Färska leads inom 15 minuter från att de kom in. Målet är att svara innan SLA:t bryts."
+              >
+                <Info className="h-3.5 w-3.5 text-amber-500 group-hover:text-amber-600" />
+              </button>
+            </div>
             <Clock className="h-4 w-4 text-amber-500" />
           </div>
           <p className="mt-2 text-2xl font-semibold text-brand-text dark:text-white">
@@ -336,8 +360,18 @@ export default function SellerDashboardClient({ sellerName, data }: SellerDashbo
         </div>
 
         <div className="rounded-xl bg-white p-3 shadow-sm ring-1 ring-gray-100 dark:bg-gray-900 dark:ring-gray-800">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-brand-text/80">Snitt-svarstid</span>
+          <div className="flex items-center justify-between gap-1">
+            <div className="flex items-center gap-1">
+              <span className="text-xs font-medium text-brand-text/80">Snitt-svarstid</span>
+              <button
+                type="button"
+                className="group"
+                aria-label="Förklaring av snitt-svarstid"
+                title="Genomsnittlig tid från att ett lead kom in tills första svaret skickades."
+              >
+                <Info className="h-3.5 w-3.5 text-brand-text/40 group-hover:text-brand-text/70" />
+              </button>
+            </div>
             <Activity className="h-4 w-4 text-brand-green" />
           </div>
           <p className="mt-2 text-2xl font-semibold text-brand-text dark:text-white">
@@ -349,8 +383,18 @@ export default function SellerDashboardClient({ sellerName, data }: SellerDashbo
         </div>
 
         <div className={`rounded-xl p-3 shadow-sm ring-1 ${slaCardClasses}`}>
-          <div className="flex items-center justify-between">
-            <span className={`text-xs font-medium ${slaLabelColor}`}>Inom SLA</span>
+          <div className="flex items-center justify-between gap-1">
+            <div className="flex items-center gap-1">
+              <span className={`text-xs font-medium ${slaLabelColor}`}>Inom SLA</span>
+              <button
+                type="button"
+                className="group"
+                aria-label="Förklaring av SLA-kort"
+                title="Andel besvarade leads där första svaret kom inom 15 minuter. Visar hur väl ni håller uppföljningslöftet."
+              >
+                <Info className={`h-3.5 w-3.5 ${slaIconColor} opacity-80 group-hover:opacity-100`} />
+              </button>
+            </div>
             <CheckCircle2 className={`h-4 w-4 ${slaIconColor}`} />
           </div>
           <p className="mt-2 text-2xl font-semibold text-brand-text dark:text-white">
@@ -373,7 +417,7 @@ export default function SellerDashboardClient({ sellerName, data }: SellerDashbo
           optimisticStatus={optimisticStatus}
         />
         <LeadListSection
-          title="Nya leads (på väg mot SLA)"
+          title="Nya leads (SLA)"
           leads={data.leadsByBucket.new}
           bucket="new"
           nowIso={now.toISOString()}
