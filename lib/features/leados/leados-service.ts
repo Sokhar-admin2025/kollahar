@@ -32,10 +32,11 @@ function emptySellerLeadOSData(now: Date): SellerLeadOSData {
       missedCount: 0,
       newCount: 0,
       activeCount: 0,
-      averageResponseTimeMs: 0,
+      averageResponseTimeMs: null,
       respondedCount: 0,
       respondedWithinSlaCount: 0,
-      percentWithinSla: 0,
+      percentWithinSla: null,
+      slaStatus: 'no-data',
     },
     leadsByBucket: {
       missed: [],
