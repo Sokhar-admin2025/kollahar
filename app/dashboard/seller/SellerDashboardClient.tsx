@@ -290,16 +290,17 @@ export default function SellerDashboardClient({ sellerName, data }: SellerDashbo
   }
 
   return (
-    <div className="min-h-screen bg-brand-beige px-4 py-5">
-      <header className="mb-6">
+    <div className="min-h-screen bg-brand-beige">
+      <div className="mx-auto max-w-6xl px-4 py-5">
+        <header className="mb-6">
         <p className="text-xs uppercase tracking-wide text-brand-text/60">Seller Mode</p>
         <h1 className="mt-1 text-2xl font-semibold text-brand-text">
           Hej {sellerName}, här är dina leads.
         </h1>
         <p className="mt-1 text-sm text-brand-text/80">{primaryInstruction}</p>
-      </header>
+        </header>
 
-      <section className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <section className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <div
           className={`rounded-xl p-3 shadow-sm ring-1 ${
             data.stats.missedCount > 0
@@ -404,9 +405,9 @@ export default function SellerDashboardClient({ sellerName, data }: SellerDashbo
             {data.stats.respondedWithinSlaCount} av {data.stats.respondedCount} svar inom 15 min.
           </p>
         </div>
-      </section>
+        </section>
 
-      <main>
+        <main>
         <LeadListSection
           title="Missade leads"
           leads={data.leadsByBucket.missed}
@@ -434,13 +435,14 @@ export default function SellerDashboardClient({ sellerName, data }: SellerDashbo
           updatingId={updatingId}
           optimisticStatus={optimisticStatus}
         />
-      </main>
+        </main>
 
-      <footer className="mt-6 text-center text-[11px] text-brand-text/60">
-        {totalOpen > 0
-          ? `Du har ${totalOpen} öppna leads att jobba med just nu.`
-          : 'Du är i fas – inga öppna leads just nu.'}
-      </footer>
+        <footer className="mt-6 text-center text-[11px] text-brand-text/60">
+          {totalOpen > 0
+            ? `Du har ${totalOpen} öppna leads att jobba med just nu.`
+            : 'Du är i fas – inga öppna leads just nu.'}
+        </footer>
+      </div>
     </div>
   )
 }

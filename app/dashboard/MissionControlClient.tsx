@@ -10,6 +10,7 @@ import {
   Activity,
   Package,
   TrendingUp,
+  Info,
 } from 'lucide-react'
 import type { SellerLeadOSData } from '@/lib/features/leados/leados-types'
 import type { DealerDashboardData } from '@/lib/features/dealer/dealer-analytics-service'
@@ -153,20 +154,21 @@ export default function MissionControlClient({
           : 'ring-red-200 bg-red-50/60 dark:bg-red-900/20 dark:ring-red-900/40'
 
   return (
-    <div className="min-h-screen bg-brand-beige px-4 py-5">
-      <header className="mb-6">
+    <div className="min-h-screen bg-brand-beige">
+      <div className="mx-auto max-w-6xl px-4 py-5">
+        <header className="mb-6">
         <p className="text-xs uppercase tracking-wide text-brand-text/60">
           Mission Control
         </p>
         <h1 className="mt-1 text-2xl font-semibold text-brand-text">
           Hej {sellerName}, här är din överblick.
         </h1>
-        <p className="mt-1 text-sm text-brand-text/80">
-          Se dina leads, SLA-hälsa och lager på ett ställe.
-        </p>
-      </header>
+          <p className="mt-1 text-sm text-brand-text/80">
+            Se dina leads, SLA-hälsa och lager på ett ställe.
+          </p>
+        </header>
 
-      {upcomingSlaLead && (
+        {upcomingSlaLead && (
         <section
           className="mb-5 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 shadow-sm dark:border-amber-800 dark:bg-amber-900/30"
           aria-live="polite"
@@ -199,27 +201,49 @@ export default function MissionControlClient({
             </div>
           </div>
         </section>
-      )}
+        )}
 
-      <section className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div className="rounded-xl bg-white p-3 shadow-sm ring-1 ring-gray-100 dark:bg-gray-900 dark:ring-gray-800">
-          <div className="flex items-center justify-between gap-1">
-            <span className="text-xs font-medium text-brand-text/80">Aktiva leads</span>
-            <Activity className="h-4 w-4 text-brand-green" />
-          </div>
+        <section className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="rounded-xl bg-white p-3 shadow-sm ring-1 ring-gray-100 dark:bg-gray-900 dark:ring-gray-800">
+            <div className="flex items-center justify-between gap-1">
+              <div className="flex items-center gap-1">
+                <span className="text-xs font-medium text-brand-text/80">Aktiva leads</span>
+                <button
+                  type="button"
+                  className="group"
+                  aria-label="Förklaring av aktiva leads"
+                  title="Visar hur många leads du aktivt behöver jobba med just nu (nya + aktiva i LeadOS-buckets)."
+                >
+                  <Info className="h-3.5 w-3.5 text-brand-text/40 group-hover:text-brand-text/70" />
+                </button>
+              </div>
+              <Activity className="h-4 w-4 text-brand-green" />
+            </div>
           <p className="mt-2 text-2xl font-semibold text-brand-text dark:text-white">
             {activeLeadsCount}
           </p>
           <p className="mt-1 text-[11px] text-brand-text/60">
             Baserat på nya + aktiva leads tilldelade dig.
           </p>
-        </div>
-
-        <div className={`rounded-xl p-3 shadow-sm ring-1 ${slaCardClasses}`}>
-          <div className="flex items-center justify-between gap-1">
-            <span className={`text-xs font-medium ${slaLabelColor}`}>Inom SLA</span>
-            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
           </div>
+
+          <div className={`rounded-xl p-3 shadow-sm ring-1 ${slaCardClasses}`}>
+            <div className="flex items-center justify-between gap-1">
+              <div className="flex items-center gap-1">
+                <span className={`text-xs font-medium ${slaLabelColor}`}>Inom SLA</span>
+                <button
+                  type="button"
+                  className="group"
+                  aria-label="Förklaring av SLA-hälsa"
+                  title="Andel besvarade leads där första svaret kom inom 15 minuter. Visar hur väl du håller ditt uppföljningslöfte."
+                >
+                  <Info
+                    className={`h-3.5 w-3.5 ${slaLabelColor} opacity-80 group-hover:opacity-100`}
+                  />
+                </button>
+              </div>
+              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+            </div>
           <p className="mt-2 text-2xl font-semibold text-brand-text dark:text-white">
             {hasSlaData ? `${slaPercent}%` : '–'}
           </p>
@@ -227,65 +251,96 @@ export default function MissionControlClient({
             {sellerLeadData.stats.respondedWithinSlaCount} av{' '}
             {sellerLeadData.stats.respondedCount} svar inom 15 min.
           </p>
-        </div>
-
-        <div className="rounded-xl bg-white p-3 shadow-sm ring-1 ring-gray-100 dark:bg-gray-900 dark:ring-gray-800">
-          <div className="flex items-center justify-between gap-1">
-            <span className="text-xs font-medium text-brand-text/80">Totalt lager</span>
-            <Package className="h-4 w-4 text-brand-text/70" />
           </div>
+
+          <div className="rounded-xl bg-white p-3 shadow-sm ring-1 ring-gray-100 dark:bg-gray-900 dark:ring-gray-800">
+            <div className="flex items-center justify-between gap-1">
+              <div className="flex items-center gap-1">
+                <span className="text-xs font-medium text-brand-text/80">Totalt lager</span>
+                <button
+                  type="button"
+                  className="group"
+                  aria-label="Förklaring av totalt lager"
+                  title="Antal aktiva annonser i din organisation – hjälper dig se hur mycket du har ute på marknaden."
+                >
+                  <Info className="h-3.5 w-3.5 text-brand-text/40 group-hover:text-brand-text/70" />
+                </button>
+              </div>
+              <Package className="h-4 w-4 text-brand-text/70" />
+            </div>
           <p className="mt-2 text-2xl font-semibold text-brand-text dark:text-white">
             {dealerData.activeListingsCount}
           </p>
           <p className="mt-1 text-[11px] text-brand-text/60">
             Aktiva annonser i din organisation.
           </p>
-        </div>
-
-        <div className="rounded-xl bg-white p-3 shadow-sm ring-1 ring-gray-100 dark:bg-gray-900 dark:ring-gray-800">
-          <div className="flex items-center justify-between gap-1">
-            <span className="text-xs font-medium text-brand-text/80">
-              Snitt-svarstid (senaste 10)
-            </span>
-            <Clock className="h-4 w-4 text-brand-green" />
           </div>
+
+          <div className="rounded-xl bg-white p-3 shadow-sm ring-1 ring-gray-100 dark:bg-gray-900 dark:ring-gray-800">
+            <div className="flex items-center justify-between gap-1">
+              <div className="flex items-center gap-1">
+                <span className="text-xs font-medium text-brand-text/80">
+                  Snitt-svarstid (senaste 10)
+                </span>
+                <button
+                  type="button"
+                  className="group"
+                  aria-label="Förklaring av snitt-svarstid"
+                  title="Genomsnittlig tid till första svar på de 10 senaste besvarade leadsen."
+                >
+                  <Info className="h-3.5 w-3.5 text-brand-text/40 group-hover:text-brand-text/70" />
+                </button>
+              </div>
+              <Clock className="h-4 w-4 text-brand-green" />
+            </div>
           <p className="mt-2 text-2xl font-semibold text-brand-text dark:text-white">
             {formatMsToMinutes(avgResponseMsLast10)}
           </p>
           <p className="mt-1 text-[11px] text-brand-text/60">
             Beräknat på de senaste besvarade leadsen.
           </p>
-        </div>
-      </section>
+          </div>
+        </section>
 
-      <section className="mb-6 flex flex-col gap-3 sm:flex-row">
-        <Link
+        <section className="mb-6 flex flex-col gap-3 sm:flex-row">
+          <Link
           href="/dashboard/seller"
           className="inline-flex flex-1 items-center justify-center rounded-xl bg-brand-green px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-green/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-green focus-visible:ring-offset-2"
         >
           Gå till Seller Mode
-        </Link>
-        <Link
+          </Link>
+          <Link
           href="/dashboard/dealer"
           className="inline-flex flex-1 items-center justify-center rounded-xl bg-white px-4 py-3 text-sm font-semibold text-brand-text shadow-sm ring-1 ring-gray-200 transition hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-green focus-visible:ring-offset-2 dark:bg-gray-900 dark:text-gray-100 dark:ring-gray-700 dark:hover:bg-gray-800"
         >
           Hantera inventariet
-        </Link>
-      </section>
+          </Link>
+        </section>
 
-      <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
-        <div className="flex items-center justify-between gap-2">
-          <div>
-            <h2 className="text-sm font-semibold text-brand-text dark:text-white">
-              Pipeline-översikt
-            </h2>
-            <p className="mt-1 text-xs text-brand-text/70">
-              {`Missade: ${sellerLeadData.stats.missedCount} · Nya: ${sellerLeadData.stats.newCount} · Aktiva: ${sellerLeadData.stats.activeCount}`}
-            </p>
+        <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <div className="flex items-center gap-1">
+                <h2 className="text-sm font-semibold text-brand-text dark:text-white">
+                  Pipeline-översikt
+                </h2>
+                <button
+                  type="button"
+                  className="group"
+                  aria-label="Förklaring av pipeline-översikt"
+                  title="Snabb överblick över hur många leads som är missade, nya och aktiva i din LeadOS-pipeline."
+                >
+                  <Info className="h-3.5 w-3.5 text-brand-text/40 group-hover:text-brand-text/70" />
+                </button>
+              </div>
+              <p className="mt-1 text-xs text-brand-text/70">
+                {`Missade: ${sellerLeadData.stats.missedCount} · Nya: ${sellerLeadData.stats.newCount} · Aktiva: ${sellerLeadData.stats.activeCount}`}
+              </p>
+            </div>
+            <TrendingUp className="h-5 w-5 text-brand-text/50" />
           </div>
-          <TrendingUp className="h-5 w-5 text-brand-text/50" />
-        </div>
-      </section>
+        </section>
+      </div>
     </div>
   )
 }
