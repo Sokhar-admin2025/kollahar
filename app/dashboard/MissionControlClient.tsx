@@ -11,6 +11,8 @@ import {
   Package,
   TrendingUp,
   Info,
+  Users,
+  ChevronRight,
 } from 'lucide-react'
 import type { SellerLeadOSData } from '@/lib/features/leados/leados-types'
 import type { DealerDashboardData } from '@/lib/features/dealer/dealer-analytics-service'
@@ -316,6 +318,66 @@ export default function MissionControlClient({
           Hantera inventariet
           </Link>
         </section>
+
+        {/* Leads att följa upp – kompakt överblick med länk till full Lead Action Center i dealer */}
+        {dealerData.leadActionItems.length > 0 && (
+          <section className="mb-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-brand-green" />
+                <div>
+                  <h2 className="text-sm font-semibold text-brand-text dark:text-white">
+                    Leads att följa upp
+                  </h2>
+                  <p className="mt-0.5 text-xs text-brand-text/70 dark:text-gray-400">
+                    {dealerData.leadActionItems.filter((l) => l.status === 'new').length > 0
+                      ? `${dealerData.leadActionItems.filter((l) => l.status === 'new').length} väntar på svar · ${dealerData.leadActionItems.length} totalt`
+                      : `${dealerData.leadActionItems.length} leads i organisationen`}
+                  </p>
+                </div>
+              </div>
+              <Link
+                href="/dashboard/dealer"
+                className="inline-flex items-center gap-1 rounded-lg bg-brand-green/10 px-3 py-2 text-sm font-semibold text-brand-green ring-1 ring-brand-green/30 transition hover:bg-brand-green/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-green focus-visible:ring-offset-2"
+              >
+                Se alla i Lead Action Center
+                <ChevronRight className="h-4 w-4" />
+              </Link>
+            </div>
+            {dealerData.leadActionItems.filter((l) => l.status === 'new').length > 0 && (
+              <ul className="mt-3 space-y-1.5 border-t border-gray-100 pt-3 dark:border-gray-700">
+                {dealerData.leadActionItems
+                  .filter((l) => l.status === 'new')
+                  .slice(0, 5)
+                  .map((lead) => (
+                    <li
+                      key={lead.id}
+                      className="flex items-center justify-between gap-2 text-xs text-brand-text/80 dark:text-gray-300"
+                    >
+                      <span className="min-w-0 truncate">
+                        <span className="font-medium text-brand-text dark:text-gray-200">
+                          {lead.buyer_name}
+                        </span>
+                        <span className="mx-1.5">·</span>
+                        <span className="truncate">{lead.listing_title}</span>
+                      </span>
+                      <Link
+                        href="/dashboard/dealer"
+                        className="shrink-0 text-brand-green hover:underline"
+                      >
+                        Öppna
+                      </Link>
+                    </li>
+                  ))}
+                {dealerData.leadActionItems.filter((l) => l.status === 'new').length > 5 && (
+                  <li className="pt-1 text-[11px] text-brand-text/60">
+                    +{dealerData.leadActionItems.filter((l) => l.status === 'new').length - 5} till
+                  </li>
+                )}
+              </ul>
+            )}
+          </section>
+        )}
 
         <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
           <div className="flex items-center justify-between gap-2">

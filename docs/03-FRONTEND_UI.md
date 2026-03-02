@@ -273,6 +273,11 @@ Dashboard är **centralhubben** för användaren. Alla användarspecifika funkti
    - Fliktext: `Mina sålda prylar` + antal i parentes (även när det är 0)
    - Datum för publicering och såld-datum visas i tabell
 
+**Mission Control (företagskonto):**
+- När användaren har `account_type === 'company'` och `organization_id` visar `/dashboard` **Mission Control** i stället för den privata dashboard-vyn.
+- Mission Control innehåller: SLA-banner (om lead nära att missa 15 min), stat-kort (Aktiva leads, Inom SLA, Totalt lager, Snitt-svarstid), primära knappar (Gå till Seller Mode, Hantera inventariet), **Leads att följa upp** (kompakt överblick med antal som väntar på svar + max 5 poster + länk "Se alla i Lead Action Center" → `/dashboard/dealer`), samt Pipeline-översikt.
+- Allt innehåll ligger inom `max-w-6xl mx-auto` för att linjera med header/logga/profil.
+
 **Navigering från Dashboard:**
 - Liten länk uppe till höger ovanför flikarna: `← Till alla annonser` som leder till startsidan (`/`).
 
