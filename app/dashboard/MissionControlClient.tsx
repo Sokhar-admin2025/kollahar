@@ -13,6 +13,9 @@ import {
   Info,
   Users,
   ChevronRight,
+  Lock,
+  User,
+  RefreshCw,
 } from 'lucide-react'
 import type { SellerLeadOSData } from '@/lib/features/leados/leados-types'
 import type { DealerDashboardData } from '@/lib/features/dealer/dealer-analytics-service'
@@ -23,6 +26,41 @@ interface MissionControlClientProps {
   sellerLeadData: SellerLeadOSData
   dealerData: DealerDashboardData
   organizationId: string
+}
+
+/** Dummy-data för placeholder "Senaste aktivitet" (Pulsen). Ersätts av riktig feed när activity_log finns. */
+const RECENT_ACTIVITY_DUMMY: Array<{
+  type: string
+  message: string
+  relativeTime: string
+}> = [
+  { type: 'lead_new', message: 'Ny lead: Anna K. – Volvo XC60', relativeTime: '2 min sedan' },
+  { type: 'inventory_sold', message: 'Annons såld: BMW 320d', relativeTime: '1 timme sedan' },
+  { type: 'sync_import_success', message: 'Import lyckades: 12 annonser', relativeTime: 'igår' },
+  { type: 'lead_status', message: 'Lead kontaktad: Erik S. – Tesla Model 3', relativeTime: 'igår' },
+  { type: 'inventory_created', message: 'Ny annons: Audi A4', relativeTime: '2 dagar sedan' },
+  { type: 'lead_sla_missed', message: 'SLA missad för lead – VW Golf', relativeTime: '3 dagar sedan' },
+]
+
+function getActivityIcon(type: string) {
+  switch (type) {
+    case 'lead_new':
+    case 'lead_status':
+      return <User className="h-4 w-4 shrink-0 text-brand-text/60 dark:text-gray-400" />
+    case 'inventory_sold':
+    case 'inventory_created':
+    case 'inventory_updated':
+    case 'inventory_deleted':
+      return <Package className="h-4 w-4 shrink-0 text-brand-text/60 dark:text-gray-400" />
+    case 'sync_import_success':
+    case 'sync_import_error':
+      return <RefreshCw className="h-4 w-4 shrink-0 text-brand-text/60 dark:text-gray-400" />
+    case 'lead_sla_missed':
+    case 'lead_sla_warning':
+      return <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+    default:
+      return <Activity className="h-4 w-4 shrink-0 text-brand-text/60 dark:text-gray-400" />
+  }
 }
 
 function formatMsToMinutes(ms: number | null | undefined): string {
@@ -401,6 +439,54 @@ export default function MissionControlClient({
             </div>
             <TrendingUp className="h-5 w-5 text-brand-text/50" />
           </div>
+        </section>
+
+        {/* Senaste aktivitet (Pulsen) – placeholder med dummy-data, kommande funktion */}
+        <section
+          className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900"
+          aria-label="Senaste aktivitet – kommande funktion"
+        >
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <h2 className="flex items-center gap-1.5 text-sm font-semibold text-brand-text dark:text-white">
+              Senaste aktivitet
+              <Lock
+                className="h-4 w-4 text-brand-text/50 dark:text-gray-500"
+                aria-hidden="true"
+              />
+            </h2>
+            <div className="group relative">
+              <button
+                type="button"
+                className="inline-flex h-6 w-6 items-center justify-center rounded-full text-brand-text/50 hover:text-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/30"
+                aria-label="Vad du kan förvänta dig"
+                title="What to expect"
+              >
+                <Info className="h-4 w-4" />
+              </button>
+              <div className="pointer-events-none absolute left-0 top-7 z-20 hidden w-72 rounded-lg border border-gray-200 bg-white p-3 text-xs normal-case text-brand-text shadow-lg group-hover:block group-focus-within:block dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200">
+                Här kommer du att se en tidslinje med viktiga händelser – nya leads, annonser sålda,
+                import lyckad – så du får en snabb puls på vad som hänt. Funktionen är under
+                utveckling.
+              </div>
+            </div>
+          </div>
+          <ul
+            className="space-y-1 border-l-2 border-brand-green/20 pl-4 dark:border-brand-green/30"
+            role="list"
+          >
+            {RECENT_ACTIVITY_DUMMY.map((item, index) => (
+              <li
+                key={`${item.type}-${index}`}
+                className="flex flex-wrap items-center gap-2 py-1.5 text-sm text-brand-text dark:text-gray-200"
+              >
+                {getActivityIcon(item.type)}
+                <span className="min-w-0 flex-1">{item.message}</span>
+                <span className="shrink-0 text-xs text-brand-text/60 dark:text-gray-400">
+                  {item.relativeTime}
+                </span>
+              </li>
+            ))}
+          </ul>
         </section>
       </div>
     </div>

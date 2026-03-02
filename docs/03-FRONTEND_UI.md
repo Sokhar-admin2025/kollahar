@@ -275,7 +275,7 @@ Dashboard är **centralhubben** för användaren. Alla användarspecifika funkti
 
 **Mission Control (företagskonto):**
 - När användaren har `account_type === 'company'` och `organization_id` visar `/dashboard` **Mission Control** i stället för den privata dashboard-vyn.
-- Mission Control innehåller: SLA-banner (om lead nära att missa 15 min), stat-kort (Aktiva leads, Inom SLA, Totalt lager, Snitt-svarstid), primära knappar (Gå till Seller Mode, Hantera inventariet), **Leads att följa upp** (kompakt överblick med antal som väntar på svar + max 5 poster + länk "Se alla i Lead Action Center" → `/dashboard/dealer`), samt Pipeline-översikt.
+- Mission Control innehåller: SLA-banner (om lead nära att missa 15 min), stat-kort (Aktiva leads, Inom SLA, Totalt lager, Snitt-svarstid), primära knappar (Gå till Seller Mode, Hantera inventariet), **Leads att följa upp** (kompakt överblick med antal som väntar på svar + max 5 poster + länk "Se alla i Lead Action Center" → `/dashboard/dealer`), Pipeline-översikt, samt **Senaste aktivitet (Pulsen)** – en låst placeholder-sektion längst ner med dummy-tidslinje och tooltip "What to expect". Full funktion beskrivs i `docs/RECENT_ACTIVITY_SPEC.md`.
 - Allt innehåll ligger inom `max-w-6xl mx-auto` för att linjera med header/logga/profil.
 
 **Navigering från Dashboard:**
