@@ -88,6 +88,7 @@ export default function MissionControlClient({
 }: MissionControlClientProps) {
   const router = useRouter()
   const [now, setNow] = useState<Date>(() => new Date(sellerLeadData.nowIso))
+  const [recentActivityOpen, setRecentActivityOpen] = useState(true)
 
   // Realtime: lyssna på nya leads för denna organisation och uppdatera dashboarden.
   useEffect(() => {
@@ -446,47 +447,61 @@ export default function MissionControlClient({
           className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900"
           aria-label="Senaste aktivitet – kommande funktion"
         >
-          <div className="mb-3 flex flex-wrap items-center gap-2">
-            <h2 className="flex items-center gap-1.5 text-sm font-semibold text-brand-text dark:text-white">
+          <button
+            type="button"
+            onClick={() => setRecentActivityOpen((v) => !v)}
+            className="mb-2 flex w-full items-center justify-between gap-2 rounded-lg bg-transparent px-1 text-left"
+          >
+            <span className="flex items-center gap-1.5 text-sm font-semibold text-brand-text dark:text-white">
               Senaste aktivitet
               <Lock
                 className="h-4 w-4 text-brand-text/50 dark:text-gray-500"
                 aria-hidden="true"
               />
-            </h2>
-            <div className="group relative">
-              <button
-                type="button"
-                className="inline-flex h-6 w-6 items-center justify-center rounded-full text-brand-text/50 hover:text-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/30"
-                aria-label="Vad du kan förvänta dig"
-                title="What to expect"
-              >
-                <Info className="h-4 w-4" />
-              </button>
-              <div className="pointer-events-none absolute left-0 top-7 z-20 hidden w-72 rounded-lg border border-gray-200 bg-white p-3 text-xs normal-case text-brand-text shadow-lg group-hover:block group-focus-within:block dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200">
-                Här kommer du att se en tidslinje med viktiga händelser – nya leads, annonser sålda,
-                import lyckad – så du får en snabb puls på vad som hänt. Funktionen är under
-                utveckling.
-              </div>
-            </div>
-          </div>
-          <ul
-            className="space-y-1 border-l-2 border-brand-green/20 pl-4 dark:border-brand-green/30"
-            role="list"
-          >
-            {RECENT_ACTIVITY_DUMMY.map((item, index) => (
-              <li
-                key={`${item.type}-${index}`}
-                className="flex flex-wrap items-center gap-2 py-1.5 text-sm text-brand-text dark:text-gray-200"
-              >
-                {getActivityIcon(item.type)}
-                <span className="min-w-0 flex-1">{item.message}</span>
-                <span className="shrink-0 text-xs text-brand-text/60 dark:text-gray-400">
-                  {item.relativeTime}
-                </span>
-              </li>
-            ))}
-          </ul>
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="group relative">
+                <button
+                  type="button"
+                  onClick={(e) => e.stopPropagation()}
+                  className="inline-flex h-6 w-6 items-center justify-center rounded-full text-brand-text/50 hover:text-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/30"
+                  aria-label="Vad du kan förvänta dig"
+                  title="What to expect"
+                >
+                  <Info className="h-4 w-4" />
+                </button>
+                <div className="pointer-events-none absolute right-0 top-7 z-20 hidden w-72 rounded-lg border border-gray-200 bg-white p-3 text-xs normal-case text-brand-text shadow-lg group-hover:block group-focus-within:block dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200">
+                  Här kommer du att se en tidslinje med viktiga händelser – nya leads, annonser sålda,
+                  import lyckad – så du får en snabb puls på vad som hänt. Funktionen är ett tillägg.
+                </div>
+              </span>
+              <ChevronRight
+                className={`h-4 w-4 shrink-0 text-brand-text/40 transition-transform ${
+                  recentActivityOpen ? 'rotate-90' : ''
+                }`}
+                aria-hidden="true"
+              />
+            </span>
+          </button>
+          {recentActivityOpen && (
+            <ul
+              className="space-y-1 border-l-2 border-brand-green/20 pl-4 dark:border-brand-green/30"
+              role="list"
+            >
+              {RECENT_ACTIVITY_DUMMY.map((item, index) => (
+                <li
+                  key={`${item.type}-${index}`}
+                  className="flex flex-wrap items-center gap-2 py-1.5 text-sm text-brand-text dark:text-gray-200"
+                >
+                  {getActivityIcon(item.type)}
+                  <span className="min-w-0 flex-1">{item.message}</span>
+                  <span className="shrink-0 text-xs text-brand-text/60 dark:text-gray-400">
+                    {item.relativeTime}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
       </div>
     </div>
