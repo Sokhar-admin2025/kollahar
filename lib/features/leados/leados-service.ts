@@ -33,6 +33,7 @@ function emptySellerLeadOSData(now: Date): SellerLeadOSData {
       newCount: 0,
       activeCount: 0,
       averageResponseTimeMs: null,
+      averageResponseTimeMsLast10: null,
       respondedCount: 0,
       respondedWithinSlaCount: 0,
       percentWithinSla: null,
@@ -200,7 +201,13 @@ function buildDemoData(now: Date, userId: string, organizationId: string): Selle
     return mapDbLeadToLeadOS(row, bucket)
   })
 
-  const stats = computeLeadStats(leads, now)
+  const statsBase = computeLeadStats(leads, now)
+  // Demo: snitt svarstid för de två "aktiva" leadsen (20 min och 50 min efter created).
+  const avgLast10 =
+    statsBase.respondedCount >= 1
+      ? (20 * 60 * 1000 + 50 * 60 * 1000) / 2
+      : null
+  const stats = { ...statsBase, averageResponseTimeMsLast10: avgLast10 }
 
   const missed = leads.filter((l) => l.bucket === 'missed')
   const freshNew = leads.filter((l) => l.bucket === 'new')
@@ -283,7 +290,20 @@ export async function getSellerLeadOSData(userId: string): Promise<SellerLeadOSD
         return emptySellerLeadOSData(now)
       }
 
-      rows = (legacyData ?? []).map((row: any) => {
+      type LegacyLeadRow = {
+        id: string
+        listing_id: string | null
+        buyer_name: string
+        buyer_phone: string
+        status: LeadStatus | null
+        created_at: string
+        organization_id: string
+        listing?: DbLeadRow['listing']
+      }
+
+      const legacyRows = (legacyData ?? []) as LegacyLeadRow[]
+
+      rows = legacyRows.map((row) => {
         const listing =
           // Supabase kan returnera relationer som array eller objekt beroende på query-shape
           Array.isArray(row.listing) ? row.listing[0] ?? null : row.listing ?? null
@@ -329,7 +349,36 @@ export async function getSellerLeadOSData(userId: string): Promise<SellerLeadOSD
     return mapDbLeadToLeadOS(row, bucket)
   })
 
-  const stats = computeLeadStats(leads, now)
+  const statsBase = computeLeadStats(leads, now)
+
+  // Beräkna snitt-svarstid för de 10 senaste besvarade leadsen (baserat på first_response_at).
+  const respondedRows = rows.filter((r) => r.first_response_at)
+  respondedRows.sort((a, b) => {
+    const aTs = new Date(a.first_response_at as string).getTime()
+    const bTs = new Date(b.first_response_at as string).getTime()
+    return bTs - aTs
+  })
+  const last10 = respondedRows.slice(0, 10)
+  let averageResponseTimeMsLast10: number | null = null
+  if (last10.length > 0) {
+    let totalMs = 0
+    let counted = 0
+    for (const r of last10) {
+      const created = new Date(r.created_at).getTime()
+      const first = new Date(r.first_response_at as string).getTime()
+      if (!Number.isFinite(created) || !Number.isFinite(first) || first <= created) continue
+      totalMs += first - created
+      counted += 1
+    }
+    if (counted > 0) {
+      averageResponseTimeMsLast10 = totalMs / counted
+    }
+  }
+
+  const stats = {
+    ...statsBase,
+    averageResponseTimeMsLast10,
+  }
 
   const missed = leads.filter((l) => l.bucket === 'missed')
   const freshNew = leads.filter((l) => l.bucket === 'new')

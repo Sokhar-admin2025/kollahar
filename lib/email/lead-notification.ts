@@ -14,7 +14,7 @@ const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KE
 export interface SendLeadNotificationParams {
   to: string
   cc?: string[]
-  type: 'lead_card' | 'first_message'
+  type: 'lead_card' | 'first_message' | 'new_lead'
   conversationId: string
   listingTitle: string
   buyerName: string
@@ -46,7 +46,7 @@ export async function sendLeadNotification(
   const chatUrl = `${BASE_URL}/dashboard/messages?conv=${conversationId}`
 
   const subject =
-    type === 'lead_card'
+    type === 'lead_card' || type === 'new_lead'
       ? `Nytt Lead: ${listingTitle} – ${buyerName}`
       : `Nytt meddelande: ${listingTitle} – ${buyerName}`
 

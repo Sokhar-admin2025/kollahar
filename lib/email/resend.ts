@@ -55,6 +55,58 @@ export async function sendLeadEmailToDealer(params: {
   }
 }
 
+/** Skicka SLA-varning för lead som riskerar att missa 15-minutersfönstret. */
+export async function sendLeadSlaWarningEmail(params: {
+  to: string
+  buyerName: string
+  buyerPhone: string
+  listingTitle: string
+  leadUrl: string
+  minutesLeft: number
+  createdAt: string
+}): Promise<{ success: boolean; error?: string }> {
+  if (!resend) {
+    console.warn('[resend] RESEND_API_KEY saknas – SLA-varning skickas inte')
+    return { success: false, error: 'E-post är inte konfigurerad.' }
+  }
+
+  const { to, buyerName, buyerPhone, listingTitle, leadUrl, minutesLeft, createdAt } = params
+
+  const safeMinutes = Math.max(0, Math.round(minutesLeft))
+
+  try {
+    const { error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [to],
+      bcc: [ADMIN_EMAIL],
+      subject: `[SLA-varning] Lead riskerar att missas: ${buyerName} – ${listingTitle}`,
+      html: `
+        <h2>Lead är på väg att missa 15-minuters SLA</h2>
+        <p><strong>Köpare:</strong> ${escapeHtml(buyerName)}</p>
+        <p><strong>Telefon:</strong> ${escapeHtml(buyerPhone)}</p>
+        <p><strong>Annons:</strong> ${escapeHtml(listingTitle)}</p>
+        <p><strong>Lead inkom:</strong> ${escapeHtml(createdAt)}</p>
+        <p style="margin-top:12px;"><strong>Tid kvar innan SLA bryts:</strong> ca ${safeMinutes} minuter.</p>
+        <p style="margin-top:16px;">
+          <a href="${escapeHtml(leadUrl)}" style="display:inline-block;padding:10px 18px;background:#B45309;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;">
+            Öppna lead i Seller Mode
+          </a>
+        </p>
+      `,
+    })
+
+    if (error) {
+      console.error('[resend] SLA warning email error:', error)
+      return { success: false, error: error.message }
+    }
+    return { success: true }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Okänt fel'
+    console.error('[resend] SLA warning email exception:', err)
+    return { success: false, error: msg }
+  }
+}
+
 /** Skicka admin-notis vid import-fel (för import_logs-trigger). */
 export async function sendImportErrorNotification(params: {
   userId: string

@@ -556,6 +556,14 @@ Migrations ligger i `supabase/migrations/`:
 - **Felhantering:** Enskilda bildfel stoppar inte hela batchen. `HTTP 404/410` tas bort från `images` så trasiga länkar inte tar plats i UI.
 - **Säkerhet:** Kräver inloggad företagsadmin (temporär bypass ska vara avstängd i normal drift).
 
+### LeadOS SLA-check (cron)
+
+- **Route:** `GET/POST /api/cron/check-sla`
+- **Syfte:** Skicka e-postvarningar till säljare för leads som är på väg att missa 15-minuters-SLA:t (LeadOS Seller Mode).
+- **Fönster:** Varnar för leads med `status = 'new'`, `assigned_to IS NOT NULL`, `first_response_at IS NULL` och `created_at` inom 10–15 minuter bakåt i tiden.
+- **Implementation:** `lib/features/leados/leados-sla-check.ts` anropar `triggerLeadNotification(type: 'sla_warning', ...)` som i sin tur använder `sendLeadSlaWarningEmail` (Resend).
+- **Säkerhet:** Kräver `CRON_SECRET`. Cron-klient måste skicka `Authorization: Bearer <CRON_SECRET>` eller header `x-cron-secret: <CRON_SECRET>`. Ingen user-auth används.
+
 ### Production-notering (PostgREST schema cache)
 
 Efter manuella SQL-ändringar i production (t.ex. ny kolumn) kan API:t tillfälligt svara att kolumnen saknas i schema cache.

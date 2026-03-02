@@ -29,6 +29,8 @@ export interface LeadOSStats {
   activeCount: number
   /** Medeltid till första svar (ms) för leads där first_response_at är satt. Null när det saknas data. */
   averageResponseTimeMs: number | null
+  /** Medeltid till första svar (ms) för de 10 senaste besvarade leadsen (eller färre om det finns färre än 10). */
+  averageResponseTimeMsLast10?: number | null
   /** Antal leads där säljaren har svarat. */
   respondedCount: number
   /** Antal leads där första svaret kom inom SLA-fönstret. */
