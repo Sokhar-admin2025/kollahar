@@ -5,7 +5,8 @@ import { createClient } from '@/lib/supabase/server'
 import Footer from './components/organisms/Footer'
 import CookieBanner from './components/CookieBanner'
 import ScrollbarGutter from './components/ScrollbarGutter'
-import LayoutWithHeader from './components/layout/LayoutWithHeader' 
+import LayoutWithHeader from './components/layout/LayoutWithHeader'
+import { Analytics } from '@vercel/analytics/next' 
 
 const knewave = Knewave({ 
   subsets: ['latin'],
@@ -82,6 +83,9 @@ export default async function RootLayout({
         
         {/* Cookie Consent Banner – GDPR, styr Sentry Replay */}
         <CookieBanner />
+        
+        {/* Vercel Web Analytics */}
+        <Analytics />
       </body>
     </html>
   )
