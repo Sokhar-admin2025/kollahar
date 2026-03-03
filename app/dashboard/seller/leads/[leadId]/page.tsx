@@ -48,10 +48,6 @@ export default async function LeadDetailPage({ params }: LeadDetailPageProps) {
     notFound()
   }
 
-  if (lead.conversationId) {
-    redirect(`/dashboard/messages?conv=${lead.conversationId}`)
-  }
-
   return <LeadDetailClient lead={lead} leadMessages={leadMessages} />
 }
 

@@ -121,11 +121,7 @@ function LeadListSection({
             {leads.map((lead) => (
               <Link
                 key={lead.id}
-                href={
-                  lead.conversationId
-                    ? `/dashboard/messages?conv=${lead.conversationId}`
-                    : `/dashboard/seller/leads/${lead.id}`
-                }
+                href={`/dashboard/seller/leads/${lead.id}`}
                 className="group block rounded-lg border border-gray-100 bg-white px-3 py-2 text-sm shadow-xs transition hover:-translate-y-0.5 hover:border-brand-green/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-green/40 dark:border-gray-700 dark:bg-gray-900"
               >
                 <div className="flex items-start gap-2">

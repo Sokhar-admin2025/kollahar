@@ -144,11 +144,9 @@ export default function LeadDetailClient({ lead, leadMessages }: LeadDetailClien
           <p className="mt-3 text-xs uppercase tracking-wide text-brand-text/60">
             Seller Mode
           </p>
-          <h1 className="mt-1 text-2xl font-semibold text-brand-text">
-            Lead-detalj
-          </h1>
+          <h1 className="mt-1 text-2xl font-semibold text-brand-text">Lead-detalj</h1>
           <p className="mt-1 text-sm text-brand-text/80">
-            All information du behöver för att följa upp detta lead.
+            Din interna LeadOS-vy för detta lead – status, anteckningar och LeadChat samlat.
           </p>
         </header>
 
