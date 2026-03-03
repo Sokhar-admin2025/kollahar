@@ -418,7 +418,7 @@ export default function MissionControlClient({
           </section>
         )}
 
-        <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+        <section className="mb-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
           <div className="flex items-center justify-between gap-2">
             <div>
               <div className="flex items-center gap-1">
