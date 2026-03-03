@@ -37,6 +37,7 @@ export async function getLeadDetail(params: {
       listingMake: 'Volvo',
       listingModel: 'XC40',
       listingYear: 2021,
+      listingSubtitle: 'Volvo XC40 2021',
       buyerName: 'Demo Gästkund',
       buyerPhone: '070-000 00 00',
       buyerEmail: 'demo@example.com',
