@@ -34,6 +34,7 @@ export interface DealerDashboardData {
   priceDropListings: { id: string; title: string; price: number; previous_price: number }[]
   inventory: ListingWithStats[]
   leadActionItems: LeadActionItem[]
+  leadCommanderItems: LeadCommanderItem[]
 }
 
 export type LeadStatus = 'new' | 'contacted' | 'qualified' | 'sold' | 'archived'
@@ -49,6 +50,15 @@ export interface LeadActionItem {
   buyer_phone: string
   status: LeadStatus
   created_at: string
+}
+
+export interface LeadCommanderItem {
+  id: string
+  listing_id: string | null
+  listing_title: string
+  buyer_name: string
+  status: LeadStatus
+  assigned_to: string | null
 }
 
 export interface DealerDashboardOptions {
@@ -92,6 +102,7 @@ export async function getDealerDashboardData(
       priceDropListings: [],
       inventory: [],
       leadActionItems: [],
+      leadCommanderItems: [],
     }
   }
 
@@ -141,7 +152,7 @@ export async function getDealerDashboardData(
   // 4. Leads
   const { data: leadsAllData } = await supabaseAdmin
     .from('leads')
-    .select('id, listing_id, buyer_name, buyer_phone, status, created_at, listing:listings(id, title, make, model, year)')
+    .select('id, listing_id, buyer_name, buyer_phone, status, created_at, assigned_to, listing:listings(id, title, make, model, year)')
     .eq('organization_id', organizationId)
     .order('created_at', { ascending: false })
 
@@ -150,6 +161,7 @@ export async function getDealerDashboardData(
     listing_id: string | null
     buyer_name: string
     buyer_phone: string
+    assigned_to?: string | null
     status?: string | null
     created_at: string
     listing?: {
@@ -175,6 +187,35 @@ export async function getDealerDashboardData(
       : 'new'),
     created_at: lead.created_at,
   }))
+
+  const activeStatuses: LeadStatus[] = ['new', 'contacted', 'qualified']
+  const leadCommanderItems: LeadCommanderItem[] = leadsAll
+    .filter((lead) =>
+      activeStatuses.includes(
+        (lead.status === 'contacted' ||
+        lead.status === 'qualified' ||
+        lead.status === 'sold' ||
+        lead.status === 'archived' ||
+        lead.status === 'new'
+          ? (lead.status as LeadStatus)
+          : 'new')
+      )
+    )
+    .map((lead) => ({
+      id: lead.id,
+      listing_id: lead.listing_id,
+      listing_title: lead.listing?.title?.trim() || 'Borttagen annons',
+      buyer_name: lead.buyer_name,
+      status:
+        lead.status === 'contacted' ||
+        lead.status === 'qualified' ||
+        lead.status === 'sold' ||
+        lead.status === 'archived' ||
+        lead.status === 'new'
+          ? (lead.status as LeadStatus)
+          : 'new',
+      assigned_to: lead.assigned_to ?? null,
+    }))
 
   // 5. listing_views för per-listing breakdown (trending, inventory)
   const { data: viewsDataRaw } = await supabaseAdmin
@@ -219,6 +260,7 @@ export async function getDealerDashboardData(
       priceDropListings: [],
       inventory: [],
       leadActionItems,
+      leadCommanderItems,
     }
   }
   const listingMap = new Map(
@@ -402,5 +444,6 @@ export async function getDealerDashboardData(
     priceDropListings,
     inventory,
     leadActionItems,
+      leadCommanderItems,
   }
 }

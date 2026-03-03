@@ -8,9 +8,12 @@ import type { LeadDetail } from '@/lib/features/leados/leados-lead-detail-servic
 import type { LeadStatus } from '@/lib/features/dealer/dealer-analytics-service'
 import { updateLeadStatusAction, updateLeadInternalNoteAction } from '@/app/actions/lead-actions'
 import Button from '@/app/components/atoms/Button'
+import type { LeadMessage } from '@/lib/features/leados/leados-lead-messages-service'
+import LeadChat from '@/app/dashboard/_components/LeadChat'
 
 interface LeadDetailClientProps {
   lead: LeadDetail
+  leadMessages: LeadMessage[]
 }
 
 function formatSince(dateIso: string): string {
@@ -33,7 +36,7 @@ function formatSince(dateIso: string): string {
   return `För ${d} d sedan`
 }
 
-export default function LeadDetailClient({ lead }: LeadDetailClientProps) {
+export default function LeadDetailClient({ lead, leadMessages }: LeadDetailClientProps) {
   const router = useRouter()
   const [note, setNote] = useState(lead.internalNote ?? '')
   const [savingNote, setSavingNote] = useState(false)
@@ -205,12 +208,12 @@ export default function LeadDetailClient({ lead }: LeadDetailClientProps) {
           )}
         </section>
 
-        <section className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-gray-200">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="text-sm font-semibold text-brand-text">Status</h2>
-            <span className={statusBadgeClasses}>{statusLabel}</span>
-          </div>
-          <div className="mt-3 flex flex-wrap gap-2">
+          <section className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-gray-200">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-sm font-semibold text-brand-text">Status</h2>
+              <span className={statusBadgeClasses}>{statusLabel}</span>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
             <Button
               type="button"
               variant="secondary"
@@ -296,6 +299,13 @@ export default function LeadDetailClient({ lead }: LeadDetailClientProps) {
               </div>
             </form>
           </section>
+
+          <LeadChat
+            leadId={lead.id}
+            initialMessages={leadMessages}
+            leadTitle={lead.listingTitle}
+            listingSubtitle={lead.listingSubtitle}
+          />
         </main>
       </div>
     </div>

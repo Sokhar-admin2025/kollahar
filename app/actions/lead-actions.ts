@@ -6,12 +6,14 @@ import { createLead } from '@/lib/features/leads/lead-service'
 import { triggerLeadNotification } from '@/app/actions/lead-notification-action'
 import { logAnalyticsEvent } from '@/lib/features/analytics/analytics-service'
 import type { LeadStatus } from '@/lib/features/dealer/dealer-analytics-service'
+import { addLeadMessage } from '@/lib/features/leados/leados-lead-messages-service'
 
 export type SubmitLeadCardResult = { success: true } | { success: false; error: string }
 
 interface CompanyGuardContext {
   supabase: Awaited<ReturnType<typeof createClient>>
   organizationId: string
+  userId: string
 }
 
 async function getCompanyGuard(): Promise<{ ok: true; ctx: CompanyGuardContext } | { ok: false; error: string }> {
@@ -41,7 +43,7 @@ async function getCompanyGuard(): Promise<{ ok: true; ctx: CompanyGuardContext }
     }
   }
 
-  return { ok: true, ctx: { supabase, organizationId } }
+  return { ok: true, ctx: { supabase, organizationId, userId: user.id } }
 }
 
 export async function submitLeadCardAction(
@@ -249,6 +251,122 @@ export async function updateLeadInternalNoteAction(
     return { success: false, error: 'Kunde inte spara anteckning.' }
   }
 
+  revalidatePath('/dashboard/seller')
+  return { success: true }
+}
+
+export type ReassignLeadResult = { success: true } | { success: false; error: string }
+
+export async function reassignLeadAction(
+  leadId: string,
+  newAssigneeProfileId: string
+): Promise<ReassignLeadResult> {
+  if (!newAssigneeProfileId?.trim()) {
+    return { success: false, error: 'Välj en giltig mottagare.' }
+  }
+
+  const guard = await getCompanyGuard()
+  if (!guard.ok) {
+    return { success: false, error: guard.error }
+  }
+  const { supabase, organizationId, userId } = guard.ctx
+
+  try {
+    const [{ data: leadRow, error: leadError }, { data: assigneeRow, error: assigneeError }] =
+      await Promise.all([
+        supabase
+          .from('leads')
+          .select('id, organization_id, assigned_to')
+          .eq('id', leadId)
+          .eq('organization_id', organizationId)
+          .maybeSingle(),
+        supabase
+          .from('profiles')
+          .select('id, organization_id, full_name')
+          .eq('id', newAssigneeProfileId)
+          .maybeSingle(),
+      ])
+
+    if (leadError || !leadRow) {
+      console.error('[lead-actions] reassignLeadAction lead error', {
+        leadId,
+        orgId: organizationId,
+        code: leadError?.code,
+        message: leadError?.message,
+      })
+      return {
+        success: false,
+        error: 'Leadet kunde inte hittas eller tillhör inte din organisation.',
+      }
+    }
+
+    if (assigneeError || !assigneeRow) {
+      console.error('[lead-actions] reassignLeadAction assignee error', {
+        newAssigneeProfileId,
+        orgId: organizationId,
+        code: assigneeError?.code,
+        message: assigneeError?.message,
+      })
+      return { success: false, error: 'Mottagarens profil kunde inte hittas.' }
+    }
+
+    const assigneeOrgId = (assigneeRow as { organization_id?: string | null }).organization_id
+    if (!assigneeOrgId || assigneeOrgId !== organizationId) {
+      return {
+        success: false,
+        error: 'Du kan bara omfördela leads till profiler i din egen organisation.',
+      }
+    }
+
+    const { data: currentProfile } = await supabase
+      .from('profiles')
+      .select('id, full_name')
+      .eq('id', userId)
+      .maybeSingle()
+
+    const currentName =
+      (currentProfile as { full_name?: string | null } | null)?.full_name?.trim() || 'okänd'
+    const assigneeName =
+      (assigneeRow as { full_name?: string | null } | null)?.full_name?.trim() ||
+      newAssigneeProfileId
+
+    const { error: updateError } = await supabase
+      .from('leads')
+      .update({ assigned_to: newAssigneeProfileId })
+      .eq('id', leadId)
+      .eq('organization_id', organizationId)
+
+    if (updateError) {
+      console.error('[lead-actions] reassignLeadAction update error', {
+        leadId,
+        newAssigneeProfileId,
+        orgId: organizationId,
+        code: updateError.code,
+        message: updateError.message,
+      })
+      return { success: false, error: 'Kunde inte omfördela leadet.' }
+    }
+
+    const systemMessage = `Lead omfördelad till ${assigneeName} av ${currentName}.`
+    const addMessageResult = await addLeadMessage({
+      leadId,
+      authorProfileId: (currentProfile as { id?: string } | null)?.id ?? userId,
+      role: 'system',
+      content: systemMessage,
+    })
+
+    if (!addMessageResult.success) {
+      console.error(
+        '[lead-actions] failed to create system message after reassign',
+        addMessageResult.error
+      )
+    }
+  } catch (err) {
+    console.error('reassignLeadAction error', err)
+    return { success: false, error: 'Kunde inte omfördela leadet.' }
+  }
+
+  revalidatePath('/dashboard/dealer')
   revalidatePath('/dashboard/seller')
   return { success: true }
 }

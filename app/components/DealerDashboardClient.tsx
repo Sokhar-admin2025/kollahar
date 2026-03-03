@@ -22,6 +22,8 @@ import {
 import type { DealerDashboardData } from '@/lib/features/dealer/dealer-analytics-service'
 import { formatCurrency } from '@/lib/features/listings/utils/price-utils'
 import LeadList from '@/app/components/LeadList'
+import { reassignLeadAction } from '@/app/actions/lead-actions'
+import { useTransition, useState } from 'react'
 
 interface DealerDashboardClientProps {
   companyName: string
@@ -55,6 +57,10 @@ export default function DealerDashboardClient({
   organizationId,
 }: DealerDashboardClientProps) {
   const router = useRouter()
+  const [isReassigning, startReassignTransition] = useTransition()
+  const [reassignError, setReassignError] = useState<string | null>(null)
+  const [reassignInputs, setReassignInputs] = useState<Record<string, string>>({})
+  const [reassignSuccessLeadId, setReassignSuccessLeadId] = useState<string | null>(null)
   const sellerId = orgOwnerId ?? ''
   const orgId = organizationId ?? ''
 
@@ -319,6 +325,122 @@ export default function DealerDashboardClient({
 
         <div className="mb-8">
           <LeadList leads={data.leadActionItems} />
+        </div>
+
+        {/* Lead Commander – enkel omfördelning av leads */}
+        <div className="mb-8 rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+          <div className="flex flex-col gap-2 border-b border-gray-200 px-6 py-4 sm:flex-row sm:items-center sm:justify-between dark:border-gray-700">
+            <div>
+              <h2 className="text-lg font-semibold text-brand-text dark:text-white">
+                Lead Commander
+              </h2>
+              <p className="mt-1 text-xs text-brand-text/70 dark:text-gray-400">
+                Intern vy för att omfördela aktiva leads inom din organisation.
+              </p>
+            </div>
+            {reassignError && (
+              <p className="text-xs text-red-500 dark:text-red-400">{reassignError}</p>
+            )}
+            {reassignSuccessLeadId && !reassignError && (
+              <p className="text-xs text-emerald-600 dark:text-emerald-400">
+                Lead omfördelad.
+              </p>
+            )}
+          </div>
+          <div className="divide-y divide-gray-100 dark:divide-gray-700">
+            {data.leadCommanderItems.length === 0 ? (
+              <div className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                Inga aktiva leads att omfördela just nu.
+              </div>
+            ) : (
+              data.leadCommanderItems
+                .slice()
+                .sort((a, b) => {
+                  const aUnassigned = a.assigned_to ? 1 : 0
+                  const bUnassigned = b.assigned_to ? 1 : 0
+                  if (aUnassigned !== bUnassigned) return aUnassigned - bUnassigned
+                  const aIsNew = a.status === 'new' ? 0 : 1
+                  const bIsNew = b.status === 'new' ? 0 : 1
+                  return aIsNew - bIsNew
+                })
+                .slice(0, 10)
+                .map((lead) => (
+                <div
+                  key={lead.id}
+                  className="flex flex-col gap-3 px-6 py-4 md:flex-row md:items-center md:justify-between"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-brand-text dark:text-white">
+                      {lead.buyer_name}
+                    </p>
+                    <p className="mt-0.5 truncate text-xs text-brand-text/70 dark:text-gray-400">
+                      {lead.listing_title}
+                    </p>
+                    <p className="mt-1 text-[11px] text-brand-text/60 dark:text-gray-500">
+                      Status:{' '}
+                      <span className="font-medium">
+                        {lead.status === 'new'
+                          ? 'Ny'
+                          : lead.status === 'contacted'
+                            ? 'Kontaktad'
+                            : lead.status === 'qualified'
+                              ? 'Kvalificerad'
+                              : lead.status === 'sold'
+                                ? 'Såld'
+                                : 'Arkiverad'}
+                      </span>{' '}
+                      · Tilldelad:{' '}
+                      <span className="font-medium">
+                        {lead.assigned_to ? lead.assigned_to : 'Ej tilldelad'}
+                      </span>
+                    </p>
+                  </div>
+                  <form
+                    className="flex flex-col gap-2 md:w-80 md:flex-row md:items-center md:justify-end"
+                    onSubmit={(e) => {
+                      e.preventDefault()
+                      const targetId = reassignInputs[lead.id]?.trim()
+                      if (!targetId) {
+                        setReassignError('Ange ett profil-id att omfördela till.')
+                        setReassignSuccessLeadId(null)
+                        return
+                      }
+                      setReassignError(null)
+                      setReassignSuccessLeadId(null)
+                      startReassignTransition(async () => {
+                        const result = await reassignLeadAction(lead.id, targetId)
+                        if (!result.success) {
+                          setReassignError(result.error)
+                          setReassignSuccessLeadId(null)
+                        } else {
+                          setReassignInputs((prev) => ({ ...prev, [lead.id]: '' }))
+                          setReassignSuccessLeadId(lead.id)
+                          // Data hämtas om via server-render vid nästa sidladdning; här kan vi nöja oss.
+                        }
+                      })
+                    }}
+                  >
+                    <input
+                      type="text"
+                      value={reassignInputs[lead.id] ?? ''}
+                      onChange={(e) =>
+                        setReassignInputs((prev) => ({ ...prev, [lead.id]: e.target.value }))
+                      }
+                      placeholder="Nytt assignee profil-id"
+                      className="w-full rounded-lg border border-gray-300 bg-white px-2 py-1 text-xs text-brand-text shadow-sm focus:border-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/20 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
+                    />
+                    <button
+                      type="submit"
+                      disabled={isReassigning}
+                      className="inline-flex items-center justify-center rounded-lg bg-brand-green px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-brand-green/90 disabled:opacity-60"
+                    >
+                      {isReassigning ? 'Omfördelar…' : 'Omfördela'}
+                    </button>
+                  </form>
+                </div>
+              ))
+            )}
+          </div>
         </div>
 
         {/* Inventory Management */}

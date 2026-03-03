@@ -20,6 +20,9 @@ Detta dokument samlar alla planerade dealer-funktioner, SaaS-features och produk
 - E-postnotiser vid nya meddelanden (Resend)
 - Persistent leads (ON DELETE SET NULL – statistik kvar efter raderad annons)
 - RLS på alla tabeller
+- LeadOS intern LeadChat per lead (`lead_messages`) – endast för säljare/ägare internt, aldrig kundvy
+- Auto-assign av lead till säljare vid första interna svar + systemlogg i `lead_messages`
+- Commander-vy i Dealer Command Center för att omfördela leads inom organisationen (med systemloggar vid re-assign)
 
 **Saknas för full Punkt 1:** Lead-center (lista alla leads med namn, kontakt, länk till båt), status-hantering (Nya/Kontaktade/Affär avslutad).
 
@@ -84,6 +87,8 @@ Detta dokument samlar alla planerade dealer-funktioner, SaaS-features och produk
 
 ### Internt meddelandesystem
 - [x] En chattfunktion mellan köpare och säljare direkt på plattformen. *(Klart – conversations, messages, inbox.)*
+- [x] Intern LeadOS-LeadChat per lead (endast för säljare/ägare) baserad på `lead_messages`, med auto-tilldelning vid första interna svar och systemloggar i samma feed.
+- [x] Commander-vy i Dealer Command Center för att omfördela leads inom organisationen (med systemloggar i `lead_messages` vid omfördelning).
 
 ### Notifikationsmotor
 - [ ] Realtime-notiser i webbläsaren och via e-post vid nya leads eller systemhändelser. *(E-post vid nya meddelanden finns; webbläsar-notiser/PWA saknas.)*

@@ -10,6 +10,7 @@ export interface LeadDetail {
   listingMake: string | null
   listingModel: string | null
   listingYear: number | null
+  listingSubtitle: string | null
   buyerName: string
   buyerPhone: string
   buyerEmail: string | null
@@ -99,6 +100,15 @@ export async function getLeadDetail(params: {
       | null
   }
 
+  const make = row.listing?.make?.trim() || ''
+  const model = row.listing?.model?.trim() || ''
+  const year = row.listing?.year
+  const subtitleParts: string[] = []
+  if (make) subtitleParts.push(make)
+  if (model) subtitleParts.push(model)
+  if (year) subtitleParts.push(String(year))
+  const listingSubtitle = subtitleParts.length > 0 ? subtitleParts.join(' ') : null
+
   return {
     id: row.id,
     listingId: row.listing?.id ?? row.listing_id ?? null,
@@ -107,6 +117,7 @@ export async function getLeadDetail(params: {
     listingMake: row.listing?.make ?? null,
     listingModel: row.listing?.model ?? null,
     listingYear: row.listing?.year ?? null,
+    listingSubtitle,
     buyerName: row.buyer_name,
     buyerPhone: row.buyer_phone,
     buyerEmail: row.buyer_email ?? null,
