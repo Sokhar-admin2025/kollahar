@@ -103,7 +103,7 @@ export default function DealerDashboardClient({
 
   return (
     <div className="min-h-screen bg-brand-beige dark:bg-gray-900">
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-6xl px-4 py-5">
         {/* Header */}
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -114,7 +114,10 @@ export default function DealerDashboardClient({
               <ArrowLeft size={16} />
               Tillbaka till Min Sida
             </Link>
-            <h1 className="text-2xl font-display font-bold text-brand-green dark:text-white sm:text-3xl">
+            <p className="text-xs uppercase tracking-wide text-brand-text/60 dark:text-gray-400">
+              Dealer
+            </p>
+            <h1 className="mt-1 text-2xl font-display font-bold text-brand-green dark:text-white sm:text-3xl">
               Dealer Command Center
             </h1>
             <p className="mt-1 text-brand-text dark:text-gray-400">
