@@ -25,6 +25,7 @@ Detta dokument samlar alla planerade dealer-funktioner, SaaS-features och produk
 - Commander-vy i Dealer Command Center för att omfördela leads inom organisationen (med systemloggar vid re-assign)
 - Säljdump-tabell `listing_sales` som lagrar försäljningar per annons/lead (inkl. views, leads, favoriter och kanal)
 - Dealer-flow “Markera som såld” (Inventory) + Seller Lead-detalj “Bekräfta försäljning” som uppdaterar listing/lead-status och skriver till `listing_sales` (inkl. systemmeddelanden i LeadChat)
+- Inventory Management: Åtgärder-kolumn med menyknapp (tre prickar) per rad som öppnar en intern meny med "Markera som såld", "Visa/Göm annons" och "Hantera annons" (dealer-intern vy)
 
 **Saknas för full Punkt 1:** Lead-center (lista alla leads med namn, kontakt, länk till båt), status-hantering (Nya/Kontaktade/Affär avslutad).
 

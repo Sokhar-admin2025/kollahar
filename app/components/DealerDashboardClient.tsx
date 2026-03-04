@@ -17,6 +17,7 @@ import {
   Minus,
   CircleHelp,
   Sparkles,
+  MoreVertical,
 } from 'lucide-react'
 
 import type { DealerDashboardData } from '@/lib/features/dealer/dealer-analytics-service'
@@ -25,6 +26,7 @@ import { formatCurrency } from '@/lib/features/listings/utils/price-utils'
 import LeadList from '@/app/components/LeadList'
 import { reassignLeadAction } from '@/app/actions/lead-actions'
 import { confirmListingSaleAction } from '@/app/actions/listing-sale-actions'
+import { toggleListingVisibilityAction } from '@/app/actions/listing-actions'
 import { useTransition, useState } from 'react'
 
 interface DealerDashboardClientProps {
@@ -67,6 +69,9 @@ export default function DealerDashboardClient({
   const [reassignSuccessLeadId, setReassignSuccessLeadId] = useState<string | null>(null)
   const [isConfirmingSale, startConfirmSaleTransition] = useTransition()
   const [saleError, setSaleError] = useState<string | null>(null)
+   const [openInventoryMenuId, setOpenInventoryMenuId] = useState<string | null>(null)
+   const [isTogglingVisibility, startToggleVisibilityTransition] = useTransition()
+   const [inventoryError, setInventoryError] = useState<string | null>(null)
   const sellerId = orgOwnerId ?? ''
   const orgId = organizationId ?? ''
 
@@ -571,7 +576,7 @@ export default function DealerDashboardClient({
                           {`${row.conversionTrendDelta >= 0 ? '+' : ''}${row.conversionTrendDelta.toFixed(2)} pp`}
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-right align-middle">
+                      <td className="relative px-4 py-3 text-right align-middle">
                         <div className="flex flex-col items-end gap-1 text-[11px]">
                           {row.status === 'sold' ? (
                             <p className="max-w-xs text-right text-[11px] text-brand-text/70 dark:text-gray-400">
@@ -582,47 +587,104 @@ export default function DealerDashboardClient({
                             <>
                               <button
                                 type="button"
-                                disabled={isConfirmingSale}
                                 onClick={(e) => {
                                   e.stopPropagation()
-                                  const confirmed = window.confirm(
-                                    'Är du säker på att denna annons är såld? Detta markerar annonsen som såld och skapar en säljdump i LeadOS.'
-                                  )
-                                  if (!confirmed) return
-                                  const soldVia: 'sokhar' | 'external' | 'other' = 'external'
+                                  setOpenInventoryMenuId((prev) => (prev === row.id ? null : row.id))
                                   setSaleError(null)
-                                  startConfirmSaleTransition(async () => {
-                                    const result = await confirmListingSaleAction({
-                                      listingId: row.id,
-                                      soldVia,
-                                      leadId: null,
-                                    })
-                                    if (!result.success) {
-                                      setSaleError(result.error)
-                                    } else {
-                                      router.refresh()
-                                    }
-                                  })
+                                  setInventoryError(null)
                                 }}
-                                className="inline-flex items-center justify-center rounded-full bg-emerald-600 px-3 py-1 text-[11px] font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-60"
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 bg-white text-brand-text/70 hover:bg-gray-50 hover:text-brand-text dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+                                aria-label="Visa åtgärder för annons"
                               >
-                                {isConfirmingSale ? 'Markerar…' : 'Markera som såld'}
+                                <MoreVertical className="h-4 w-4" />
                               </button>
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  router.push(`/dashboard/edit/${row.id}`)
-                                }}
-                                className="inline-flex items-center justify-center rounded-full bg-gray-100 px-3 py-1 text-[11px] font-medium text-brand-text shadow-sm transition hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
-                              >
-                                Hantera annons
-                              </button>
+                              {openInventoryMenuId === row.id && (
+                                <div className="absolute right-4 top-9 z-20 w-56 rounded-lg border border-gray-200 bg-white p-2 text-left text-[11px] shadow-lg dark:border-gray-700 dark:bg-gray-900">
+                                  <button
+                                    type="button"
+                                    disabled={isConfirmingSale}
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      const confirmed = window.confirm(
+                                        'Är du säker på att denna annons är såld? Detta markerar annonsen som såld och skapar en säljdump i LeadOS.'
+                                      )
+                                      if (!confirmed) return
+                                      const soldVia: 'sokhar' | 'external' | 'other' = 'external'
+                                      setSaleError(null)
+                                      setInventoryError(null)
+                                      startConfirmSaleTransition(async () => {
+                                        const result = await confirmListingSaleAction({
+                                          listingId: row.id,
+                                          soldVia,
+                                          leadId: null,
+                                        })
+                                        if (!result.success) {
+                                          setSaleError(result.error)
+                                        } else {
+                                          setOpenInventoryMenuId(null)
+                                          router.refresh()
+                                        }
+                                      })
+                                    }}
+                                    className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left hover:bg-emerald-50 dark:hover:bg-emerald-900/20 disabled:opacity-60"
+                                  >
+                                    <span>Markera som såld</span>
+                                    {isConfirmingSale && (
+                                      <span className="text-[10px] text-emerald-700 dark:text-emerald-300">
+                                        …
+                                      </span>
+                                    )}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    disabled={isTogglingVisibility}
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      setInventoryError(null)
+                                      startToggleVisibilityTransition(async () => {
+                                        const result = await toggleListingVisibilityAction(row.id)
+                                        if (!result.success) {
+                                          setInventoryError(result.error)
+                                        } else {
+                                          setOpenInventoryMenuId(null)
+                                          router.refresh()
+                                        }
+                                      })
+                                    }}
+                                    className="mt-1 flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-60"
+                                  >
+                                    <span>
+                                      {row.status === 'draft' ? 'Visa annons' : 'Göm annons'}
+                                    </span>
+                                    {isTogglingVisibility && (
+                                      <span className="text-[10px] text-brand-text/60 dark:text-gray-300">
+                                        …
+                                      </span>
+                                    )}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      setOpenInventoryMenuId(null)
+                                      router.push(`/dashboard/edit/${row.id}`)
+                                    }}
+                                    className="mt-1 flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left hover:bg-gray-50 dark:hover:bg-gray-800"
+                                  >
+                                    <span>Hantera annons</span>
+                                    {false && (
+                                      <span className="text-[10px] text-brand-text/60 dark:text-gray-300">
+                                        …
+                                      </span>
+                                    )}
+                                  </button>
+                                </div>
+                              )}
                             </>
                           )}
-                          {saleError && (
+                          {(saleError || inventoryError) && (
                             <p className="mt-0.5 max-w-xs text-right text-[11px] text-red-500 dark:text-red-400">
-                              {saleError}
+                              {saleError ?? inventoryError}
                             </p>
                           )}
                         </div>
