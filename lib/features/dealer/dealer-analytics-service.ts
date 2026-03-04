@@ -123,11 +123,12 @@ export async function getDealerDashboardData(
   const totalViews = totalViewsCount ?? 0
   console.log('[dealer-analytics] orgOwnerId:', orgOwnerId, 'organizationId:', organizationId, 'totalViews (count):', totalViews)
 
-  // 2. Listings – supabaseAdmin, user_id = orgOwnerId, inga status-filter (alla: active, sold, deleted)
+  // 2. Listings – supabaseAdmin, user_id = orgOwnerId, exklusive raderade (status = deleted)
   let listingsQuery = supabaseAdmin
     .from('listings')
     .select('id, title, status, price, make, model, year, previous_price, bortskankes, images, description')
     .eq('organization_id', organizationId)
+    .neq('status', 'deleted')
     .order('created_at', { ascending: false })
 
   if (!isAdmin && userEmail) {
