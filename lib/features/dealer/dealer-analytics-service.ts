@@ -186,9 +186,11 @@ export async function getDealerDashboardData(
           ? (lead.status as LeadStatus)
           : 'new'
       const listingStatus = lead.listing?.status ?? null
+      const hasListing = !!lead.listing
       const isSoldLead = normalizedStatus === 'sold'
-      const isSoldListing = listingStatus === 'sold'
-      return !isSoldLead && !isSoldListing
+      const isSoldOrDeletedListing =
+        listingStatus === 'sold' || listingStatus === 'deleted' || !hasListing
+      return !isSoldLead && !isSoldOrDeletedListing
     })
     .map((lead) => ({
       id: lead.id,
