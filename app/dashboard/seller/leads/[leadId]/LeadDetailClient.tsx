@@ -9,6 +9,8 @@ import type { LeadStatus } from '@/lib/features/dealer/dealer-analytics-service'
 import { updateLeadStatusAction, updateLeadInternalNoteAction } from '@/app/actions/lead-actions'
 import Button from '@/app/components/atoms/Button'
 import type { LeadMessage } from '@/lib/features/leados/leados-lead-messages-service'
+import { confirmListingSaleAction } from '@/app/actions/listing-sale-actions'
+import type { SoldVia } from '@/lib/features/leados/leados-sales-service'
 import LeadChat from '@/app/dashboard/_components/LeadChat'
 
 interface LeadDetailClientProps {
@@ -48,6 +50,10 @@ export default function LeadDetailClient({ lead, leadMessages }: LeadDetailClien
     (lead.status as LeadStatus) ?? 'new'
   )
   const [statusUpdating, startStatusTransition] = useTransition()
+  const [showConfirmSale, setShowConfirmSale] = useState(false)
+  const [saleSubmitting, setSaleSubmitting] = useState(false)
+  const [saleError, setSaleError] = useState<string | null>(null)
+  const [soldVia, setSoldVia] = useState<SoldVia>('sokhar')
 
   const createdSince = useMemo(() => formatSince(lead.createdAt), [lead.createdAt])
   const statusLabel = useMemo(() => {
@@ -126,6 +132,41 @@ export default function LeadDetailClient({ lead, leadMessages }: LeadDetailClien
       setNoteError('Kunde inte spara anteckning.')
     } finally {
       setSavingNote(false)
+    }
+  }
+
+  const handleMarkAsSoldClick = () => {
+    setShowConfirmSale(true)
+    setSaleError(null)
+    setSoldVia('sokhar')
+  }
+
+  const handleConfirmSale = async () => {
+    if (!lead.listingId) {
+      setSaleError('Leadet saknar kopplad annons.')
+      return
+    }
+
+    setSaleSubmitting(true)
+    setSaleError(null)
+    try {
+      const res = await confirmListingSaleAction({
+        listingId: lead.listingId,
+        leadId: lead.id,
+        soldVia,
+      })
+      if (!res.success) {
+        setSaleError(res.error ?? 'Kunde inte registrera försäljning.')
+        return
+      }
+      setShowConfirmSale(false)
+      setStatusOptimistic('sold')
+      router.refresh()
+    } catch (err) {
+      console.error('[lead-detail] confirm sale error', err)
+      setSaleError('Kunde inte registrera försäljning.')
+    } finally {
+      setSaleSubmitting(false)
     }
   }
 
@@ -233,19 +274,19 @@ export default function LeadDetailClient({ lead, leadMessages }: LeadDetailClien
             <Button
               type="button"
               variant="secondary"
-              disabled={statusUpdating}
+              disabled={saleSubmitting}
               className={`px-3 py-1 text-xs ${
                 statusOptimistic === 'sold' ? 'bg-emerald-600 text-white' : ''
               }`}
-              onClick={() => handleStatusChange('sold')}
+              onClick={handleMarkAsSoldClick}
             >
-              {statusUpdating && statusOptimistic === 'sold' ? (
+              {saleSubmitting ? (
                 <span className="inline-flex items-center gap-1">
                   <Loader2 className="h-3 w-3 animate-spin" />
-                  Sparar...
+                  Registrerar...
                 </span>
               ) : (
-                'Markera som såld'
+                'Bekräfta försäljning'
               )}
             </Button>
             <Button
@@ -304,6 +345,87 @@ export default function LeadDetailClient({ lead, leadMessages }: LeadDetailClien
             leadTitle={lead.listingTitle}
             listingSubtitle={lead.listingSubtitle}
           />
+
+          {showConfirmSale && (
+            <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4">
+              <div className="w-full max-w-md rounded-xl bg-white p-5 shadow-lg dark:bg-gray-900">
+                <h2 className="text-base font-semibold text-brand-text dark:text-white">
+                  Bekräfta försäljning
+                </h2>
+                <p className="mt-2 text-xs text-brand-text/70 dark:text-gray-300">
+                  Är du säker på att denna affär är genomförd för denna annons? Denna åtgärd
+                  markerar annonsen som såld, stänger andra leads för samma annons och skapar en
+                  säljdump i LeadOS.
+                </p>
+                <p className="mt-2 text-xs text-brand-text/60 dark:text-gray-400">
+                  Du befinner dig i ett specifikt lead – försäljningen kopplas till just detta
+                  lead i LeadOS (LeadChat och rapportering).
+                </p>
+
+                <div className="mt-4 space-y-2 text-xs text-brand-text dark:text-gray-100">
+                  <p className="font-medium">Hur såldes objektet?</p>
+                  <div className="space-y-1">
+                    <label className="flex cursor-pointer items-center gap-2">
+                      <input
+                        type="radio"
+                        name="soldVia"
+                        value="sokhar"
+                        checked={soldVia === 'sokhar'}
+                        onChange={() => setSoldVia('sokhar')}
+                      />
+                      <span>Såld via Kollahär/LeadOS</span>
+                    </label>
+                    <label className="flex cursor-pointer items-center gap-2">
+                      <input
+                        type="radio"
+                        name="soldVia"
+                        value="external"
+                        checked={soldVia === 'external'}
+                        onChange={() => setSoldVia('external')}
+                      />
+                      <span>Såld via annan kanal (t.ex. Blocket, walk-in)</span>
+                    </label>
+                    <label className="flex cursor-pointer items-center gap-2">
+                      <input
+                        type="radio"
+                        name="soldVia"
+                        value="other"
+                        checked={soldVia === 'other'}
+                        onChange={() => setSoldVia('other')}
+                      />
+                      <span>Annat</span>
+                    </label>
+                  </div>
+                </div>
+
+                {saleError && (
+                  <p className="mt-3 text-xs text-red-600 dark:text-red-400">{saleError}</p>
+                )}
+
+                <div className="mt-4 flex items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!saleSubmitting) {
+                        setShowConfirmSale(false)
+                      }
+                    }}
+                    className="inline-flex items-center justify-center rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-brand-text hover:bg-gray-50 dark:border-gray-600 dark:text-gray-100 dark:hover:bg-gray-800"
+                  >
+                    Avbryt
+                  </button>
+                  <button
+                    type="button"
+                    disabled={saleSubmitting}
+                    onClick={handleConfirmSale}
+                    className="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-60"
+                  >
+                    {saleSubmitting ? 'Registrerar…' : 'Bekräfta försäljning'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </main>
       </div>
     </div>

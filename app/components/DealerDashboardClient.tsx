@@ -20,9 +20,11 @@ import {
 } from 'lucide-react'
 
 import type { DealerDashboardData } from '@/lib/features/dealer/dealer-analytics-service'
+import type { SaleListItem } from '@/lib/features/leados/leados-sales-service'
 import { formatCurrency } from '@/lib/features/listings/utils/price-utils'
 import LeadList from '@/app/components/LeadList'
 import { reassignLeadAction } from '@/app/actions/lead-actions'
+import { confirmListingSaleAction } from '@/app/actions/listing-sale-actions'
 import { useTransition, useState } from 'react'
 
 interface DealerDashboardClientProps {
@@ -31,6 +33,7 @@ interface DealerDashboardClientProps {
   userId: string
   orgOwnerId?: string
   organizationId?: string
+  recentSales: SaleListItem[]
 }
 
 function InfoHint({ text }: { text: string }) {
@@ -55,12 +58,15 @@ export default function DealerDashboardClient({
   data,
   orgOwnerId,
   organizationId,
+  recentSales,
 }: DealerDashboardClientProps) {
   const router = useRouter()
   const [isReassigning, startReassignTransition] = useTransition()
   const [reassignError, setReassignError] = useState<string | null>(null)
   const [reassignInputs, setReassignInputs] = useState<Record<string, string>>({})
   const [reassignSuccessLeadId, setReassignSuccessLeadId] = useState<string | null>(null)
+  const [isConfirmingSale, startConfirmSaleTransition] = useTransition()
+  const [saleError, setSaleError] = useState<string | null>(null)
   const sellerId = orgOwnerId ?? ''
   const orgId = organizationId ?? ''
 
@@ -472,13 +478,14 @@ export default function DealerDashboardClient({
                   <th className="px-4 py-3">Favoriter</th>
                   <th className="px-4 py-3">Leads</th>
                   <th className="px-4 py-3">Conv. %</th>
+                  <th className="px-4 py-3 text-right">Åtgärder</th>
                 </tr>
               </thead>
               <tbody>
                 {data.inventory.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={8}
+                      colSpan={9}
                       className="px-4 py-8 text-center text-gray-500 dark:text-gray-400"
                     >
                       Inga annonser än. Lägg till din första annons.
@@ -515,7 +522,11 @@ export default function DealerDashboardClient({
                                 : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
                           }`}
                         >
-                          {row.status === 'active' ? 'Aktiv' : row.status === 'draft' ? 'Gömd' : 'Såld'}
+                          {row.status === 'active'
+                            ? 'Aktiv'
+                            : row.status === 'draft'
+                              ? 'Gömd'
+                              : 'Såld'}
                         </span>
                       </td>
                       <td className="px-4 py-3">
@@ -560,12 +571,143 @@ export default function DealerDashboardClient({
                           {`${row.conversionTrendDelta >= 0 ? '+' : ''}${row.conversionTrendDelta.toFixed(2)} pp`}
                         </div>
                       </td>
+                      <td className="px-4 py-3 text-right align-middle">
+                        <div className="flex flex-col items-end gap-1 text-[11px]">
+                          {row.status === 'sold' ? (
+                            <p className="max-w-xs text-right text-[11px] text-brand-text/70 dark:text-gray-400">
+                              Annonsen är såld – se <span className="font-semibold">Senaste
+                              försäljningar</span> nedan för sammanfattning.
+                            </p>
+                          ) : (
+                            <>
+                              <button
+                                type="button"
+                                disabled={isConfirmingSale}
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  const confirmed = window.confirm(
+                                    'Är du säker på att denna annons är såld? Detta markerar annonsen som såld och skapar en säljdump i LeadOS.'
+                                  )
+                                  if (!confirmed) return
+                                  const soldVia: 'sokhar' | 'external' | 'other' = 'external'
+                                  setSaleError(null)
+                                  startConfirmSaleTransition(async () => {
+                                    const result = await confirmListingSaleAction({
+                                      listingId: row.id,
+                                      soldVia,
+                                      leadId: null,
+                                    })
+                                    if (!result.success) {
+                                      setSaleError(result.error)
+                                    } else {
+                                      router.refresh()
+                                    }
+                                  })
+                                }}
+                                className="inline-flex items-center justify-center rounded-full bg-emerald-600 px-3 py-1 text-[11px] font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-60"
+                              >
+                                {isConfirmingSale ? 'Markerar…' : 'Markera som såld'}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  router.push(`/dashboard/edit/${row.id}`)
+                                }}
+                                className="inline-flex items-center justify-center rounded-full bg-gray-100 px-3 py-1 text-[11px] font-medium text-brand-text shadow-sm transition hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+                              >
+                                Hantera annons
+                              </button>
+                            </>
+                          )}
+                          {saleError && (
+                            <p className="mt-0.5 max-w-xs text-right text-[11px] text-red-500 dark:text-red-400">
+                              {saleError}
+                            </p>
+                          )}
+                        </div>
+                      </td>
                     </tr>
                   ))
                 )}
               </tbody>
             </table>
           </div>
+        </div>
+
+        {/* Senaste försäljningar */}
+        <div className="mt-8 rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+          <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
+            <h2 className="text-lg font-semibold text-brand-text dark:text-white">
+              Senaste försäljningar
+            </h2>
+            <p className="mt-1 text-xs text-brand-text/70 dark:text-gray-400">
+              Läs in de senaste affärerna registrerade i LeadOS (listing_sales). Endast läsning i
+              första versionen.
+            </p>
+          </div>
+          {recentSales.length === 0 ? (
+            <div className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+              Inga registrerade försäljningar ännu.
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[32rem] text-left text-sm">
+                <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase text-gray-500 dark:border-gray-700 dark:bg-gray-700/50 dark:text-gray-400">
+                  <tr>
+                    <th className="px-4 py-3">Datum</th>
+                    <th className="px-4 py-3">Annons</th>
+                    <th className="px-4 py-3">Pris</th>
+                    <th className="px-4 py-3">Säljare</th>
+                    <th className="px-4 py-3">Kanal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentSales.map((sale) => (
+                    <tr
+                      key={sale.id}
+                      className="border-b border-gray-100 last:border-0 dark:border-gray-700"
+                    >
+                      <td className="px-4 py-3 text-xs text-brand-text/80 dark:text-gray-300">
+                        {new Date(sale.soldAt).toLocaleString('sv-SE', {
+                          year: 'numeric',
+                          month: '2-digit',
+                          day: '2-digit',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </td>
+                      <td className="px-4 py-3 text-sm font-medium text-brand-text dark:text-white">
+                        <div className="truncate">{sale.listingTitle}</div>
+                        {(sale.listingMake || sale.listingModel || sale.listingYear) && (
+                          <div className="mt-0.5 text-xs font-normal text-brand-text/60 dark:text-gray-400">
+                            {[sale.listingYear, sale.listingMake, sale.listingModel]
+                              .filter(Boolean)
+                              .join(' ')}
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-brand-text dark:text-gray-300">
+                        {typeof sale.priceAtSale === 'number'
+                          ? formatCurrency(sale.priceAtSale)
+                          : '–'}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-brand-text/80 dark:text-gray-300">
+                        {sale.soldByName ?? 'Okänd'}
+                      </td>
+                      <td className="px-4 py-3 text-xs text-brand-text/70 dark:text-gray-400">
+                        {sale.soldVia === 'sokhar'
+                          ? 'Kollahär/LeadOS'
+                          : sale.soldVia === 'external'
+                            ? 'Extern kanal'
+                            : 'Annat'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
     </div>

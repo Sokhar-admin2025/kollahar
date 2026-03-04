@@ -152,7 +152,7 @@ export async function getDealerDashboardData(
   // 4. Leads
   const { data: leadsAllData } = await supabaseAdmin
     .from('leads')
-    .select('id, listing_id, buyer_name, buyer_phone, status, created_at, assigned_to, listing:listings(id, title, make, model, year)')
+    .select('id, listing_id, buyer_name, buyer_phone, status, created_at, assigned_to, listing:listings(id, title, make, model, year, status)')
     .eq('organization_id', organizationId)
     .order('created_at', { ascending: false })
 
@@ -170,23 +170,44 @@ export async function getDealerDashboardData(
       make?: string | null
       model?: string | null
       year?: number | null
+      status?: string | null
     } | null
   }>
   const totalLeads = leadsAll.length
-  const leadActionItems: LeadActionItem[] = leadsAll.map((lead) => ({
-    id: lead.id,
-    listing_id: lead.listing_id,
-    listing_title: lead.listing?.title?.trim() || 'Borttagen annons',
-    listing_make: lead.listing?.make ?? null,
-    listing_model: lead.listing?.model ?? null,
-    listing_year: lead.listing?.year ?? null,
-    buyer_name: lead.buyer_name,
-    buyer_phone: lead.buyer_phone,
-    status: (lead.status === 'contacted' || lead.status === 'qualified' || lead.status === 'sold' || lead.status === 'archived'
-      ? lead.status
-      : 'new'),
-    created_at: lead.created_at,
-  }))
+  const leadActionItems: LeadActionItem[] = leadsAll
+    .filter((lead) => {
+      const normalizedStatus: LeadStatus =
+        lead.status === 'contacted' ||
+        lead.status === 'qualified' ||
+        lead.status === 'sold' ||
+        lead.status === 'archived' ||
+        lead.status === 'new'
+          ? (lead.status as LeadStatus)
+          : 'new'
+      const listingStatus = lead.listing?.status ?? null
+      const isSoldLead = normalizedStatus === 'sold'
+      const isSoldListing = listingStatus === 'sold'
+      return !isSoldLead && !isSoldListing
+    })
+    .map((lead) => ({
+      id: lead.id,
+      listing_id: lead.listing_id,
+      listing_title: lead.listing?.title?.trim() || 'Borttagen annons',
+      listing_make: lead.listing?.make ?? null,
+      listing_model: lead.listing?.model ?? null,
+      listing_year: lead.listing?.year ?? null,
+      buyer_name: lead.buyer_name,
+      buyer_phone: lead.buyer_phone,
+      status:
+        lead.status === 'contacted' ||
+        lead.status === 'qualified' ||
+        lead.status === 'sold' ||
+        lead.status === 'archived' ||
+        lead.status === 'new'
+          ? (lead.status as LeadStatus)
+          : 'new',
+      created_at: lead.created_at,
+    }))
 
   const activeStatuses: LeadStatus[] = ['new', 'contacted', 'qualified']
   const leadCommanderItems: LeadCommanderItem[] = leadsAll

@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { unstable_noStore } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { getDealerDashboardData } from '@/lib/features/dealer/dealer-analytics-service'
+import { getRecentSalesForOrganization } from '@/lib/features/leados/leados-sales-service'
 import DealerDashboardClient from '@/app/components/DealerDashboardClient'
 
 // Bypass Next.js cache – dashboard data must be fresh
@@ -46,15 +47,18 @@ export default async function DealerDashboardPage() {
     userEmail,
   })
 
+  const recentSales = await getRecentSalesForOrganization(organizationId, 10)
+
   console.log('[dealer-dashboard] orgOwnerId:', orgOwnerId, 'organizationId:', organizationId, 'Views from DB:', data.totalViews, 'avgHealth:', data.averageHealthPercent)
 
   return (
-    <DealerDashboardClient
-      companyName={companyName}
-      data={data}
-      userId={user.id}
-      orgOwnerId={orgOwnerId}
-      organizationId={organizationId}
-    />
+      <DealerDashboardClient
+        companyName={companyName}
+        data={data}
+        userId={user.id}
+        orgOwnerId={orgOwnerId}
+        organizationId={organizationId}
+        recentSales={recentSales}
+      />
   )
 }
