@@ -22,6 +22,7 @@ type DbLeadRow = {
     make?: string | null
     model?: string | null
     year?: number | null
+    status?: string | null
   } | null
 }
 
@@ -254,7 +255,7 @@ export async function getSellerLeadOSData(userId: string): Promise<SellerLeadOSD
   const { data, error } = await supabase
     .from('leads')
     .select(
-      'id, conversation_id, listing_id, buyer_name, buyer_phone, source, status, created_at, first_response_at, assigned_to, organization_id, listing:listings(title, make, model, year)'
+      'id, conversation_id, listing_id, buyer_name, buyer_phone, source, status, created_at, first_response_at, assigned_to, organization_id, listing:listings(title, make, model, year, status)'
     )
     .eq('organization_id', organizationId)
     .eq('assigned_to', userId)
@@ -330,7 +331,22 @@ export async function getSellerLeadOSData(userId: string): Promise<SellerLeadOSD
       return emptySellerLeadOSData(now)
     }
   } else {
-    rows = (data ?? []) as DbLeadRow[]
+    rows =
+      ((data ?? []) as DbLeadRow[]).filter((row) => {
+        const normalizedStatus: LeadStatus =
+          row.status === 'contacted' ||
+          row.status === 'qualified' ||
+          row.status === 'sold' ||
+          row.status === 'archived' ||
+          row.status === 'new'
+            ? (row.status as LeadStatus)
+            : 'new'
+        const listingStatus = row.listing?.status ?? null
+        const isSoldOrArchived =
+          normalizedStatus === 'sold' || normalizedStatus === 'archived'
+        const isSoldListing = listingStatus === 'sold'
+        return !isSoldOrArchived && !isSoldListing
+      }) as DbLeadRow[]
   }
 
   if (rows.length === 0) {
