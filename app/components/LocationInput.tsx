@@ -2,7 +2,13 @@
 
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { Search, ChevronDown, MapPin } from 'lucide-react'
-import { SWEDISH_LAN, getKommunerByLan, searchKommuner, type SwedishLocation } from '@/lib/swedish-locations'
+import {
+  SWEDISH_LAN,
+  getKommunerByLan,
+  searchKommuner,
+  formatLocation,
+  type SwedishLocation,
+} from '@/lib/swedish-locations'
 
 interface LocationInputProps {
   value: string
@@ -111,6 +117,17 @@ export default function LocationInput({
     }
   }
 
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      const raw = (e.currentTarget.value || '').trim()
+      if (!raw) return
+      const formatted = formatLocation(raw)
+      onChange(formatted)
+      setIsUserTyping(false)
+      setShowSuggestions(false)
+    }
+  }
+
   const handleInputFocus = () => {
     // Visa inte suggestions automatiskt här; de visas först när användaren börjar skriva
     setShowDropdown(false) // Stäng dropdown när input får fokus
@@ -131,6 +148,7 @@ export default function LocationInput({
           value={displayValue}
           onChange={handleInputChange}
           onFocus={handleInputFocus}
+          onKeyDown={handleInputKeyDown}
           placeholder={placeholder}
           required={required}
           className={`w-full pl-11 pr-10 p-3 border rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none transition text-brand-text antialiased ${hasError ? 'border-red-500 focus:ring-red-500/30 focus:border-red-500' : 'border-gray-300'}`}

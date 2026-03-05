@@ -157,6 +157,9 @@ export const SWEDISH_KOMMUNER: SwedishLocation[] = [
   // Stockholms län
   { kommun: 'Stockholm', län: 'Stockholms län' },
   { kommun: 'Huddinge', län: 'Stockholms län' },
+  // Stuvsta är en tätort i Huddinge – hanteras som alias i UI (Stuvsta, Huddinge)
+  // utan att påverka län/kommun-trädet (LOCATION_TREE bygger endast på SWEDISH_LAN).
+  { kommun: 'Stuvsta', län: 'Huddinge' },
   { kommun: 'Nacka', län: 'Stockholms län' },
   { kommun: 'Södertälje', län: 'Stockholms län' },
   { kommun: 'Botkyrka', län: 'Stockholms län' },
