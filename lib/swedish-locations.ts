@@ -111,6 +111,8 @@ export interface LocationCounty {
 }
 
 // LOCATION_TREE byggs från SWEDISH_LAN + SWEDISH_KOMMUNER (alla län och kommuner), se längre ner i filen.
+// Vissa orter används endast som "alias" i sök/formatteringslogik (t.ex. Stuvsta) och ska inte synas
+// som egna noder i filtret – de filtreras bort i buildLocationTree via ALIAS_MUNICIPALITIES.
 export function getCountyByValue(value: string): LocationCounty | undefined {
   return LOCATION_TREE.find((c) => c.value === value)
 }
@@ -158,8 +160,8 @@ export const SWEDISH_KOMMUNER: SwedishLocation[] = [
   { kommun: 'Stockholm', län: 'Stockholms län' },
   { kommun: 'Huddinge', län: 'Stockholms län' },
   // Stuvsta är en tätort i Huddinge – hanteras som alias i UI (Stuvsta, Huddinge)
-  // utan att påverka län/kommun-trädet (LOCATION_TREE bygger endast på SWEDISH_LAN).
-  { kommun: 'Stuvsta', län: 'Huddinge' },
+  // men ligger administrativt i Stockholms län, därför knuten hit i plats-trädet.
+  { kommun: 'Stuvsta', län: 'Stockholms län' },
   { kommun: 'Nacka', län: 'Stockholms län' },
   { kommun: 'Södertälje', län: 'Stockholms län' },
   { kommun: 'Botkyrka', län: 'Stockholms län' },
@@ -528,9 +530,15 @@ function slugify(s: string): string {
     .replace(/[^a-z0-9-]/g, '');
 }
 
+const ALIAS_MUNICIPALITIES = new Set<string>([
+  'Stuvsta',
+])
+
 function buildLocationTree(): LocationCounty[] {
   return SWEDISH_LAN.map((lan) => {
-    const kommunerForLan = SWEDISH_KOMMUNER.filter((loc) => loc.län === lan);
+    const kommunerForLan = SWEDISH_KOMMUNER.filter(
+      (loc) => loc.län === lan && !ALIAS_MUNICIPALITIES.has(loc.kommun)
+    );
     const uniqueKommuner = [...new Set(kommunerForLan.map((loc) => loc.kommun))].sort();
     const municipalities: LocationMunicipality[] = uniqueKommuner.map((kommun) => ({
       label: kommun,
@@ -574,7 +582,12 @@ export function mergeLocationCounts(
     const s = row.location_value.trim()
     const commaIdx = s.indexOf(',')
     const kommun = commaIdx >= 0 ? s.slice(0, commaIdx).trim() : ''
-    const lan = commaIdx >= 0 ? s.slice(commaIdx + 1).trim() : ''
+    const lanRaw = commaIdx >= 0 ? s.slice(commaIdx + 1).trim() : ''
+    // Specialfall: "Stuvsta, Huddinge" mappas till Stockholms län i trädet
+    const lan =
+      lanRaw === 'Huddinge'
+        ? 'Stockholms län'
+        : lanRaw
     if (!kommun || !lan) continue
 
     const county = tree.find((c) => c.label === lan)
@@ -619,6 +632,13 @@ export function searchKommuner(query: string): SwedishLocation[] {
 }
 
 export function formatLocation(location: string): string {
+  const trimmed = location.trim()
+
+  // Specialfall: Stuvsta ska visas som "Stuvsta, Huddinge"
+  if (trimmed.toLowerCase() === 'stuvsta') {
+    return 'Stuvsta, Huddinge'
+  }
+
   // Om location redan är formaterad (t.ex. "Stockholm, Stockholms län"), returnera som den är
   if (location.includes(',')) return location;
   
