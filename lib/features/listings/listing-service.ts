@@ -926,18 +926,21 @@ export async function updateListingStatus(
 
     if (error) {
       console.error('updateListingStatus failed', error)
+      const msg = (error as { message?: string }).message ?? 'Okänt fel'
+      const code = (error as { code?: string }).code ?? 'okänt'
       return {
         success: false,
-        error: 'Kunde inte uppdatera annonsen. Försök igen senare.',
+        error: `Kunde inte uppdatera annonsen (${msg}, kod: ${code}).`,
       }
     }
 
     return { success: true, data: { id: listingId.trim() } }
   } catch (err) {
     console.error('updateListingStatus unexpected error', err)
+    const msg = err instanceof Error ? err.message : 'Okänt fel'
     return {
       success: false,
-      error: 'Ett oväntat fel uppstod vid uppdatering.',
+      error: `Ett oväntat fel uppstod vid uppdatering (${msg}).`,
     }
   }
 }
@@ -982,7 +985,9 @@ export async function updateListingStatusAdmin(
 
     if (fetchError || !row) {
       console.error('[updateListingStatusAdmin] fetchError:', fetchError?.message, fetchError?.code)
-      return { success: false, error: 'Annonsen hittades inte.' }
+      const msg = fetchError?.message ?? 'Annonsen hittades inte.'
+      const code = fetchError?.code ?? 'okänt'
+      return { success: false, error: `Kunde inte hitta annonsen (${msg}, kod: ${code}).` }
     }
 
     if ((row as { user_id: string }).user_id !== userId) {
@@ -1006,16 +1011,17 @@ export async function updateListingStatusAdmin(
       )
       return {
         success: false,
-        error: 'Kunde inte uppdatera annonsen. Försök igen senare.',
+        error: `Kunde inte uppdatera annonsen (${updateError.message}, kod: ${updateError.code ?? 'okänt'}).`,
       }
     }
 
     return { success: true, data: { id: listingId.trim() } }
   } catch (err) {
     console.error('updateListingStatusAdmin unexpected error', err)
+    const msg = err instanceof Error ? err.message : 'Okänt fel'
     return {
       success: false,
-      error: 'Ett oväntat fel uppstod vid uppdatering.',
+      error: `Ett oväntat fel uppstod vid uppdatering (${msg}).`,
     }
   }
 }
