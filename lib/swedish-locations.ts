@@ -111,8 +111,6 @@ export interface LocationCounty {
 }
 
 // LOCATION_TREE byggs från SWEDISH_LAN + SWEDISH_KOMMUNER (alla län och kommuner), se längre ner i filen.
-// Vissa orter används endast som "alias" i sök/formatteringslogik (t.ex. Stuvsta) och ska inte synas
-// som egna noder i filtret – de filtreras bort i buildLocationTree via ALIAS_MUNICIPALITIES.
 export function getCountyByValue(value: string): LocationCounty | undefined {
   return LOCATION_TREE.find((c) => c.value === value)
 }
@@ -530,15 +528,9 @@ function slugify(s: string): string {
     .replace(/[^a-z0-9-]/g, '');
 }
 
-const ALIAS_MUNICIPALITIES = new Set<string>([
-  'Stuvsta',
-])
-
 function buildLocationTree(): LocationCounty[] {
   return SWEDISH_LAN.map((lan) => {
-    const kommunerForLan = SWEDISH_KOMMUNER.filter(
-      (loc) => loc.län === lan && !ALIAS_MUNICIPALITIES.has(loc.kommun)
-    );
+    const kommunerForLan = SWEDISH_KOMMUNER.filter((loc) => loc.län === lan);
     const uniqueKommuner = [...new Set(kommunerForLan.map((loc) => loc.kommun))].sort();
     const municipalities: LocationMunicipality[] = uniqueKommuner.map((kommun) => ({
       label: kommun,
