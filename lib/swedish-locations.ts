@@ -642,9 +642,30 @@ export function mergeLocationCounts(
     const munMap = munCounts.get(county.value)!
     let countySum = 0
     const municipalities = county.municipalities.map((m) => {
-      const c = munMap.get(m.value) ?? 0
-      countySum += c
-      return { ...m, count: c }
+      const baseCount = munMap.get(m.value) ?? 0
+
+      // För Huddinge-kommunen i Stockholms län vill vi att siffran
+      // även inkluderar alla annonser i Stuvsta-klustret
+      // (Stuvsta, Vistaberg, Glömsta, Fullersta), så att "(N)" vid
+      // "Huddinge" speglar hela Huddinge inkl. dessa närområden.
+      let displayCount = baseCount
+      if (county.label === 'Stockholms län' && m.label === 'Huddinge') {
+        let clusterSum = 0
+        for (const label of STUVSTA_CLUSTER_LABELS) {
+          const clusterMun = county.municipalities.find(
+            (cm) => cm.label === label
+          )
+          if (clusterMun) {
+            clusterSum += munMap.get(clusterMun.value) ?? 0
+          }
+        }
+        displayCount = baseCount + clusterSum
+      }
+
+      // Länets totalsiffra ska inte dubbelräkna klustret, så den baseras
+      // alltid på de "råa" per-kommun-siffrorna.
+      countySum += baseCount
+      return { ...m, count: displayCount }
     })
     return { ...county, count: countySum, municipalities }
   })
