@@ -107,7 +107,7 @@ export default function LocationFilter({
     if (!q) return baseTree
 
     // Om användaren skriver ett alias till Stuvsta-klustret (t.ex. "Vistaberg", "Glömsta", "Fullersta")
-    // vill vi visa samma kommun (Stuvsta) i trädet.
+    // vill vi visa samma kommun (Huddinge) i trädet (alla alias räknas som Huddinge).
     const stuvstaCanonical = mapAliasToCanonicalMunicipalityName(raw)
     const municipalityLabelToMatch = stuvstaCanonical?.toLowerCase() ?? q
 
@@ -118,7 +118,7 @@ export default function LocationFilter({
         const hasMatchingMunicipality = county.municipalities.some((m) => {
           const munLabelLower = m.label.toLowerCase()
           if (stuvstaCanonical) {
-            // Endast exakt match på Stuvsta när query är alias
+            // Endast exakt match på den kanoniska kommunen (Huddinge) när query är alias
             return munLabelLower === municipalityLabelToMatch
           }
           return munLabelLower.includes(q)
@@ -131,7 +131,7 @@ export default function LocationFilter({
           const munLabelLower = m.label.toLowerCase()
           const countyLabelLower = county.label.toLowerCase()
           if (stuvstaCanonical) {
-            // Visa bara Stuvsta-kommunen under Stockholms län när alias skrivs
+            // Visa bara den kanoniska kommunen (Huddinge) under Stockholms län när alias skrivs
             return munLabelLower === municipalityLabelToMatch
           }
           return munLabelLower.includes(q) || countyLabelLower.includes(q)
@@ -216,7 +216,7 @@ export default function LocationFilter({
     if (!q) return
 
     // Mappa ev. alias (Stuvsta, Vistaberg, Glömsta, Fullersta) till
-    // den kanoniska kommunen "Stuvsta" i filtret.
+    // den kanoniska kommunen "Huddinge" i filtret.
     const stuvstaCanonical = mapAliasToCanonicalMunicipalityName(raw)
     const municipalityLabelToMatch = stuvstaCanonical?.toLowerCase() ?? q
 

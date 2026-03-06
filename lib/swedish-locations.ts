@@ -155,14 +155,15 @@ export function isStuvstaAlias(name: string): boolean {
 }
 
 /**
- * För filter/statistik: mappa alias-namn (Vistaberg, Glömsta, Fullersta) till
- * en kanonisk kommunetikett i trädet ("Stuvsta").
+ * För filter/statistik: mappa alias-namn (Stuvsta, Vistaberg, Glömsta, Fullersta) till
+ * en kanonisk kommunetikett i trädet ("Huddinge").
+ * Dvs alla dessa räknas som Huddinge i LOCATION_TREE/get_location_stats.
  */
 export function mapAliasToCanonicalMunicipalityName(query: string): string | null {
   const lower = query.trim().toLowerCase()
   if (!lower) return null
   if (isStuvstaAlias(lower)) {
-    return 'Stuvsta'
+    return 'Huddinge'
   }
   return null
 }
