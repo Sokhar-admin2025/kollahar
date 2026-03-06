@@ -2,6 +2,15 @@
 
 Detta dokument beskriver email-meddelandet som skickas när användare registrerar sig och behöver verifiera sin e-post med en 6-siffrig kod.
 
+## Avsändare – inte "Supabase"
+
+Så att mailet **inte visas som från Supabase** i klienten (t.ex. iPhone Mail):
+
+- I **Supabase Dashboard** → **Authentication** → **SMTP**: sätt **Sender name** till t.ex. **Kolla här!** eller **Kollahar.se**.
+- Vid egen SMTP: använd **Sender email** från er domän (t.ex. `noreply@kollahar.se`).
+
+Detaljer: `docs/SUPABASE_EMAIL_SETUP.md` (avsnitt "Avsändarnamn").
+
 ## Konfiguration i Supabase
 
 Email-templaten konfigureras i Supabase Dashboard under **Authentication > Email Templates > Magic Link**.

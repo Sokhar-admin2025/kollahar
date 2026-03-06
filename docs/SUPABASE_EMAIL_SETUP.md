@@ -1,15 +1,16 @@
 # Supabase Email-konfiguration för OTP
 
 ## Problem
-Inga email skickas vid registrering av ny användare.
+- Inga email skickas vid registrering av ny användare.
+- Meddelandet visas som "från Supabase" – användare ska se Kolla här! / Kollahar istället.
 
 ## Lösning
 
 ### 1. Konfigurera Email Provider i Supabase Dashboard
 
-1. Gå till **Supabase Dashboard** → **Project Settings** → **Auth**
-2. Scrolla ner till **Email Auth**
-3. Välj en av följande alternativ:
+1. Gå till **Supabase Dashboard** → **Authentication** → [SMTP Settings](https://supabase.com/dashboard/project/_/auth/smtp)  
+   (eller **Project Settings** → **Auth** → scrolla till **Email**)
+2. Välj en av följande alternativ:
 
 #### Alternativ A: Supabase's inbyggda email (för utveckling)
 - **SMTP Host**: Lämna tomt (använder Supabase's default)
@@ -17,17 +18,29 @@ Inga email skickas vid registrering av ny användare.
 - **SMTP User**: Lämna tomt
 - **SMTP Password**: Lämna tomt
 - **Sender email**: Använd Supabase's default (fungerar endast för utveckling)
+- **Sender name** (om det finns): Sätt t.ex. `Kolla här!` så att avsändaren inte visas som "Supabase"
 
 **OBS:** Supabase's inbyggda email fungerar endast för utveckling och har begränsningar.
 
 #### Alternativ B: Egen SMTP-server (rekommenderat för produktion)
-- **SMTP Host**: `smtp.gmail.com` (för Gmail) eller din email-providers SMTP
+- **SMTP Host**: t.ex. `smtp.resend.com` (Resend), `smtp.gmail.com` (Gmail) eller din providers SMTP
 - **SMTP Port**: `587` (TLS) eller `465` (SSL)
-- **SMTP User**: Din email-adress
-- **SMTP Password**: App-specifikt lösenord (för Gmail: skapa i Google Account → Security → App passwords)
-- **Sender email**: Din email-adress
+- **SMTP User**: Din SMTP-användare (Resend: API-nyckel som användarnamn)
+- **SMTP Password**: App-specifikt lösenord eller API-nyckel
+- **Sender email**: Din verifierade adress, t.ex. `noreply@kollahar.se`
+- **Sender name**: Sätt till **Kolla här!** eller **Kollahar.se** så att mailet inte visas som "från Supabase"
 
-### 2. Konfigurera Email Templates
+### 2. Avsändarnamn – så att det inte står "Supabase"
+
+Om mailet visas som **från Supabase** i klienten (t.ex. iPhone Mail):
+
+1. Gå till **Authentication** → **SMTP** (eller **Project Settings** → **Auth** → **Email**).
+2. Sätt **Sender name** (avsändarnamn) till t.ex. **Kolla här!** eller **Kollahar.se**.
+3. Vid egen SMTP: använd **Sender email** från er domän (t.ex. `noreply@kollahar.se`).
+
+Då visas meddelandet som "Kolla här! &lt;noreply@kollahar.se&gt;" i stället för "Supabase".
+
+### 3. Konfigurera Email Templates
 
 1. Gå till **Supabase Dashboard** → **Authentication** → **Email Templates**
 2. Välj **"Magic Link"** template (används för OTP)
@@ -35,17 +48,17 @@ Inga email skickas vid registrering av ny användare.
 
 **Viktigt:** 
 - Använd `{{ .Token }}` för 6-siffrig kod (Supabase's variabel)
-- Ämnesrad: "Bekräfta ditt konto på Kollahär!"
-- Innehåll: Se `docs/EMAIL_TEMPLATE_OTP.md`
+- Ämnesrad: "Bekräfta ditt konto på Kollahar!" (ingen referens till Supabase)
+- Innehåll: Se `docs/EMAIL_TEMPLATE_OTP.md` – texten ska vara från Kollahar, inte Supabase
 
-### 3. Aktivera Email Confirmation (om det behövs)
+### 4. Aktivera Email Confirmation (om det behövs)
 
 1. Gå till **Supabase Dashboard** → **Authentication** → **Settings**
 2. Under **"Email Auth"**:
    - **Enable email confirmations**: Sätt till `OFF` (vi använder OTP istället)
    - **Enable email change confirmations**: Sätt till `ON` eller `OFF` (beroende på behov)
 
-### 4. Testa Email-utskick
+### 5. Testa Email-utskick
 
 1. Försök registrera en ny användare
 2. Kontrollera:
@@ -53,7 +66,7 @@ Inga email skickas vid registrering av ny användare.
    - **Email inbox** → Se om email kommer fram
    - **Console logs** → Se om det finns fel i browser console
 
-### 5. Felsökning
+### 6. Felsökning
 
 #### Email kommer inte fram:
 - Kontrollera **Spam/Junk**-mappen
@@ -70,7 +83,7 @@ Inga email skickas vid registrering av ny användare.
 - Kontrollera att email-templates är konfigurerade
 - Använd rätt variabel (`{{ .Token }}` för OTP)
 
-### 6. För produktion
+### 7. För produktion
 
 **Rekommenderat:** Använd egen SMTP-server eller email-tjänst som:
 - **SendGrid**
