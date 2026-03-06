@@ -5,7 +5,7 @@ import { ChevronDown, ChevronRight, Search, ListPlus } from 'lucide-react'
 import {
   LOCATION_TREE,
   mergeLocationCounts,
-  mapAliasToCanonicalMunicipalityName,
+  STUVSTA_CLUSTER_LABELS,
   isStuvstaAlias,
   type LocationCounty,
 } from '@/lib/swedish-locations'
@@ -107,9 +107,8 @@ export default function LocationFilter({
     if (!q) return baseTree
 
     // Om användaren skriver ett alias till Stuvsta-klustret (t.ex. "Vistaberg", "Glömsta", "Fullersta")
-    // vill vi visa samma kommun (Huddinge) i trädet (alla alias räknas som Huddinge).
-    const stuvstaCanonical = mapAliasToCanonicalMunicipalityName(raw)
-    const municipalityLabelToMatch = stuvstaCanonical?.toLowerCase() ?? q
+    // vill vi visa alla fyra områden (Stuvsta, Vistaberg, Glömsta, Fullersta) i trädet.
+    const isStuvstaClusterQuery = isStuvstaAlias(raw)
 
     return baseTree
       .filter((county) => {
@@ -117,9 +116,11 @@ export default function LocationFilter({
         const countyMatch = countyLabelLower.includes(q)
         const hasMatchingMunicipality = county.municipalities.some((m) => {
           const munLabelLower = m.label.toLowerCase()
-          if (stuvstaCanonical) {
-            // Endast exakt match på den kanoniska kommunen (Huddinge) när query är alias
-            return munLabelLower === municipalityLabelToMatch
+          if (isStuvstaClusterQuery) {
+            // Matcha alla fyra områden i klustret oavsett vilket alias som skrivits
+            return STUVSTA_CLUSTER_LABELS.some(
+              (label) => label.toLowerCase() === munLabelLower
+            )
           }
           return munLabelLower.includes(q)
         })
@@ -130,9 +131,11 @@ export default function LocationFilter({
         municipalities: county.municipalities.filter((m) => {
           const munLabelLower = m.label.toLowerCase()
           const countyLabelLower = county.label.toLowerCase()
-          if (stuvstaCanonical) {
-            // Visa bara den kanoniska kommunen (Huddinge) under Stockholms län när alias skrivs
-            return munLabelLower === municipalityLabelToMatch
+          if (isStuvstaClusterQuery) {
+            // Visa alla fyra kluster-områden under Stockholms län när alias skrivs
+            return STUVSTA_CLUSTER_LABELS.some(
+              (label) => label.toLowerCase() === munLabelLower
+            )
           }
           return munLabelLower.includes(q) || countyLabelLower.includes(q)
         }),
@@ -215,21 +218,34 @@ export default function LocationFilter({
     const q = raw.toLowerCase()
     if (!q) return
 
-    // Mappa ev. alias (Stuvsta, Vistaberg, Glömsta, Fullersta) till
-    // den kanoniska kommunen "Huddinge" i filtret.
-    const stuvstaCanonical = mapAliasToCanonicalMunicipalityName(raw)
-    const municipalityLabelToMatch = stuvstaCanonical?.toLowerCase() ?? q
+    // Om användaren skriver ett alias (Stuvsta, Vistaberg, Glömsta, Fullersta):
+    // välj automatiskt alla fyra områden i klustret i filtret.
+    if (isStuvstaAlias(raw)) {
+      e.preventDefault()
+      for (const county of LOCATION_TREE) {
+        for (const muni of county.municipalities) {
+          if (
+            STUVSTA_CLUSTER_LABELS.some(
+              (label) => label.toLowerCase() === muni.label.toLowerCase()
+            )
+          ) {
+            toggleMunicipality(county.value, muni.value)
+          }
+        }
+      }
+      setSearchQuery('')
+      setListVisible(false)
+      return
+    }
 
-    // Försök hitta en exakt matchande kommun i hela trädet (t.ex. "Stuvsta").
+    // Vanlig exakt match: försök hitta en kommun med samma namn som sökningen.
     for (const county of LOCATION_TREE) {
       const match = county.municipalities.find(
-        (m) => m.label.toLowerCase() === municipalityLabelToMatch
+        (m) => m.label.toLowerCase() === q
       )
       if (match) {
         e.preventDefault()
-        // Välj kommunen (toggleMunicipality hanterar state för full/partial).
         toggleMunicipality(county.value, match.value)
-        // Rensa sökfältet och stäng listan så det känns "klart".
         setSearchQuery('')
         setListVisible(false)
         return

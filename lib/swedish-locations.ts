@@ -141,7 +141,7 @@ const STUVSTA_NEIGHBORHOOD_ALIASES = [
 
 type StuvstaAlias = (typeof STUVSTA_NEIGHBORHOOD_ALIASES)[number]
 
-const STUVSTA_ALIAS_DISPLAY: Record<StuvstaAlias, string> = {
+export const STUVSTA_ALIAS_DISPLAY: Record<StuvstaAlias, string> = {
   stuvsta: 'Stuvsta',
   vistaberg: 'Vistaberg',
   'glömsta': 'Glömsta',
@@ -154,19 +154,13 @@ export function isStuvstaAlias(name: string): boolean {
   return STUVSTA_NEIGHBORHOOD_ALIASES.includes(lower as StuvstaAlias)
 }
 
-/**
- * För filter/statistik: mappa alias-namn (Stuvsta, Vistaberg, Glömsta, Fullersta) till
- * en kanonisk kommunetikett i trädet ("Huddinge").
- * Dvs alla dessa räknas som Huddinge i LOCATION_TREE/get_location_stats.
- */
-export function mapAliasToCanonicalMunicipalityName(query: string): string | null {
-  const lower = query.trim().toLowerCase()
-  if (!lower) return null
-  if (isStuvstaAlias(lower)) {
-    return 'Huddinge'
-  }
-  return null
-}
+// Kommunetiketter för Stuvsta-klustret (används i filter-UI för att visa öron)
+export const STUVSTA_CLUSTER_LABELS = [
+  STUVSTA_ALIAS_DISPLAY.stuvsta,
+  STUVSTA_ALIAS_DISPLAY.vistaberg,
+  STUVSTA_ALIAS_DISPLAY['glömsta'],
+  STUVSTA_ALIAS_DISPLAY.fullersta,
+] as const
 
 /**
  * För lagrat värde på annonsen: mappa alias till det exakta områdesnamnet + Huddinge.
@@ -628,10 +622,6 @@ export function mergeLocationCounts(
     const lanRaw = commaIdx >= 0 ? s.slice(commaIdx + 1).trim() : ''
     if (!kommunRaw || !lanRaw) continue
 
-    // Klustra alla Stuvsta-närområden (Stuvsta, Vistaberg, Glömsta, Fullersta)
-    // under samma kommunetikett i trädet: "Stuvsta".
-    const canonicalKommun = mapAliasToCanonicalMunicipalityName(kommunRaw) ?? kommunRaw
-
     // Specialfall: "... , Huddinge" mappas till Stockholms län i trädet
     const lan = lanRaw === 'Huddinge' ? 'Stockholms län' : lanRaw
 
@@ -639,7 +629,7 @@ export function mergeLocationCounts(
     if (!county) continue
     const munMap = munCounts.get(county.value)
     if (!munMap) continue
-    const mun = county.municipalities.find((m) => m.label === canonicalKommun)
+    const mun = county.municipalities.find((m) => m.label === kommunRaw)
     if (!mun) continue
 
     const prev = munMap.get(mun.value) ?? 0
