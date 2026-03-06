@@ -15,14 +15,23 @@ export default function CookieBanner() {
 
   useEffect(() => {
     if (!mounted || typeof window === 'undefined') return;
-    const consent = localStorage.getItem(CONSENT_KEY);
-    if (!consent) {
+    try {
+      const consent = localStorage.getItem(CONSENT_KEY);
+      if (!consent) {
+        setShowBanner(true);
+      }
+    } catch {
+      // localStorage kan kasta på t.ex. iPhone privat läge eller strikta inställningar
       setShowBanner(true);
     }
   }, [mounted]);
 
   const acceptCookies = async () => {
-    localStorage.setItem(CONSENT_KEY, 'accepted');
+    try {
+      localStorage.setItem(CONSENT_KEY, 'accepted');
+    } catch {
+      // Ignorera om localStorage inte är tillgängligt (t.ex. privat läge)
+    }
     setShowBanner(false);
     try {
       const Sentry = await import('@sentry/nextjs');
@@ -30,11 +39,15 @@ export default function CookieBanner() {
     } catch {
       // Replay will be enabled on reload via sentry.client.config
     }
-    window.location.reload();
+    if (typeof window !== 'undefined') window.location.reload();
   };
 
   const declineCookies = () => {
-    localStorage.setItem(CONSENT_KEY, 'declined');
+    try {
+      localStorage.setItem(CONSENT_KEY, 'declined');
+    } catch {
+      // Ignorera om localStorage inte är tillgängligt
+    }
     setShowBanner(false);
   };
 

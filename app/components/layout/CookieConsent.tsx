@@ -6,12 +6,19 @@ import Link from 'next/link'
 export default function CookieConsent() {
   const [showBanner, setShowBanner] = useState(() => {
     if (typeof window === 'undefined') return false
-    return !localStorage.getItem('cookie_consent')
+    try {
+      return !localStorage.getItem('cookie_consent')
+    } catch {
+      return true
+    }
   })
 
   const handleAccept = () => {
-    // Spara samtycke i localStorage
-    localStorage.setItem('cookie_consent', 'true')
+    try {
+      localStorage.setItem('cookie_consent', 'true')
+    } catch {
+      // Ignorera om localStorage inte tillgängligt (t.ex. privat läge)
+    }
     setShowBanner(false)
   }
 

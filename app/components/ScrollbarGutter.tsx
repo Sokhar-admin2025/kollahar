@@ -4,13 +4,17 @@ import { useEffect } from 'react'
 
 /** Mät scrollbar-bredd även när sidan är kort (ingen synlig scrollbar). */
 function getScrollbarWidth(): number {
-  if (typeof document === 'undefined') return 0
-  const outer = document.createElement('div')
-  outer.style.cssText = 'overflow:scroll; position:absolute; top:-9999px; width:100px; height:1px;'
-  document.body.appendChild(outer)
-  const width = outer.offsetWidth - outer.clientWidth
-  document.body.removeChild(outer)
-  return width
+  if (typeof document === 'undefined' || !document.body) return 0
+  try {
+    const outer = document.createElement('div')
+    outer.style.cssText = 'overflow:scroll; position:absolute; top:-9999px; width:100px; height:1px;'
+    document.body.appendChild(outer)
+    const width = outer.offsetWidth - outer.clientWidth
+    document.body.removeChild(outer)
+    return width
+  } catch {
+    return 0
+  }
 }
 
 /**
@@ -19,10 +23,15 @@ function getScrollbarWidth(): number {
  */
 export default function ScrollbarGutter() {
   useEffect(() => {
+    if (typeof document === 'undefined' || !document.documentElement) return
     const w = getScrollbarWidth()
     document.documentElement.style.setProperty('--scrollbar-width', `${w}px`)
     return () => {
-      document.documentElement.style.removeProperty('--scrollbar-width')
+      try {
+        document.documentElement.style.removeProperty('--scrollbar-width')
+      } catch {
+        // Ignorera vid unmount om DOM inte längre tillgänglig
+      }
     }
   }, [])
 

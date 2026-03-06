@@ -3,7 +3,12 @@ import * as Sentry from "@sentry/nextjs";
 // GDPR: Session Replay aktiveras endast vid explicit samtycke ('cookie-consent' === 'accepted')
 const getConsent = (): boolean => {
   if (typeof window === 'undefined') return false;
-  return localStorage.getItem('cookie-consent') === 'accepted';
+  try {
+    return localStorage.getItem('cookie-consent') === 'accepted';
+  } catch {
+    // localStorage kan kasta på t.ex. iPhone privat läge
+    return false;
+  }
 };
 
 const hasConsent = getConsent();
