@@ -896,7 +896,7 @@ export async function deleteListing(
 }
 
 /**
- * Uppdatera endast status (t.ex. till 'sold').
+ * Uppdatera endast status (t.ex. till 'sold') via vanlig server-klient.
  * Sätter inte deleted_at vid 'sold' så att annonsen fortfarande kan visas som "Såld" för alla (RLS tillåter SELECT på sålda).
  */
 export async function updateListingStatus(
@@ -935,6 +935,84 @@ export async function updateListingStatus(
     return { success: true, data: { id: listingId.trim() } }
   } catch (err) {
     console.error('updateListingStatus unexpected error', err)
+    return {
+      success: false,
+      error: 'Ett oväntat fel uppstod vid uppdatering.',
+    }
+  }
+}
+
+/**
+ * Uppdatera endast status (t.ex. till 'sold') via supabaseAdmin.
+ * Används för åtgärder där RLS/session kan strula (t.ex. "Såld här" i dashboard),
+ * men vi verifierar alltid ägande (user_id === userId) innan uppdatering.
+ */
+export async function updateListingStatusAdmin(
+  listingId: string,
+  status: string,
+  userId: string
+): Promise<ServiceResult<{ id: string }>> {
+  if (!listingId?.trim() || !userId?.trim()) {
+    return { success: false, error: 'Ogiltigt annons- eller användar-id.' }
+  }
+
+  const allowed = ['active', 'sold', 'deleted', 'draft']
+  if (!allowed.includes(status)) {
+    return { success: false, error: 'Ogiltig status.' }
+  }
+
+  try {
+    if (!supabaseAdmin) {
+      console.error(
+        '[updateListingStatusAdmin] SUPABASE_SERVICE_ROLE_KEY saknas. Statusändring kräver service role i production.'
+      )
+      return {
+        success: false,
+        error: 'Kunde inte uppdatera annonsen just nu. Kontakta support om felet kvarstår.',
+      }
+    }
+
+    const client = supabaseAdmin
+
+    const { data: row, error: fetchError } = await client
+      .from('listings')
+      .select('id, user_id')
+      .eq('id', listingId.trim())
+      .single()
+
+    if (fetchError || !row) {
+      console.error('[updateListingStatusAdmin] fetchError:', fetchError?.message, fetchError?.code)
+      return { success: false, error: 'Annonsen hittades inte.' }
+    }
+
+    if ((row as { user_id: string }).user_id !== userId) {
+      return { success: false, error: 'Du får bara uppdatera egna annonser.' }
+    }
+
+    const { error: updateError } = await client
+      .from('listings')
+      .update({ status })
+      .eq('id', listingId.trim())
+      .eq('user_id', userId)
+
+    if (updateError) {
+      console.error(
+        '[updateListingStatusAdmin] updateError:',
+        updateError.message,
+        'code:',
+        updateError.code,
+        'details:',
+        updateError.details
+      )
+      return {
+        success: false,
+        error: 'Kunde inte uppdatera annonsen. Försök igen senare.',
+      }
+    }
+
+    return { success: true, data: { id: listingId.trim() } }
+  } catch (err) {
+    console.error('updateListingStatusAdmin unexpected error', err)
     return {
       success: false,
       error: 'Ett oväntat fel uppstod vid uppdatering.',

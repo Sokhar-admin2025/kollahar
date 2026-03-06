@@ -8,6 +8,7 @@ import {
   updateListingPrice as updateListingPriceService,
   deleteListing as deleteListingService,
   updateListingStatus as updateListingStatusService,
+  updateListingStatusAdmin as updateListingStatusAdminService,
 } from '@/lib/features/listings/listing-service'
 import { insertListingSchema, updateListingSchema } from '@/lib/validators/listing-schema'
 import type { InsertListingInput, UpdateListingInput } from '@/lib/validators/listing-schema'
@@ -185,7 +186,12 @@ export async function markAsSoldAction(
     }
   }
 
-  const result = await updateListingStatusService(listingId, 'sold', user.id)
+  // För "Såld här" använder vi admin-vägen om möjligt (bättre mot RLS/session-strul),
+  // annars faller vi tillbaka till den vanliga RLS-säkrade uppdateringen.
+  const result =
+    process.env.SUPABASE_SERVICE_ROLE_KEY != null && process.env.SUPABASE_SERVICE_ROLE_KEY !== ''
+      ? await updateListingStatusAdminService(listingId, 'sold', user.id)
+      : await updateListingStatusService(listingId, 'sold', user.id)
   if (!result.success) {
     return { success: false, error: result.error ?? 'Kunde inte markera som såld.' }
   }
