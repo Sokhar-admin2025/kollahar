@@ -418,6 +418,7 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 - **Listing-service** (`lib/features/listings/listing-service.ts`): `getUserListings(userId)` hämtar alla annonser för användaren (sorterat `created_at` desc). `deleteListing(listingId, userId)` verifierar ägande och utför hård DELETE. `updateListingStatus(listingId, status, userId)` sätter status (t.ex. `'sold'`) och `deleted_at` vid såld.
 - **Server Actions** (`app/actions/listing-actions.ts`): `deleteListingAction(listingId, logReason?, adTitle?)` och `markAsSoldAction(listingId, logReason?, adTitle?)`; båda loggar till `deletion_logs` vid behov och anropar `revalidatePath('/dashboard')`.
 - **Dashboard-sida** (`app/dashboard/page.tsx`): Async Server Component – hämtar användare (redirect till `/login` om ej inloggad), anropar `getUserListings(user.id)` och skickar data till `<DashboardClient />`.
+- **DashboardClient header**: För privata användare visas nu `profiles.full_name` efter texten "Inloggad som" om namn finns, annars fallback till e-post som tidigare.
 - **DashboardClient** (`app/components/DashboardClient.tsx`): Ny klientkomponent med flikar (Aktiva, Sparade, Historik), radlista för Aktiva (oförändrad UI), grid för Sparade, tabell med horisontell scroll för Historik. Ta bort/såld-modal anropar Server Actions och `router.refresh()` efter lyckat svar.
 
 #### Listningsflöde: server-side filter, paginering och refetch

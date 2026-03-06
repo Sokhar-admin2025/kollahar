@@ -20,7 +20,7 @@ const supabase = createClient()
 interface DashboardClientProps {
   listings: Listing[]
   favoriteListings: Listing[]
-  user: { id: string; email?: string }
+  user: { id: string; email?: string; fullName?: string | null }
   hasUnreadMessages?: boolean
   accountType?: string
 }
@@ -130,7 +130,9 @@ export default function DashboardClient({
           <h1 className="text-3xl font-display text-brand-green mb-2">{t.header.title}</h1>
           <p className="text-brand-text antialiased">
             {t.header.welcome}{' '}
-            <span className="font-semibold">{user.email ?? '...'}</span>
+            <span className="font-semibold">
+              {user.fullName?.trim() || user.email || '...'}
+            </span>
           </p>
           {accountType === 'company' && (
             <span

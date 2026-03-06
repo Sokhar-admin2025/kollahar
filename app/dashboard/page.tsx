@@ -41,7 +41,7 @@ export default async function DashboardPage() {
       <DashboardClient
         listings={listings}
         favoriteListings={favoriteListings}
-        user={{ id: user.id, email: user.email ?? undefined }}
+        user={{ id: user.id, email: user.email ?? undefined, fullName }}
         hasUnreadMessages={hasUnreadMessages}
         accountType={accountType}
       />
