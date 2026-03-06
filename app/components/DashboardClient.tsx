@@ -89,7 +89,7 @@ export default function DashboardClient({
     setIsDeleting(true)
 
     try {
-      if (deleteReason === 'just_delete') {
+      if (deleteReason === 'just_delete' || deleteReason === 'sold_elsewhere') {
         const result = await deleteListingAction(
           adToDelete.id,
           deleteReason,

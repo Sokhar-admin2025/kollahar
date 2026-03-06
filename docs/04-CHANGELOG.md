@@ -1141,8 +1141,8 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 - **Radera Annons**: Modal med anledning för radering
 - **Anledningar**: 
   - "Såld här" (markerar som `sold`, sätter `deleted_at`)
-  - "Såld någon annanstans" (raderar helt)
-  - "Vill bara ta bort den" (raderar helt)
+  - "Såld någon annanstans" (raderar helt – samma delete-flöde som nedan)
+  - "Vill bara ta bort den" (raderar helt via `deleteListingAction`)
 - **Deletion Logs**: Loggning av raderade annonser för analytics
 
 ### 🔧 Ändrat
