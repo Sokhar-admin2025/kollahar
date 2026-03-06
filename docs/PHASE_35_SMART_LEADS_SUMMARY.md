@@ -117,4 +117,4 @@ Phase 3.5 lägger till smarta lead-notiser, multi-user-stöd för dealers och f�
 
 - `RESEND_API_KEY` – krävs för att skicka lead-notiser
 - `SUPABASE_SERVICE_ROLE_KEY` – krävs för dealer-dashboard (leads, listings, listing_views)
-- `NEXT_PUBLIC_APP_URL` eller `VERCEL_URL` – för korrekta länkar i e-post
+- `NEXT_PUBLIC_APP_URL` (eller default kollahar.se) – för korrekta länkar i e-post. Använd ALDRIG VERCEL_URL.

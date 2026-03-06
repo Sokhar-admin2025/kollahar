@@ -7,10 +7,8 @@ import { sendLeadSlaWarningEmail } from '@/lib/email/resend'
 import { createLead } from '@/lib/features/leads/lead-service'
 import { SLA_MS } from '@/lib/features/leados/leados-metrics'
 
-const BASE_URL =
-  process.env.NEXT_PUBLIC_APP_URL ||
-  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
-  'https://kollahar.se'
+// Använd endast produktions-URL för e-postlänkar – aldrig VERCEL_URL (tar användare till Vercel-login)
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://kollahar.se'
 
 export type TriggerLeadNotificationParams =
   | {

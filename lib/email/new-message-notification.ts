@@ -2,10 +2,8 @@ import { Resend } from 'resend'
 
 const FROM_EMAIL = 'noreply@kollahar.se'
 
-const BASE_URL =
-  process.env.NEXT_PUBLIC_APP_URL ||
-  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
-  'https://kollahar.se'
+// Använd endast produktions-URL för e-postlänkar – aldrig VERCEL_URL (tar användare till Vercel-login)
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://kollahar.se'
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 
