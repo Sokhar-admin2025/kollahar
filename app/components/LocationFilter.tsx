@@ -104,7 +104,18 @@ export default function LocationFilter({
   const filteredTree = useMemo(() => {
     const raw = searchQuery.trim()
     const q = raw.toLowerCase()
-    if (!q) return baseTree
+    if (!q) {
+      // Basvy: visa inte Stuvsta-klustrets finmaskiga områden i trädet (de dyker upp först vid sök).
+      return baseTree.map((county) => ({
+        ...county,
+        municipalities: county.municipalities.filter(
+          (m) =>
+            !STUVSTA_CLUSTER_LABELS.some(
+              (label) => label.toLowerCase() === m.label.toLowerCase()
+            )
+        ),
+      }))
+    }
 
     // Om användaren skriver ett alias till Stuvsta-klustret (t.ex. "Vistaberg", "Glömsta", "Fullersta")
     // vill vi visa alla fyra områden (Stuvsta, Vistaberg, Glömsta, Fullersta) i trädet.

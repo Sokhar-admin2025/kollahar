@@ -202,9 +202,11 @@ export const SWEDISH_KOMMUNER: SwedishLocation[] = [
   // Stockholms län
   { kommun: 'Stockholm', län: 'Stockholms län' },
   { kommun: 'Huddinge', län: 'Stockholms län' },
-  // Stuvsta är en tätort i Huddinge – hanteras som alias i UI (Stuvsta, Huddinge)
-  // men ligger administrativt i Stockholms län, därför knuten hit i plats-trädet.
+  // Stuvsta-klustret i Huddinge – används som finmaskiga områden i filtret.
   { kommun: 'Stuvsta', län: 'Stockholms län' },
+  { kommun: 'Vistaberg', län: 'Stockholms län' },
+  { kommun: 'Glömsta', län: 'Stockholms län' },
+  { kommun: 'Fullersta', län: 'Stockholms län' },
   { kommun: 'Nacka', län: 'Stockholms län' },
   { kommun: 'Södertälje', län: 'Stockholms län' },
   { kommun: 'Botkyrka', län: 'Stockholms län' },
