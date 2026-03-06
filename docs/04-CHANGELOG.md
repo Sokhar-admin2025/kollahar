@@ -890,9 +890,9 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
   - Val av kommun stänger listan direkt (ingen dubbelklick-bugg).
   - Förifylld plats i "Skapa annons" öppnar inte dropdown automatiskt.
   - `autoComplete="address-level2"` används för att undvika att browsern fyller i e-post i platsfältet.
-- **Stuvsta-alias för Huddinge**: Platsdatastrukturen känner nu igen "Stuvsta" som eget ortsnamn kopplat till Huddinge, så att:
-  - Skrivning av `Stuvsta` i platsfältet ger autocomplete-förslaget "Stuvsta, Huddinge".
-  - Tryck på Enter med texten `Stuvsta` formaterar och sparar värdet som "Stuvsta, Huddinge" utan extra klick.
+- **Stuvsta-kluster (Stuvsta, Vistaberg, Glömsta, Fullersta)**:
+  - Skapa/redigera annons: Skrivning av något av namnen `Stuvsta`, `Vistaberg`, `Glömsta` eller `Fullersta` i platsfältet, följt av Enter, sparar värdet som respektive område + Huddinge (t.ex. "Vistaberg, Huddinge"). Förslagslistan visar alla fyra områden separat kopplade till Huddinge.
+  - Publikt platsfilter: Sökfältet för plats förstår aliasen som ett gemensamt kluster – skriva något av namnen och trycka Enter väljer Stuvsta-kommunen i filtret, och filtreringen visar annonser från alla fyra områden som en samlad vy.
 
 #### Meddelanden / Chatt
 - **Meddelandevyn**: Uppdaterad till att följa Kollahärs grafiska profil.

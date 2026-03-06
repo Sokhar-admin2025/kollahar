@@ -2,7 +2,13 @@
 
 import { useState, useMemo, useEffect } from 'react'
 import { ChevronDown, ChevronRight, Search, ListPlus } from 'lucide-react'
-import { LOCATION_TREE, mergeLocationCounts, type LocationCounty } from '@/lib/swedish-locations'
+import {
+  LOCATION_TREE,
+  mergeLocationCounts,
+  mapAliasToCanonicalMunicipalityName,
+  isStuvstaAlias,
+  type LocationCounty,
+} from '@/lib/swedish-locations'
 import { getLocationStats } from '@/lib/features/location/location-service'
 
 /** Antal län som visas innan "Visa alla län". */
@@ -96,20 +102,41 @@ export default function LocationFilter({
   const showList = listVisible || searchQuery.trim().length > 0
 
   const filteredTree = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase()
+    const raw = searchQuery.trim()
+    const q = raw.toLowerCase()
     if (!q) return baseTree
-    return baseTree.filter((county) => {
-      const countyMatch = county.label.toLowerCase().includes(q)
-      const hasMatchingMunicipality = county.municipalities.some((m) =>
-        m.label.toLowerCase().includes(q)
-      )
-      return countyMatch || hasMatchingMunicipality
-    }).map((county) => ({
-      ...county,
-      municipalities: county.municipalities.filter((m) =>
-        m.label.toLowerCase().includes(q) || county.label.toLowerCase().includes(q)
-      ),
-    }))
+
+    // Om användaren skriver ett alias till Stuvsta-klustret (t.ex. "Vistaberg", "Glömsta", "Fullersta")
+    // vill vi visa samma kommun (Stuvsta) i trädet.
+    const stuvstaCanonical = mapAliasToCanonicalMunicipalityName(raw)
+    const municipalityLabelToMatch = stuvstaCanonical?.toLowerCase() ?? q
+
+    return baseTree
+      .filter((county) => {
+        const countyLabelLower = county.label.toLowerCase()
+        const countyMatch = countyLabelLower.includes(q)
+        const hasMatchingMunicipality = county.municipalities.some((m) => {
+          const munLabelLower = m.label.toLowerCase()
+          if (stuvstaCanonical) {
+            // Endast exakt match på Stuvsta när query är alias
+            return munLabelLower === municipalityLabelToMatch
+          }
+          return munLabelLower.includes(q)
+        })
+        return countyMatch || hasMatchingMunicipality
+      })
+      .map((county) => ({
+        ...county,
+        municipalities: county.municipalities.filter((m) => {
+          const munLabelLower = m.label.toLowerCase()
+          const countyLabelLower = county.label.toLowerCase()
+          if (stuvstaCanonical) {
+            // Visa bara Stuvsta-kommunen under Stockholms län när alias skrivs
+            return munLabelLower === municipalityLabelToMatch
+          }
+          return munLabelLower.includes(q) || countyLabelLower.includes(q)
+        }),
+      }))
   }, [searchQuery, baseTree])
 
   const countiesToShow = showAllCounties ? filteredTree : filteredTree.slice(0, INITIAL_COUNTIES)
@@ -184,13 +211,19 @@ export default function LocationFilter({
   const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key !== 'Enter') return
 
-    const q = e.currentTarget.value.trim().toLowerCase()
+    const raw = e.currentTarget.value.trim()
+    const q = raw.toLowerCase()
     if (!q) return
+
+    // Mappa ev. alias (Stuvsta, Vistaberg, Glömsta, Fullersta) till
+    // den kanoniska kommunen "Stuvsta" i filtret.
+    const stuvstaCanonical = mapAliasToCanonicalMunicipalityName(raw)
+    const municipalityLabelToMatch = stuvstaCanonical?.toLowerCase() ?? q
 
     // Försök hitta en exakt matchande kommun i hela trädet (t.ex. "Stuvsta").
     for (const county of LOCATION_TREE) {
       const match = county.municipalities.find(
-        (m) => m.label.toLowerCase() === q
+        (m) => m.label.toLowerCase() === municipalityLabelToMatch
       )
       if (match) {
         e.preventDefault()

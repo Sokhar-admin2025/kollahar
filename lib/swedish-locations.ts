@@ -129,6 +129,56 @@ export interface SwedishLocation {
   län: string;
 }
 
+// --- Stuvsta med närliggande områden (alias-namn som ska bete sig likadant i SÖK),
+// men där annonsernas location kan vara definierad separat per område.
+const STUVSTA_NEIGHBORHOOD_ALIASES = [
+  'stuvsta',
+  'vistaberg',
+  'glömsta',
+  'glomsta', // fallback utan ö
+  'fullersta',
+] as const
+
+type StuvstaAlias = (typeof STUVSTA_NEIGHBORHOOD_ALIASES)[number]
+
+const STUVSTA_ALIAS_DISPLAY: Record<StuvstaAlias, string> = {
+  stuvsta: 'Stuvsta',
+  vistaberg: 'Vistaberg',
+  'glömsta': 'Glömsta',
+  glomsta: 'Glömsta',
+  fullersta: 'Fullersta',
+}
+
+export function isStuvstaAlias(name: string): boolean {
+  const lower = name.trim().toLowerCase()
+  return STUVSTA_NEIGHBORHOOD_ALIASES.includes(lower as StuvstaAlias)
+}
+
+/**
+ * För filter/statistik: mappa alias-namn (Vistaberg, Glömsta, Fullersta) till
+ * en kanonisk kommunetikett i trädet ("Stuvsta").
+ */
+export function mapAliasToCanonicalMunicipalityName(query: string): string | null {
+  const lower = query.trim().toLowerCase()
+  if (!lower) return null
+  if (isStuvstaAlias(lower)) {
+    return 'Stuvsta'
+  }
+  return null
+}
+
+/**
+ * För lagrat värde på annonsen: mappa alias till det exakta områdesnamnet + Huddinge.
+ * Exempel: "vistaberg" -> "Vistaberg, Huddinge"
+ */
+export function formatStuvstaAliasLocation(raw: string): string | null {
+  const lower = raw.trim().toLowerCase()
+  if (!lower) return null
+  if (!isStuvstaAlias(lower)) return null
+  const display = STUVSTA_ALIAS_DISPLAY[lower as StuvstaAlias]
+  return `${display}, Huddinge`
+}
+
 export const SWEDISH_LAN = [
   'Stockholms län',
   'Uppsala län',
@@ -573,20 +623,22 @@ export function mergeLocationCounts(
   for (const row of stats) {
     const s = row.location_value.trim()
     const commaIdx = s.indexOf(',')
-    const kommun = commaIdx >= 0 ? s.slice(0, commaIdx).trim() : ''
+    const kommunRaw = commaIdx >= 0 ? s.slice(0, commaIdx).trim() : ''
     const lanRaw = commaIdx >= 0 ? s.slice(commaIdx + 1).trim() : ''
-    // Specialfall: "Stuvsta, Huddinge" mappas till Stockholms län i trädet
-    const lan =
-      lanRaw === 'Huddinge'
-        ? 'Stockholms län'
-        : lanRaw
-    if (!kommun || !lan) continue
+    if (!kommunRaw || !lanRaw) continue
+
+    // Klustra alla Stuvsta-närområden (Stuvsta, Vistaberg, Glömsta, Fullersta)
+    // under samma kommunetikett i trädet: "Stuvsta".
+    const canonicalKommun = mapAliasToCanonicalMunicipalityName(kommunRaw) ?? kommunRaw
+
+    // Specialfall: "... , Huddinge" mappas till Stockholms län i trädet
+    const lan = lanRaw === 'Huddinge' ? 'Stockholms län' : lanRaw
 
     const county = tree.find((c) => c.label === lan)
     if (!county) continue
     const munMap = munCounts.get(county.value)
     if (!munMap) continue
-    const mun = county.municipalities.find((m) => m.label === kommun)
+    const mun = county.municipalities.find((m) => m.label === canonicalKommun)
     if (!mun) continue
 
     const prev = munMap.get(mun.value) ?? 0
@@ -616,19 +668,35 @@ export function getKommunerByLan(lan: string): string[] {
 export function searchKommuner(query: string): SwedishLocation[] {
   const lowerQuery = query.toLowerCase().trim();
   if (!lowerQuery) return [];
-  
-  return SWEDISH_KOMMUNER.filter(loc => 
-    loc.kommun.toLowerCase().includes(lowerQuery) ||
-    loc.län.toLowerCase().includes(lowerQuery)
-  ).slice(0, 10); // Max 10 förslag
+
+  // Stuvsta-kluster: om användaren skriver något av alias-namnen (Stuvsta, Vistaberg,
+  // Glömsta, Fullersta) vill vi visa alla dessa som separata förslag kopplade till Huddinge.
+  if (isStuvstaAlias(lowerQuery)) {
+    const base: SwedishLocation[] = [
+      { kommun: 'Stuvsta', län: 'Huddinge' },
+      { kommun: 'Vistaberg', län: 'Huddinge' },
+      { kommun: 'Glömsta', län: 'Huddinge' },
+      { kommun: 'Fullersta', län: 'Huddinge' },
+    ]
+    return base
+  }
+
+  return SWEDISH_KOMMUNER.filter(
+    (loc) =>
+      loc.kommun.toLowerCase().includes(lowerQuery) ||
+      loc.län.toLowerCase().includes(lowerQuery)
+  ).slice(0, 10) // Max 10 förslag
 }
 
 export function formatLocation(location: string): string {
   const trimmed = location.trim()
 
-  // Specialfall: Stuvsta ska visas som "Stuvsta, Huddinge"
-  if (trimmed.toLowerCase() === 'stuvsta') {
-    return 'Stuvsta, Huddinge'
+  // Specialfall: Stuvsta-klustret – annonsskapare kan skriva
+  // "Stuvsta", "Vistaberg", "Glömsta", "Fullersta" och vi lagrar
+  // respektive område separat med ", Huddinge".
+  const stuvstaAliasFormatted = formatStuvstaAliasLocation(trimmed)
+  if (stuvstaAliasFormatted) {
+    return stuvstaAliasFormatted
   }
 
   // Om location redan är formaterad (t.ex. "Stockholm, Stockholms län"), returnera som den är
