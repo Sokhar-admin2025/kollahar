@@ -27,7 +27,8 @@ export default function Button({
 
   // 1. Grund-design (Gäller alla knappar)
   // focus:ring gör att man ser knappen tydligt om man använder tangentbord (EAA-krav)
-  const baseStyles = "font-medium transition-colors rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
+  // Vi undviker "stoppskylt"-pekare på disabled (ingen disabled:cursor-not-allowed).
+  const baseStyles = "font-medium transition-colors rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-50"
   
   // 2. Våra olika "Skins"
   const variants = {
