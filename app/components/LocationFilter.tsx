@@ -181,6 +181,29 @@ export default function LocationFilter({
       (m) => m.countyValue === countyValue && m.municipalityValue === municipalityValue
     )
 
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== 'Enter') return
+
+    const q = e.currentTarget.value.trim().toLowerCase()
+    if (!q) return
+
+    // Försök hitta en exakt matchande kommun i hela trädet (t.ex. "Stuvsta").
+    for (const county of LOCATION_TREE) {
+      const match = county.municipalities.find(
+        (m) => m.label.toLowerCase() === q
+      )
+      if (match) {
+        e.preventDefault()
+        // Välj kommunen (toggleMunicipality hanterar state för full/partial).
+        toggleMunicipality(county.value, match.value)
+        // Rensa sökfältet och stäng listan så det känns "klart".
+        setSearchQuery('')
+        setListVisible(false)
+        return
+      }
+    }
+  }
+
   const searchEl = (
     <div className="relative shrink-0">
       <Search
@@ -195,6 +218,7 @@ export default function LocationFilter({
           setSearchQuery(e.target.value)
           if (e.target.value.trim().length > 0) setListVisible(true)
         }}
+        onKeyDown={handleSearchKeyDown}
         className="w-full pl-9 pr-3 py-3 border border-gray-300 rounded-xl bg-white text-brand-text text-sm placeholder:text-gray-400 antialiased focus:outline-none focus:ring-2 focus:ring-brand-green"
         aria-label="Sök område"
       />
