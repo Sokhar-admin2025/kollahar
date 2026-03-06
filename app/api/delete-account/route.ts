@@ -29,7 +29,7 @@ async function deletePublicDataForUser(userId: string): Promise<string | null> {
     const { error } = await supabaseAdmin.from(table).delete().eq(column, userId)
     if (error) {
       console.error(`[delete-account] Rensning av ${table} (${column}=${userId}):`, error.message, error.code)
-      return `Kunde inte rensa ${table}: ${error.message}`
+      return `Kunde inte rensa ${table}: ${error.message} (kod: ${error.code ?? 'okänt'})`
     }
   }
   return null
@@ -74,7 +74,11 @@ export async function POST() {
     if (dataError) {
       console.error('[delete-account] Rensning av användardata misslyckades:', dataError)
       return NextResponse.json(
-        { error: 'Kunde inte radera ditt konto (rensning av data misslyckades). Försök igen eller kontakta support.' },
+        {
+          error:
+            `Kunde inte radera ditt konto (rensning av data misslyckades: ${dataError}). ` +
+            'Kontakta support om problemet kvarstår.',
+        },
         { status: 500 }
       )
     }
@@ -92,7 +96,12 @@ export async function POST() {
         { message: errMsg, code: errCode, userId }
       )
       return NextResponse.json(
-        { error: 'Kunde inte radera ditt konto just nu. Försök igen eller kontakta support.' },
+        {
+          error:
+            `Kunde inte radera ditt konto just nu (auth.deleteUser: ${errMsg}${
+              errCode ? `, kod: ${errCode}` : ''
+            }). Försök igen eller kontakta support.`,
+        },
         { status: 500 }
       )
     }
