@@ -102,6 +102,8 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 #### Radera annons – fix för production
 - **deleteListing:** Använder `supabaseAdmin` för SELECT + DELETE efter ägarverifiering. Undviker RLS/session-problem (cookie-domain, serverless) som gjorde att användare inte kunde radera annonser i production.
+#### Annonsgräns (listings_limit_company) – "Såld här" blockeras inte längre
+- **Trigger-fix:** Ny migration `20260309100000_fix_listings_limit_company_on_status_update.sql` uppdaterar `check_listing_limit()` så att MAX_LIMIT_REACHED endast kan triggas när `NEW.status = 'active'` (nya/återaktiverade annonser). Uppdateringar till icke-aktiva statusar (`sold`, `draft`, `deleted`) passerar utan gränskontroll, så valet **"Såld här"** i dashboarden sänker antalet aktiva annonser istället för att blockeras av kvoten.
 
 #### Sökfält & Next.js 15+ searchParams
 - **app/page.tsx:** `searchParams` är nu `Promise`; await före användning (Next.js 15+ breaking change).
