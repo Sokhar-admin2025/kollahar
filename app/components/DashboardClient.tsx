@@ -300,9 +300,11 @@ export default function DashboardClient({
                           </div>
                         )}
                       </div>
-                      <div className="flex-1 flex flex-col">
+                      <div className="flex-1 min-w-0 flex flex-col">
                         <div className="flex items-start justify-between gap-2 mb-2">
-                          <h3 className="font-bold text-lg text-brand-text antialiased flex-1">{ad.title}</h3>
+                          <h3 className="font-bold text-lg text-brand-text antialiased flex-1 truncate">
+                            {ad.title}
+                          </h3>
                           <div className="flex gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                             <Button
                               variant="icon"
