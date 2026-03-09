@@ -592,6 +592,15 @@ export default function LoginPageContent() {
             </div>
           )}
 
+          {reason === 'login_to_chat' && (
+            <div
+              className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800"
+              role="alert"
+            >
+              {DASHBOARD_TEXTS.messages.actions.loginToChat}
+            </div>
+          )}
+
           {searchParams.get('upgrade') === 'email_sent' && (
             <div
               className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800"

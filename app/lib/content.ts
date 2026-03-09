@@ -185,7 +185,7 @@ export const DASHBOARD_TEXTS = {
     actions: {
       contactSeller: "Skicka meddelande",
       startChat: "Hej! Jag är intresserad av denna.", // Standardtext när man startar ny chatt
-      loginToChat: "Logga in för att chatta"
+      loginToChat: "Du behöver logga in för att kontakta säljaren i chatten."
     }
   },
   // ... (här slutar messages-blocket), <--- GLÖM INTE KOMMA HÄR OVANFÖR
