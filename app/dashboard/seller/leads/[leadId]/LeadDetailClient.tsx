@@ -3,7 +3,7 @@
 import { useMemo, useState, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Phone, Mail, ArrowLeft, Loader2 } from 'lucide-react'
+import { Phone, Mail, ArrowLeft, Loader2, MessageCircle } from 'lucide-react'
 import type { LeadDetail } from '@/lib/features/leados/leados-lead-detail-service'
 import type { LeadStatus } from '@/lib/features/dealer/dealer-analytics-service'
 import { updateLeadStatusAction, updateLeadInternalNoteAction } from '@/app/actions/lead-actions'
@@ -206,17 +206,27 @@ export default function LeadDetailClient({ lead, leadMessages }: LeadDetailClien
               </div>
             </div>
             <div className="mt-3 space-y-1 text-sm text-brand-text/80">
-            <a href={`tel:${lead.buyerPhone}`} className="inline-flex items-center gap-1">
-              <Phone className="h-4 w-4 text-brand-green" />
-              <span>{lead.buyerPhone}</span>
-            </a>
-            {lead.buyerEmail && (
-              <a href={`mailto:${lead.buyerEmail}`} className="inline-flex items-center gap-1">
-                <Mail className="h-4 w-4 text-brand-green" />
-                <span className="break-all">{lead.buyerEmail}</span>
+              <a href={`tel:${lead.buyerPhone}`} className="inline-flex items-center gap-1">
+                <Phone className="h-4 w-4 text-brand-green" />
+                <span>{lead.buyerPhone}</span>
               </a>
-            )}
+              {lead.buyerEmail && (
+                <a href={`mailto:${lead.buyerEmail}`} className="inline-flex items-center gap-1">
+                  <Mail className="h-4 w-4 text-brand-green" />
+                  <span className="break-all">{lead.buyerEmail}</span>
+                </a>
+              )}
             </div>
+            {lead.conversationId && (
+              <button
+                type="button"
+                onClick={() => router.push(`/dashboard/messages?conv=${lead.conversationId}`)}
+                className="mt-3 inline-flex items-center gap-1 rounded-full bg-brand-green px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-brand-green/90"
+              >
+                <MessageCircle className="h-3.5 w-3.5" />
+                <span>Öppna kundchatten</span>
+              </button>
+            )}
             <p className="mt-3 text-xs text-brand-text/60">
               Inkommen: {new Date(lead.createdAt).toLocaleString('sv-SE')} ({createdSince})
             </p>
