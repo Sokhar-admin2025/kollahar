@@ -142,6 +142,30 @@ export async function getMessages(conversationId: string): Promise<Message[]> {
   return (data ?? []) as Message[]
 }
 
+/** Hämta de senaste N meddelandena i en konversation (default 10). */
+export async function getLatestMessagesForConversation(
+  conversationId: string,
+  limit = 10
+): Promise<Message[]> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('messages')
+    .select('*')
+    .eq('conversation_id', conversationId)
+    .order('created_at', { ascending: false })
+    .limit(limit)
+
+  if (error) {
+    console.error('[messages] getLatestMessagesForConversation failed', error.message)
+    return []
+  }
+
+  const rows = (data ?? []) as Message[]
+  // Returnera i fallande ordning (senaste först) – enklare för UI att visa
+  return rows
+}
+
 /** Markera meddelanden i konversationen som lästa (de som inte skickats av userId). */
 export async function markConversationAsRead(
   conversationId: string,

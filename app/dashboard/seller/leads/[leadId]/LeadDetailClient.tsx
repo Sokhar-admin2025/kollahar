@@ -12,10 +12,13 @@ import type { LeadMessage } from '@/lib/features/leados/leados-lead-messages-ser
 import { confirmListingSaleAction } from '@/app/actions/listing-sale-actions'
 import type { SoldVia } from '@/lib/features/leados/leados-sales-service'
 import LeadChat from '@/app/dashboard/_components/LeadChat'
+import type { Message as CustomerMessage } from '@/app/types'
 
 interface LeadDetailClientProps {
   lead: LeadDetail
   leadMessages: LeadMessage[]
+  customerMessages: CustomerMessage[]
+  currentUserId: string
 }
 
 function formatSince(dateIso: string): string {
@@ -38,7 +41,12 @@ function formatSince(dateIso: string): string {
   return `För ${d} d sedan`
 }
 
-export default function LeadDetailClient({ lead, leadMessages }: LeadDetailClientProps) {
+export default function LeadDetailClient({
+  lead,
+  leadMessages,
+  customerMessages,
+  currentUserId,
+}: LeadDetailClientProps) {
   const router = useRouter()
   const [note, setNote] = useState(lead.internalNote ?? '')
   const [savingNote, setSavingNote] = useState(false)
@@ -102,6 +110,14 @@ export default function LeadDetailClient({ lead, leadMessages }: LeadDetailClien
         return lead.source || 'Okänd källa'
     }
   }, [lead.source])
+
+  const recentCustomerMessages = useMemo(
+    () =>
+      [...customerMessages].sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      ),
+    [customerMessages]
+  )
 
   const handleStatusChange = (next: LeadStatus) => {
     if (statusOptimistic === next) return
@@ -217,6 +233,44 @@ export default function LeadDetailClient({ lead, leadMessages }: LeadDetailClien
                 </a>
               )}
             </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={statusUpdating}
+                className={`px-3 py-1 text-xs ${
+                  statusOptimistic === 'contacted' ? 'bg-brand-green text-white' : ''
+                }`}
+                onClick={() => handleStatusChange('contacted')}
+              >
+                {statusUpdating && statusOptimistic === 'contacted' ? (
+                  <span className="inline-flex items-center gap-1">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    Sparar...
+                  </span>
+                ) : (
+                  'Sätt som kontaktad'
+                )}
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={saleSubmitting}
+                className={`px-3 py-1 text-xs ${
+                  statusOptimistic === 'sold' ? 'bg-emerald-600 text-white' : ''
+                }`}
+                onClick={handleMarkAsSoldClick}
+              >
+                {saleSubmitting ? (
+                  <span className="inline-flex items-center gap-1">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    Registrerar...
+                  </span>
+                ) : (
+                  'Såld till kund!'
+                )}
+              </Button>
+            </div>
             {lead.conversationId && (
               <button
                 type="button"
@@ -259,66 +313,35 @@ export default function LeadDetailClient({ lead, leadMessages }: LeadDetailClien
 
           <section className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-gray-200">
             <div className="flex items-center justify-between gap-3">
-              <h2 className="text-sm font-semibold text-brand-text">Status</h2>
+              <h2 className="text-sm font-semibold text-brand-text">Senaste konversation</h2>
               <span className={statusBadgeClasses}>{statusLabel}</span>
             </div>
-            <div className="mt-3 flex flex-wrap gap-2">
-            <Button
-              type="button"
-              variant="secondary"
-              disabled={statusUpdating}
-              className={`px-3 py-1 text-xs ${
-                statusOptimistic === 'contacted' ? 'bg-brand-green text-white' : ''
-              }`}
-              onClick={() => handleStatusChange('contacted')}
-            >
-              {statusUpdating && statusOptimistic === 'contacted' ? (
-                <span className="inline-flex items-center gap-1">
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                  Sparar...
-                </span>
-              ) : (
-                'Sätt som kontaktad'
+            <div className="mt-3 text-xs text-brand-text/80">
+              {!lead.conversationId && (
+                <p className="text-brand-text/60">
+                  Det finns ingen chatt kopplad till detta lead.
+                </p>
               )}
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              disabled={saleSubmitting}
-              className={`px-3 py-1 text-xs ${
-                statusOptimistic === 'sold' ? 'bg-emerald-600 text-white' : ''
-              }`}
-              onClick={handleMarkAsSoldClick}
-            >
-              {saleSubmitting ? (
-                <span className="inline-flex items-center gap-1">
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                  Registrerar...
-                </span>
-              ) : (
-                'Bekräfta försäljning'
+              {lead.conversationId && recentCustomerMessages.length === 0 && (
+                <p className="text-brand-text/60">
+                  Inga meddelanden i kundchatten ännu.
+                </p>
               )}
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              disabled={statusUpdating}
-              className={`px-3 py-1 text-xs ${
-                statusOptimistic === 'archived' ? 'bg-gray-800 text-white' : ''
-              }`}
-              onClick={() => handleStatusChange('archived')}
-            >
-              {statusUpdating && statusOptimistic === 'archived' ? (
-                <span className="inline-flex items-center gap-1">
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                  Sparar...
-                </span>
-              ) : (
-                'Arkivera'
+              {lead.conversationId && recentCustomerMessages.length > 0 && (
+                <ul className="space-y-1">
+                  {recentCustomerMessages.map((msg) => {
+                    const senderLabel = msg.sender_id === currentUserId ? 'Säljare' : 'Köpare'
+                    return (
+                      <li key={msg.id}>
+                        <span className="font-semibold">{senderLabel}:</span>{' '}
+                        <span>{msg.content}</span>
+                      </li>
+                    )
+                  })}
+                </ul>
               )}
-            </Button>
-          </div>
-        </section>
+            </div>
+          </section>
 
           <section className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-gray-200">
             <h2 className="text-sm font-semibold text-brand-text">Intern anteckning</h2>

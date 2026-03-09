@@ -3,6 +3,7 @@ import { unstable_noStore } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { getLeadDetail } from '@/lib/features/leados/leados-lead-detail-service'
 import { getLeadMessagesForLead } from '@/lib/features/leados/leados-lead-messages-service'
+import { getLatestMessagesForConversation } from '@/lib/features/messages/message-service'
 import LeadDetailClient from './LeadDetailClient'
 
 interface LeadDetailPageProps {
@@ -39,15 +40,26 @@ export default async function LeadDetailPage({ params }: LeadDetailPageProps) {
     redirect('/dashboard')
   }
 
-  const [lead, leadMessages] = await Promise.all([
-    getLeadDetail({ leadId }),
-    getLeadMessagesForLead(leadId, user.id),
-  ])
+  const lead = await getLeadDetail({ leadId })
 
   if (!lead) {
     notFound()
   }
 
-  return <LeadDetailClient lead={lead} leadMessages={leadMessages} />
+  const [leadMessages, customerMessages] = await Promise.all([
+    getLeadMessagesForLead(leadId, user.id),
+    lead.conversationId
+      ? getLatestMessagesForConversation(lead.conversationId)
+      : Promise.resolve([]),
+  ])
+
+  return (
+    <LeadDetailClient
+      lead={lead}
+      leadMessages={leadMessages}
+      customerMessages={customerMessages}
+      currentUserId={user.id}
+    />
+  )
 }
 
