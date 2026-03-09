@@ -49,6 +49,7 @@ export default function Header({
   const [currentUserId, setCurrentUserId] = useState<string | null>(initialUserId ?? null)
   const [isVerified, setIsVerified] = useState<boolean>(initialIsVerified)
   const t = DASHBOARD_TEXTS
+  const isLoggedIn = !!(currentUserId && isVerified && !showAsLoggedOut)
 
   useEffect(() => {
     const syncUser = async (session: { user: { id: string } } | null) => {
@@ -228,7 +229,7 @@ export default function Header({
         {/* Navigation / Actions */}
         <div className="flex items-center gap-2">
           {/* Desktop: UserMenu för inloggad OCH verifierad (ej på reset-password), annars Logga in + Sälj-knapp */}
-          {currentUserId && isVerified && !showAsLoggedOut ? (
+          {isLoggedIn ? (
             <div className="hidden md:flex items-center gap-3">
               <Button onClick={handleSellClick}>
                 {t.navigation.sellBtn}
@@ -250,14 +251,15 @@ export default function Header({
             </div>
           )}
 
-          {/* Mobil: enklare menyikon */}
+          {/* Mobil: tydlig login/dashboard-knapp med text */}
           <button
             type="button"
             onClick={handleDashboardClick}
-            className="inline-flex md:hidden items-center justify-center h-10 w-10 rounded-full border border-brand-green/30 text-brand-green hover:bg-brand-green/10 focus:outline-none focus:ring-2 focus:ring-brand-green focus:ring-offset-2 focus:ring-offset-white"
-            aria-label={currentUserId && isVerified && !showAsLoggedOut ? 'Öppna Min Dashboard' : 'Logga in'}
+            className="inline-flex md:hidden items-center justify-center gap-1 rounded-full border border-brand-green/30 bg-white px-4 py-2 text-sm font-medium text-brand-green hover:bg-brand-green/10 focus:outline-none focus:ring-2 focus:ring-brand-green focus:ring-offset-2 focus:ring-offset-white"
+            aria-label={isLoggedIn ? 'Öppna Min Dashboard' : 'Logga in'}
           >
-            <Menu size={20} aria-hidden="true" />
+            <Menu size={18} aria-hidden="true" />
+            {!isLoggedIn && <span>Logga in</span>}
           </button>
         </div>
       </div>

@@ -957,6 +957,7 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
   - Desktop: Sökfält i mitten av headern, UserMenu till höger
   - Mobil: Sökfält dolt i header, finns kvar i Hero-sektionen
   - Ej inloggade: Visar "Logga in"-länk istället för UserMenu
+- **Mobil-header**: Menyikonen uppe till höger är ersatt med en större knapp med Menu‑ikon + texten "Logga in" för oinloggade (samma `handleDashboardClick`‑logik som tidigare), vilket gör det lättare att träffa på mobil och tydligare att knappen leder till inloggning.
 
 #### Header & Hero Layout-optimering
 - **Desktop Header**: Sökfält flyttat från Hero till mitten av headern (mellan logga och navigation)
