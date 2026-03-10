@@ -1,5 +1,6 @@
 'use server'
 
+import { createElement } from 'react'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import { Resend } from 'resend'
 import MarketingMail1 from '@/app/emails/MarketingMail1'
@@ -80,14 +81,13 @@ export async function processMarketingQueue(): Promise<ProcessMarketingQueueResu
         replyTo: REPLY_TO,
         to: [lead.email],
         subject,
-        react: (
-          <MarketingMail1
-            contactName={lead.contact_name ?? null}
-            companyName={lead.company_name ?? null}
-            signupUrl={SIGNUP_URL}
-            imageUrl="https://wyumdbrvpphmjbmfdphj.supabase.co/storage/v1/object/public/Marketing/dashboard-preview.png"
-          />
-        ),
+        react: createElement(MarketingMail1, {
+          contactName: lead.contact_name ?? null,
+          companyName: lead.company_name ?? null,
+          signupUrl: SIGNUP_URL,
+          imageUrl:
+            'https://wyumdbrvpphmjbmfdphj.supabase.co/storage/v1/object/public/Marketing/dashboard-preview.png',
+        }),
       })
 
       if (sendError) {
@@ -128,14 +128,13 @@ export async function processMarketingQueue(): Promise<ProcessMarketingQueueResu
         replyTo: REPLY_TO,
         to: [lead.email],
         subject,
-        react: (
-          <MarketingMail2
-            contactName={lead.contact_name ?? null}
-            companyName={lead.company_name ?? null}
-            signupUrl={SIGNUP_URL}
-            imageUrl="https://wyumdbrvpphmjbmfdphj.supabase.co/storage/v1/object/public/Marketing/Dealer-inventory-settings.png"
-          />
-        ),
+        react: createElement(MarketingMail2, {
+          contactName: lead.contact_name ?? null,
+          companyName: lead.company_name ?? null,
+          signupUrl: SIGNUP_URL,
+          imageUrl:
+            'https://wyumdbrvpphmjbmfdphj.supabase.co/storage/v1/object/public/Marketing/Dealer-inventory-settings.png',
+        }),
       })
       if (sendError) {
         result.failed += 1
@@ -163,15 +162,15 @@ export async function processMarketingQueue(): Promise<ProcessMarketingQueueResu
         replyTo: REPLY_TO,
         to: [lead.email],
         subject,
-        react: (
-          <MarketingMail3
-            contactName={lead.contact_name ?? null}
-            companyName={lead.company_name ?? null}
-            signupUrl={SIGNUP_URL}
-            imageUrl1="https://wyumdbrvpphmjbmfdphj.supabase.co/storage/v1/object/public/Marketing/Seller_view_001.png"
-            imageUrl2="https://wyumdbrvpphmjbmfdphj.supabase.co/storage/v1/object/public/Marketing/Seller_view_002.png"
-          />
-        ),
+        react: createElement(MarketingMail3, {
+          contactName: lead.contact_name ?? null,
+          companyName: lead.company_name ?? null,
+          signupUrl: SIGNUP_URL,
+          imageUrl1:
+            'https://wyumdbrvpphmjbmfdphj.supabase.co/storage/v1/object/public/Marketing/Seller_view_001.png',
+          imageUrl2:
+            'https://wyumdbrvpphmjbmfdphj.supabase.co/storage/v1/object/public/Marketing/Seller_view_002.png',
+        }),
       })
       if (sendError) {
         result.failed += 1
