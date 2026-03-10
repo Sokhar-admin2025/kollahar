@@ -2,9 +2,9 @@
 
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import { Resend } from 'resend'
-import { renderMarketingMail1Html } from '@/lib/email/marketing-mail1'
-import { renderMarketingMail2Html } from '@/lib/email/marketing-mail2'
-import { renderMarketingMail3Html } from '@/lib/email/marketing-mail3'
+import MarketingMail1 from '@/app/emails/MarketingMail1'
+import MarketingMail2 from '@/app/emails/MarketingMail2'
+import MarketingMail3 from '@/app/emails/MarketingMail3'
 
 const RESEND_API_KEY = (process.env.RESEND_API_KEY || '').trim()
 const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null
@@ -70,13 +70,6 @@ export async function processMarketingQueue(): Promise<ProcessMarketingQueueResu
     if (lead.status !== 'active') continue
 
     if (lead.current_step === 0) {
-      const html = renderMarketingMail1Html({
-        contactName: lead.contact_name ?? null,
-        companyName: lead.company_name ?? null,
-        signupUrl: SIGNUP_URL,
-        imageUrl: 'https://wyumdbrvpphmjbmfdphj.supabase.co/storage/v1/object/public/Marketing/dashboard-preview.png',
-      })
-
       const subject =
         lead.contact_name?.trim()
           ? `17 minuter är för långsamt, ${lead.contact_name.trim()}.`
@@ -87,7 +80,14 @@ export async function processMarketingQueue(): Promise<ProcessMarketingQueueResu
         replyTo: REPLY_TO,
         to: [lead.email],
         subject,
-        html,
+        react: (
+          <MarketingMail1
+            contactName={lead.contact_name ?? null}
+            companyName={lead.company_name ?? null}
+            signupUrl={SIGNUP_URL}
+            imageUrl="https://wyumdbrvpphmjbmfdphj.supabase.co/storage/v1/object/public/Marketing/dashboard-preview.png"
+          />
+        ),
       })
 
       if (sendError) {
@@ -122,19 +122,20 @@ export async function processMarketingQueue(): Promise<ProcessMarketingQueueResu
     const readyForNextStep = lastSentAt > 0 && Date.now() - lastSentAt >= intervalMs
 
     if (lead.current_step === 1 && readyForNextStep) {
-      const html = renderMarketingMail2Html({
-        contactName: lead.contact_name ?? null,
-        companyName: lead.company_name ?? null,
-        signupUrl: SIGNUP_URL,
-        imageUrl: 'https://wyumdbrvpphmjbmfdphj.supabase.co/storage/v1/object/public/Marketing/Dealer-inventory-settings.png',
-      })
       const subject = 'Sluta gissa – börja svara tillsammans'
       const { error: sendError } = await resend.emails.send({
         from: FROM_EMAIL,
         replyTo: REPLY_TO,
         to: [lead.email],
         subject,
-        html,
+        react: (
+          <MarketingMail2
+            contactName={lead.contact_name ?? null}
+            companyName={lead.company_name ?? null}
+            signupUrl={SIGNUP_URL}
+            imageUrl="https://wyumdbrvpphmjbmfdphj.supabase.co/storage/v1/object/public/Marketing/Dealer-inventory-settings.png"
+          />
+        ),
       })
       if (sendError) {
         result.failed += 1
@@ -156,22 +157,21 @@ export async function processMarketingQueue(): Promise<ProcessMarketingQueueResu
     }
 
     if (lead.current_step === 2 && readyForNextStep) {
-      const html = renderMarketingMail3Html({
-        contactName: lead.contact_name ?? null,
-        companyName: lead.company_name ?? null,
-        signupUrl: SIGNUP_URL,
-        imageUrl1:
-          'https://wyumdbrvpphmjbmfdphj.supabase.co/storage/v1/object/public/Marketing/Seller_view_001.png',
-        imageUrl2:
-          'https://wyumdbrvpphmjbmfdphj.supabase.co/storage/v1/object/public/Marketing/Seller_view_002.png',
-      })
       const subject = 'Vi bygger bryggan till framtiden'
       const { error: sendError } = await resend.emails.send({
         from: FROM_EMAIL,
         replyTo: REPLY_TO,
         to: [lead.email],
         subject,
-        html,
+        react: (
+          <MarketingMail3
+            contactName={lead.contact_name ?? null}
+            companyName={lead.company_name ?? null}
+            signupUrl={SIGNUP_URL}
+            imageUrl1="https://wyumdbrvpphmjbmfdphj.supabase.co/storage/v1/object/public/Marketing/Seller_view_001.png"
+            imageUrl2="https://wyumdbrvpphmjbmfdphj.supabase.co/storage/v1/object/public/Marketing/Seller_view_002.png"
+          />
+        ),
       })
       if (sendError) {
         result.failed += 1
