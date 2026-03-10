@@ -8,6 +8,13 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ### ✨ Tillagt
 
+#### Marketing Leads – 3-stegs e-postkampanj (feb 2026)
+- **Tabell `marketing_leads`:** E-post, kontaktnamn, företagsnamn, `current_step` (1–3), `last_sent_at`. Migration `20260310100000_marketing_leads.sql` inkl. RLS (service role) och index.
+- **Tre mejl:** Mail 1 (Välkommen / Mission Control), Mail 2 (Sniper Mode), Mail 3 (Framtiden & SEO). Varje mejl har React-komponent (`app/emails/MarketingMail1–3.tsx`), HTML-renderer (`lib/email/marketing-mail1–3.ts`) och gemensam visuell stil (CTA, bilder 560×320, border-radius, box-shadow).
+- **Mail 3 – två seller-view-bilder:** Bilderna Seller_view_001.png och Seller_view_002.png (Supabase Storage) visas i Mail 3 med lead-in "Så här kan det se ut för er – era annonser i samma vy". Konverteringscopy: "Inget kreditkort, ingen förpliktelse – bara 3 minuter till översikten" och tydlig CTA.
+- **Cron:** `app/api/cron/process-marketing/route.ts` – hämtar leads redo för nästa steg, skickar via Resend, uppdaterar `current_step` och `last_sent_at`. Skyddad med `CRON_SECRET`.
+- **Server action:** `processMarketingLeadsAction` i `app/actions/marketing-actions.ts` – anropas av cron eller manuellt; använder Resend + Supabase admin.
+
 #### Level 2 – Lead Action Center för handlare (feb 2026)
 - **Ny tabellvy i Dealer Dashboard:** `Lead Action Center` med kund (namn/e-post/telefon), intresse (annonslänk), relativ tid och inline status.
 - **Lead-statusflöde:** Nya statusar `new`, `contacted`, `qualified`, `sold`, `archived` (default `new`).
