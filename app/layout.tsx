@@ -5,7 +5,9 @@ import { createClient } from '@/lib/supabase/server'
 import Footer from './components/organisms/Footer'
 import CookieBanner from './components/CookieBanner'
 import ScrollbarGutter from './components/ScrollbarGutter'
-import LayoutWithHeader from './components/layout/LayoutWithHeader' 
+import LayoutWithHeader from './components/layout/LayoutWithHeader'
+import { ErrorBoundary } from './components/ErrorBoundary'
+import { GlobalErrorListeners } from './components/GlobalErrorListeners'
 
 const knewave = Knewave({ 
   subsets: ['latin'],
@@ -66,22 +68,26 @@ export default async function RootLayout({
     <html lang="sv">
       <body className={`${dmSans.variable} ${knewave.variable} font-body min-h-screen flex flex-col bg-brand-beige`}>
         <ScrollbarGutter />
-        {/* Header med server-hämtad user = inget flimmer; innehållet wrappat i LayoutWithHeader */}
-        <LayoutWithHeader
-          initialUserId={user?.id ?? null}
-          initialIsVerified={initialIsVerified}
-        >
-          {/* Huvudinnehållet: min-h-0 så att flex-barn (t.ex. InboxClient med h-full) kan fylla utan att tvinga body att växa */}
-          <div className="flex-grow min-h-0 flex flex-col">
-            {children}
-          </div>
-        </LayoutWithHeader>
+        <GlobalErrorListeners>
+          <ErrorBoundary>
+            {/* Header med server-hämtad user = inget flimmer; innehållet wrappat i LayoutWithHeader */}
+            <LayoutWithHeader
+              initialUserId={user?.id ?? null}
+              initialIsVerified={initialIsVerified}
+            >
+              {/* Huvudinnehållet: min-h-0 så att flex-barn (t.ex. InboxClient med h-full) kan fylla utan att tvinga body att växa */}
+              <div className="flex-grow min-h-0 flex flex-col">
+                {children}
+              </div>
+            </LayoutWithHeader>
 
-        {/* Footern hamnar alltid längst ner */}
-        <Footer />
-        
-        {/* Cookie Consent Banner – GDPR, styr Sentry Replay */}
-        <CookieBanner />
+            {/* Footern hamnar alltid längst ner */}
+            <Footer />
+            
+            {/* Cookie Consent Banner – GDPR, styr Sentry Replay */}
+            <CookieBanner />
+          </ErrorBoundary>
+        </GlobalErrorListeners>
       </body>
     </html>
   )
