@@ -77,13 +77,12 @@ export async function translateError(errorId: string) {
       input: prompt,
     });
 
-    const content = completion.output[0].content[0];
-    if (content && (content as any).type === "output_text") {
-      translated = (content as any).text;
-    } else {
-      // fallback om svaret är i annat format
-      translated = JSON.stringify(completion.output);
-    }
+    // OpenAI Responses-API har ett flexibelt schema – använd defensiv typning.
+    const anyCompletion = completion as any;
+    translated =
+      anyCompletion.output_text ||
+      anyCompletion.output?.[0]?.content?.[0]?.text ||
+      JSON.stringify(anyCompletion.output ?? anyCompletion);
   } catch (err) {
     console.error("[translateError] LLM error", err);
     return {
