@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "../../lib/supabase/server";
 import { UsersClient, type UserRow } from "./UsersClient";
 
 export const dynamic = "force-dynamic";

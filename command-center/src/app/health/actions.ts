@@ -1,7 +1,7 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
-import { getOpenAIClient } from "@/lib/llm";
+import { createClient } from "../../lib/supabase/server";
+import { getOpenAIClient } from "../../lib/llm";
 
 export async function translateError(errorId: string) {
   const supabase = await createClient();

@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { CheckCircle2, Wand2 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
-import { parseEquipmentList } from "@/lib/parsers/equipment-parser";
+import { createClient } from "../../lib/supabase/client";
+import { parseEquipmentList } from "../../lib/parsers/equipment-parser";
 
 type ParsedResult = string[];
 

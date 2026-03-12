@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "../../lib/supabase/server";
 import { LeadsClient, type Lead } from "./LeadsClient";
 
 export const dynamic = "force-dynamic";

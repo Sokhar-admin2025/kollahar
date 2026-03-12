@@ -1,7 +1,7 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "../../lib/supabase/server";
+import { createAdminClient } from "../../lib/supabase/admin";
 
 const MAIN_APP_URL =
   process.env.NEXT_PUBLIC_MAIN_APP_URL || "http://localhost:3001";

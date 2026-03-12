@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "../lib/supabase/server";
 import { CommandShell, type StaffUser } from "./command-shell";
 
 const geistSans = Geist({
