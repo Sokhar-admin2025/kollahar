@@ -256,7 +256,7 @@ export default function CleaningLabPage() {
                           setHeuristic(h);
                           const ai = m.refined_list ?? [];
                           setAiSuggestion(ai);
-                          setSelected("ai");
+                          setSelectedBase("ai");
                           setManualLines(ai.join("\n"));
                         }}
                         className={`flex w-full items-center justify-between gap-2 px-2 py-1.5 text-left hover:bg-slate-800 ${

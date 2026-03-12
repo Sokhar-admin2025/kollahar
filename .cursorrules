@@ -8,18 +8,41 @@ You are an expert Senior Fullstack Developer specializing in Next.js (App Router
 - **Design Philosophy:** Clean, minimalist, mobile-first. Lots of whitespace, clear typography (Vimla-style). And as best possible way have accessibility in mind, so that we pass EAA regulations.
 - **Tone:** Professional, helpful, funny, and clear.
 
-# ARCHITECTURE RULES
-- **Dashboard Centralization:** All user-specific lists (My Ads, Saved Favorites, Sold Items, Messages) MUST be implemented as tabs or sections within the `/dashboard` page. DO NOT create separate pages (like /favorites or /my-ads) unless explicitly requested. The Dashboard is the single hub for the user.
-- **Supabase Auth:** Use `createBrowserClient` for client components and `createServerClient` for server actions/components to handle cookies correctly.
-- **Images:** All user images are stored in the 'listing-images' bucket.
+# ARCHITECTURE RULES – HUVUDAPPEN (`/sokhar`)
+- **Dashboard Centralization:** All user-specific lists (My Ads, Saved Favorites, Sold Items, Messages) MUST be implemented as tabs eller sektioner inom `/dashboard`. Skapa inte separata sidor (som `/favorites` eller `/my-ads`) utan uttrycklig begäran. Dashboard är navet.
+- **Supabase Auth:** Använd SSR-paketen (`createServerClient` / `createBrowserClient`) enligt befintliga helpers i `lib/supabase/*` och undvik flera GoTrueClient-instanser.
+- **Images:** Alla användarbilder ligger i bucketen `listing-images`.
+
+# NY ARKITEKTUR – COMMAND CENTER (`/command-center`)
+- **Separat app:** `command-center/` är en egen Next.js App Router-app, med kod under `command-center/src/*`. Den deployas som separat projekt på Vercel.
+- **Syfte:** Intern adminpanel för Kollahär (internal staff only) – t.ex. AI Cleaning Lab, System Health, User Management (impersonation), Lead Management.
+- **Isolering:** Kod för adminpanelen SKA stanna i `/command-center`. Återanvänd inte huvudappens komponenter direkt – kopiera hellre logik eller bygg små wrappers för att undvika kopplingsproblem.
+- **Supabase:** Command Center använder Supabase (inkl. Service Role key) för admin-flöden, men alla känsliga operationer ska ligga i server actions/route handlers.
+
+## Importregler i `command-center`
+- **ALDRIG** förlita dig på `@/`-alias i `command-center` (även om det finns i tsconfig).
+- Använd alltid **relativa importer** i `command-center/src/**`, t.ex.:
+  - `import { createClient } from "../lib/supabase/server";`
+  - `import { parseEquipmentList } from "../../lib/parsers/equipment-parser";`
+- Detta är kritiskt för Vercel-builden eftersom `command-center` ligger som underkatalog i huvudrepo:t.
+
+## Miljövariabler
+- Huvudappens runtime läser env från rotens `.env.local` / Vercel-projektet för `/sokhar`.
+- Command Center har en egen `.env.local` i `/command-center` och ett eget Vercel-projekt.
+- När du lägger till nya envs, tänk på **vilken** app som ska använda dem (t.ex. `NEXT_PUBLIC_MAIN_APP_URL` i Command Center vs. huvudappens publika envs).
+
+## Designregler i Command Center
+- **Stil:** Neo-brutalistisk – tjocka ramar (`border-2`/`border-4`), tydliga skuggor, starka accentfärger.
+- **Bakgrund:** Ljus grund (liknande sidebar), kontrastfärger för sektioner (gul, grön, orange) – undvik helsvarta bakgrunder som gör skuggor meningslösa.
+- **Layout:** På desktop ska viktiga vyer (AI Cleaning Lab, System Health, User Management) utnyttja bredden (Command Center-shellen har redan max-width på innehållet).
 
 # TECH STACK BEST PRACTICES
-- **Styling:** Use Tailwind CSS exclusively. Avoid inline styles.
-- **Icons:** Use `lucide-react`.
-- **Components:** keep components small and reusable.
-- **Fetching:** Prefer Server Components for fetching data where possible.
+- **Styling:** Använd Tailwind CSS exklusivt. Undvik inline-styles utöver enstaka specialfall.
+- **Icons:** Använd `lucide-react` i båda appar.
+- **Komponenter:** Håll komponenter små och återanvändbara inom respektive app.
+- **Fetching:** Föredra Server Components/server actions för dataladdning där det passar (särskilt i dashboards).
 
 # BEHAVIOR
-- When writing code, always consider "Safety first" (Row Level Security, Auth checks).
-- If I ask for a new feature, check if it fits the existing "Dashboard Pattern" first.
-- Always fix "Multiple GoTrueClient" warnings by instantiating Supabase clients outside component scope or correctly using the SSR package.
+- Tänk alltid "Safety first": RLS, auth-checks, audit-logs för adminflöden.
+- Om en ny feature berör inloggade vyer, kontrollera först om den hör hemma i `/dashboard` (huvudapp) eller i Command Center.
+- Undvik att introducera dolda kopplingar mellan huvudapp och Command Center – kommunikation ska ske via Supabase (data) eller tydliga URLs, inte via delad UI-kod.
