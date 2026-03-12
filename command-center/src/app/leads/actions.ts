@@ -32,8 +32,8 @@ export async function importLeads(formData: FormData) {
 
   const existingEmails = new Set(
     (existingRows ?? [])
-      .map((row) => row.email as string | null)
-      .filter(Boolean)
+      .map((row) => row.email)
+      .filter((email): email is string => typeof email === "string" && email.length > 0)
       .map((email) => email.toLowerCase())
   );
 
