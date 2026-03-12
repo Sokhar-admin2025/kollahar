@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { parseEquipmentList } from "@/lib/parsers/equipment-parser";
+import { parseEquipmentList } from "../../../lib/parsers/equipment-parser";
 
 // Enkel stub för AI-förslag.
 // TODO: Byt ut mot riktig LLM-integration (t.ex. via OpenAI/Vertex)
