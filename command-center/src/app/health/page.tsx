@@ -9,7 +9,7 @@ export default async function HealthPage() {
 
   const { data, error } = await supabase
     .from("system_errors")
-    .select("id, error_message, stack_trace, path, user_id, status, created_at")
+    .select("id, error_message, stack_trace, path, user_id, status, source, created_at")
     .order("created_at", { ascending: false })
     .limit(50);
 

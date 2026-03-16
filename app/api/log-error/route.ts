@@ -1,18 +1,24 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@supabase/supabase-js'
+
+// Använd admin-klient – endpointen anropas från instrumentation (ingen user-session)
+function getAdminClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  )
+}
 
 export async function POST(request: Request) {
   try {
-    const supabase = await createClient()
-
-    const body = (await request.json().catch(() => null)) as
-      | {
-          error_message?: string
-          stack_trace?: string
-          path?: string
-          user_id?: string
-        }
-      | null
+    const body = (await request.json().catch(() => null)) as {
+      error_message?: string
+      stack_trace?: string
+      path?: string
+      user_id?: string
+      source?: string
+    } | null
 
     const errorMessage = body?.error_message?.trim()
     if (!errorMessage) {
@@ -22,30 +28,25 @@ export async function POST(request: Request) {
       )
     }
 
-    const stackTrace = body?.stack_trace?.trim() || null
-    const path = body?.path?.trim() || null
-    const userId = body?.user_id?.trim() || null
+    const supabase = getAdminClient()
 
-    // Försök infoga – men svälj fel tyst (vi vill inte krascha appen)
     const { error } = await supabase.from('system_errors').insert({
       error_message: errorMessage,
-      stack_trace: stackTrace,
-      path,
-      user_id: userId,
+      stack_trace: body?.stack_trace?.trim() || null,
+      path: body?.path?.trim() || null,
+      user_id: body?.user_id?.trim() || null,
+      source: body?.source || 'main-app',
       status: 'open',
     })
 
     if (error) {
       console.error('[log-error] insert failed', error.message)
-      // Svara ändå 200 – loggning får aldrig krascha appen
       return NextResponse.json({ success: false })
     }
 
     return NextResponse.json({ success: true })
   } catch (err) {
     console.error('[log-error] unexpected error', err)
-    // Svara 200 även här – viktigast är att inte krascha frontend
     return NextResponse.json({ success: false })
   }
 }
-
