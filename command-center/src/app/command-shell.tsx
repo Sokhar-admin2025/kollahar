@@ -150,14 +150,8 @@ export function CommandShell({ staff, children }: CommandShellProps) {
       </div>
 
       {/* Main content */}
-      <main
-        className={`flex-1 overflow-y-auto px-3 pb-6 pt-14 md:px-6 md:pt-6 ${
-          collapsed ? "md:ml-20" : "md:ml-72"
-        }`}
-      >
-        <div className="mx-auto max-w-7xl">
-          {children}
-        </div>
+      <main className="flex-1 overflow-y-auto px-4 pb-6 pt-16 md:px-8 md:pt-6">
+        {children}
       </main>
     </div>
   );
