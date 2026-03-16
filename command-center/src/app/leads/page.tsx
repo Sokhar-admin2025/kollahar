@@ -16,26 +16,24 @@ export default async function LeadsPage() {
   const leads = (data ?? []) as Lead[];
 
   return (
-    <div className="flex min-h-screen items-start justify-center bg-slate-950 px-4 py-8">
-      <main className="w-full max-w-5xl rounded-2xl bg-slate-900/80 p-6 shadow-xl ring-1 ring-slate-800">
-        <div className="mb-4 flex items-center justify-between gap-4">
-          <div>
-            <p className="text-[11px] uppercase tracking-wide text-emerald-400">
-              Lead Management-modul
-            </p>
-            <p className="mt-1 text-xs text-slate-400">
-              Hämtar data från Supabase-tabellen <code>marketing_leads</code>.
-            </p>
-          </div>
-          {error && (
-            <p className="rounded-md bg-red-950/40 px-3 py-1.5 text-[11px] text-red-300">
-              Kunde inte ladda leads just nu.
-            </p>
-          )}
+    <div className="rounded-2xl border-4 border-black bg-white p-4 md:p-6 shadow-[6px_6px_0_0_rgba(0,0,0,1)]">
+      <header className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
+        <div>
+          <h1 className="text-xl font-semibold text-slate-900">
+            Lead Management
+          </h1>
+          <p className="text-xs text-slate-600">
+            Hämtar data från Supabase-tabellen <code className="rounded bg-slate-200 px-1 py-0.5 text-[10px]">marketing_leads</code>.
+          </p>
         </div>
+        {error && (
+          <p className="rounded-md border-2 border-black bg-red-100 px-3 py-1.5 text-[11px] font-semibold text-red-700 shadow-[3px_3px_0_0_rgba(0,0,0,1)]">
+            Kunde inte ladda leads just nu.
+          </p>
+        )}
+      </header>
 
-        <LeadsClient leads={leads} />
-      </main>
+      <LeadsClient leads={leads} />
     </div>
   );
 }

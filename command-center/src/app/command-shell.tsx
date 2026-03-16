@@ -31,10 +31,10 @@ export function CommandShell({ staff, children }: CommandShellProps) {
   const [collapsed, setCollapsed] = useState(false); // desktop collapse
 
   return (
-    <div className="flex min-h-screen bg-[#f0f0f0] text-slate-900">
+    <div className="flex h-screen overflow-hidden bg-[#f0f0f0] text-slate-900">
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex flex-col border-r-2 border-black bg-white p-4 shadow-[4px_0_0_0_rgba(0,0,0,1)] transition-transform duration-200 md:static md:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 flex flex-col overflow-y-auto border-r-2 border-black bg-white p-4 shadow-[4px_0_0_0_rgba(0,0,0,1)] transition-transform duration-200 md:static md:translate-x-0 ${
           open ? "translate-x-0 w-72" : "-translate-x-full w-72 md:translate-x-0"
         } ${
           collapsed ? "md:w-20" : "md:w-72"
@@ -151,7 +151,7 @@ export function CommandShell({ staff, children }: CommandShellProps) {
 
       {/* Main content */}
       <main
-        className={`flex-1 px-3 pb-6 pt-14 md:px-6 md:pt-6 ${
+        className={`flex-1 overflow-y-auto px-3 pb-6 pt-14 md:px-6 md:pt-6 ${
           collapsed ? "md:ml-20" : "md:ml-72"
         }`}
       >
