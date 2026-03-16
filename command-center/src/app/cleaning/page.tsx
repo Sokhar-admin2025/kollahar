@@ -353,7 +353,7 @@ export default function CleaningLabPage() {
           </div>
           <p className="mt-1 text-[11px] text-slate-600">
             Här kan du lägga till/ta bort rader. Varje rad blir en egen post i{" "}
-            <code className="rounded bg-slate-800 px-1 py-0.5 text-[10px]">refined_list</code>.
+            <code className="rounded border border-black/20 bg-[#f0f0f0] px-1 py-0.5 text-[10px] text-slate-900">refined_list</code>.
           </p>
           <textarea
             value={manualLines}

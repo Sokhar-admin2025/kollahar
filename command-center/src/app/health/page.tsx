@@ -1,11 +1,11 @@
-import { createClient } from "../../lib/supabase/server";
+import { createAdminClient } from "../../lib/supabase/admin";
 import type { SystemError } from "./HealthClient";
 import { HealthClient } from "./HealthClient";
 
 export const dynamic = "force-dynamic";
 
 export default async function HealthPage() {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from("system_errors")
