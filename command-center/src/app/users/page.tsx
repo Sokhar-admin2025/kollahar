@@ -14,19 +14,17 @@ export default async function UsersPage() {
   const users = (data ?? []) as UserRow[];
 
   return (
-    <div className="py-4 md:py-6">
-      <h1 className="text-sm font-semibold uppercase tracking-wide text-slate-700">
-        User Management
-      </h1>
-      <p className="mt-1 text-[11px] text-slate-600">
-        Hämtar data från huvud-appens tabell{" "}
-        <code className="rounded bg-slate-200 px-1 py-0.5 text-[10px]">
-          profiles
-        </code>
-        . Endast för intern användning.
-      </p>
+    <div className="space-y-4">
+      <div>
+        <h1 className="text-2xl font-black tracking-tight text-black">
+          User Management
+        </h1>
+        <p className="text-xs font-medium text-slate-600">
+          Alla profiler i huvud-appen. Använd impersonation med försiktighet.
+        </p>
+      </div>
       {error && (
-        <p className="mt-2 rounded-md border-2 border-black bg-red-100 px-3 py-1.5 text-[11px] font-semibold text-red-700 shadow-[3px_3px_0_0_rgba(0,0,0,1)]">
+        <p className="rounded-md border-2 border-black bg-red-100 px-3 py-1.5 text-[11px] font-semibold text-red-700 shadow-[3px_3px_0_0_rgba(0,0,0,1)]">
           Kunde inte ladda användare just nu.
         </p>
       )}
@@ -34,4 +32,3 @@ export default async function UsersPage() {
     </div>
   );
 }
-

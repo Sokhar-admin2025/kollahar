@@ -16,14 +16,14 @@ export default async function LeadsPage() {
   const leads = (data ?? []) as Lead[];
 
   return (
-    <div className="rounded-2xl border-4 border-black bg-white p-4 md:p-6 shadow-[6px_6px_0_0_rgba(0,0,0,1)]">
-      <header className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
+    <div className="space-y-4">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-baseline sm:justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900">
+          <h1 className="text-2xl font-black tracking-tight text-black">
             Lead Management
           </h1>
-          <p className="text-xs text-slate-600">
-            Hämtar data från Supabase-tabellen <code className="rounded bg-slate-200 px-1 py-0.5 text-[10px]">marketing_leads</code>.
+          <p className="text-xs font-medium text-slate-600">
+            Hantera marketing_leads-sekvensen och manuella imports.
           </p>
         </div>
         {error && (
@@ -31,10 +31,8 @@ export default async function LeadsPage() {
             Kunde inte ladda leads just nu.
           </p>
         )}
-      </header>
-
+      </div>
       <LeadsClient leads={leads} />
     </div>
   );
 }
-

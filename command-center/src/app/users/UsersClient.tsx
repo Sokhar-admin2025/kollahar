@@ -35,38 +35,26 @@ export function UsersClient({ users }: UsersClientProps) {
   };
 
   return (
-    <div className="mt-4 rounded-2xl border-4 border-black bg-white p-4 shadow-[6px_6px_0_0_rgba(0,0,0,1)]">
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-700">
-            User Management
-          </p>
-          <p className="mt-1 text-[11px] text-slate-600">
-            Lista över alla profiler i huvud-appen. Använd{" "}
-            <span className="font-semibold">“Logga in som”</span> med försiktighet.
-          </p>
-        </div>
-        {error && (
-          <p className="max-w-xs rounded-md border-2 border-black bg-red-100 px-3 py-1.5 text-[11px] font-semibold text-red-700 shadow-[3px_3px_0_0_rgba(0,0,0,1)]">
-            {error}
-          </p>
-        )}
-      </div>
-
-      <div className="overflow-hidden rounded-xl border-2 border-black">
-        <table className="min-w-full border-collapse bg-[#fdfdfd] text-left text-[11px]">
+    <div className="space-y-3">
+      {error && (
+        <p className="rounded-md border-2 border-black bg-red-100 px-3 py-1.5 text-[11px] font-semibold text-red-700 shadow-[3px_3px_0_0_rgba(0,0,0,1)]">
+          {error}
+        </p>
+      )}
+      <div className="overflow-hidden rounded-xl border-2 border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)]">
+        <table className="min-w-full border-collapse bg-white text-left text-[11px]">
           <thead>
-            <tr className="bg-[#f0f0f0]">
-              <th className="border-b-2 border-black px-3 py-2 font-semibold">
+            <tr className="bg-black text-white">
+              <th className="px-3 py-2.5 text-[11px] font-bold uppercase tracking-wide">
                 Namn
               </th>
-              <th className="border-b-2 border-black px-3 py-2 font-semibold">
+              <th className="px-3 py-2.5 text-[11px] font-bold uppercase tracking-wide">
                 E-post
               </th>
-              <th className="border-b-2 border-black px-3 py-2 font-semibold">
+              <th className="px-3 py-2.5 text-[11px] font-bold uppercase tracking-wide">
                 Typ
               </th>
-              <th className="border-b-2 border-black px-3 py-2 font-semibold text-right">
+              <th className="px-3 py-2.5 text-[11px] font-bold uppercase tracking-wide text-right">
                 Åtgärder
               </th>
             </tr>
@@ -76,29 +64,34 @@ export function UsersClient({ users }: UsersClientProps) {
               <tr>
                 <td
                   colSpan={4}
-                  className="px-3 py-3 text-center text-[11px] text-slate-500"
+                  className="px-3 py-4 text-center text-[11px] text-slate-500"
                 >
                   Inga användare hittades.
                 </td>
               </tr>
             ) : (
               users.map((u) => (
-                <tr key={u.id} className="odd:bg-white even:bg-[#f7f7f7]">
-                  <td className="border-t border-black/20 px-3 py-2">
+                <tr
+                  key={u.id}
+                  className="border-t border-black/20 odd:bg-white even:bg-[#f5f5f5] hover:bg-yellow-50"
+                >
+                  <td className="px-3 py-2.5 font-medium text-slate-900">
                     {u.full_name || "–"}
                   </td>
-                  <td className="border-t border-black/20 px-3 py-2">
+                  <td className="px-3 py-2.5 text-slate-700">
                     {u.email || "–"}
                   </td>
-                  <td className="border-t border-black/20 px-3 py-2">
-                    {u.account_type || "okänd"}
+                  <td className="px-3 py-2.5">
+                    <span className="rounded-sm border border-black/30 bg-[#f0f0f0] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-700">
+                      {u.account_type || "okänd"}
+                    </span>
                   </td>
-                  <td className="border-t border-black/20 px-3 py-2 text-right">
+                  <td className="px-3 py-2.5 text-right">
                     <button
                       type="button"
                       onClick={() => handleImpersonate(u.id)}
                       disabled={isPending && pendingId === u.id}
-                      className="inline-flex items-center gap-1 rounded-md border-2 border-black bg-orange-400 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-black shadow-[2px_2px_0_0_rgba(0,0,0,1)] hover:bg-orange-300 disabled:opacity-60"
+                      className="inline-flex items-center gap-1 rounded-md border-2 border-black bg-orange-400 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-black shadow-[2px_2px_0_0_rgba(0,0,0,1)] hover:bg-orange-300 disabled:opacity-50"
                     >
                       {isPending && pendingId === u.id
                         ? "Skapar länk…"
@@ -114,4 +107,3 @@ export function UsersClient({ users }: UsersClientProps) {
     </div>
   );
 }
-

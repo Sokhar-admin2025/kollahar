@@ -170,25 +170,24 @@ export default function CleaningLabPage() {
   };
 
   return (
-    <div className="py-4 md:py-6">
-      <div className="rounded-2xl border-4 border-black bg-white p-4 md:p-6 shadow-[6px_6px_0_0_rgba(0,0,0,1)]">
-        <header className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-baseline sm:justify-between">
-          <div>
-            <h1 className="text-xl font-semibold text-slate-900">
-              AI Cleaning Lab
-            </h1>
-            <p className="text-xs text-slate-600">
-              Neo-brutalistisk verkstad för att städa bilutrustning – du är
-              Master of Data.
-            </p>
-          </div>
-          <span className="mt-2 inline-flex items-center gap-1 rounded-full border-2 border-black bg-yellow-300 px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-slate-900 shadow-[3px_3px_0_0_rgba(0,0,0,1)]">
-            <Wand2 className="h-3 w-3" />
-            Cleaning Mode
-          </span>
-        </header>
+    <div className="space-y-4">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-baseline sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-black tracking-tight text-black">
+            AI Cleaning Lab
+          </h1>
+          <p className="text-xs font-medium text-slate-600">
+            Neo-brutalistisk verkstad för att städa bilutrustning – du är
+            Master of Data.
+          </p>
+        </div>
+        <span className="inline-flex items-center gap-1 rounded-md border-2 border-black bg-yellow-300 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-black shadow-[3px_3px_0_0_rgba(0,0,0,1)]">
+          <Wand2 className="h-3 w-3" />
+          Cleaning Mode
+        </span>
+      </div>
 
-        <section className="mb-5 grid gap-4 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <section className="grid gap-4 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
           <div>
             <div className="mb-2 inline-flex items-center gap-2">
               <span className="rounded-full border-2 border-black bg-yellow-200 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide shadow-[2px_2px_0_0_rgba(0,0,0,1)]">
@@ -382,7 +381,6 @@ export default function CleaningLabPage() {
             </button>
           </div>
         </section>
-      </div>
     </div>
   );
 }

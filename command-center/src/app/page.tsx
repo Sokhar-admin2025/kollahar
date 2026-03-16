@@ -1,24 +1,22 @@
 export default function Home() {
   return (
     <div className="space-y-4">
-      <header className="rounded-2xl border-2 border-black bg-white px-5 py-4 shadow-[4px_4px_0_0_rgba(0,0,0,1)]">
-        <div className="flex flex-col gap-2 md:flex-row md:items-baseline md:justify-between">
-          <div>
-            <h1 className="text-2xl font-black tracking-tight text-black">
-              Kollahär! Command Center
-            </h1>
-            <p className="text-xs font-medium text-slate-700">
-              Intern superadmin-portal. Endast för Kollahär!-teamet.
-            </p>
-          </div>
-          <p className="mt-1 inline-flex items-center gap-2 rounded-md border-2 border-black bg-yellow-300 px-3 py-1 text-[11px] font-black uppercase tracking-wide shadow-[3px_3px_0_0_rgba(0,0,0,1)]">
-            Intern miljö
-            <span className="rounded-sm bg-black px-1.5 py-0.5 text-[10px] font-bold text-white">
-              Handle with care
-            </span>
+      <div className="flex flex-col gap-2 md:flex-row md:items-baseline md:justify-between">
+        <div>
+          <h1 className="text-2xl font-black tracking-tight text-black">
+            Kollahär! Command Center
+          </h1>
+          <p className="text-xs font-medium text-slate-600">
+            Intern superadmin-portal. Endast för Kollahär!-teamet.
           </p>
         </div>
-      </header>
+        <span className="inline-flex items-center gap-2 rounded-md border-2 border-black bg-yellow-300 px-3 py-1 text-[11px] font-black uppercase tracking-wide shadow-[3px_3px_0_0_rgba(0,0,0,1)]">
+          Intern miljö
+          <span className="rounded-sm bg-black px-1.5 py-0.5 text-[10px] font-bold text-white">
+            Handle with care
+          </span>
+        </span>
+      </div>
 
       <section className="grid gap-4 md:grid-cols-3">
         <div className="rounded-2xl border-2 border-black bg-white p-4 shadow-[4px_4px_0_0_rgba(0,0,0,1)]">
