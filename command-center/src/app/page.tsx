@@ -1,37 +1,78 @@
 import Link from "next/link";
+import { createAdminClient } from "../lib/supabase/admin";
 
-const modules = [
-  {
-    href: "/leads",
-    label: "Lead Management",
-    short: "LD",
-    color: "bg-green-300",
-    description: "Hantera marketing_leads-sekvensen, importera och följ upp prospects.",
-  },
-  {
-    href: "/cleaning",
-    label: "AI Cleaning Lab",
-    short: "CL",
-    color: "bg-yellow-300",
-    description: "Städa och validera utrustningssträngar med heuristik och LLM.",
-  },
-  {
-    href: "/users",
-    label: "User Management",
-    short: "US",
-    color: "bg-orange-300",
-    description: "Visa alla profiler i huvud-appen och logga in som användare (impersonation).",
-  },
-  {
-    href: "/health",
-    label: "System Health",
-    short: "SH",
-    color: "bg-red-300",
-    description: "Övervaka tekniska fel från huvud-appen och lös dem med LLM-analys.",
-  },
-];
+export const dynamic = "force-dynamic";
 
-export default function Home() {
+export default async function Home() {
+  const supabase = createAdminClient();
+
+  const [errorsRes, leadsRes, usersRes] = await Promise.all([
+    supabase
+      .from("system_errors")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "open"),
+    supabase.from("marketing_leads").select("status, current_step, last_sent_at"),
+    supabase.from("profiles").select("id", { count: "exact", head: true }),
+  ]);
+
+  const openErrors = errorsRes.count ?? 0;
+  const totalUsers = usersRes.count ?? 0;
+
+  const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
+  const leadsData = leadsRes.data ?? [];
+  const activeLeads = leadsData.filter((r) => r.status === "active").length;
+  const onboardedLeads = leadsData.filter((r) => r.status === "onboarded").length;
+  const droppedLeads = leadsData.filter(
+    (r) =>
+      r.status === "active" &&
+      r.current_step === 3 &&
+      r.last_sent_at &&
+      Date.now() - new Date(r.last_sent_at).getTime() > THREE_DAYS_MS
+  ).length;
+
+  const modules = [
+    {
+      href: "/leads",
+      label: "Marketing Automation",
+      short: "MA",
+      color: "bg-green-300",
+      stat: activeLeads,
+      statLabel: `${onboardedLeads} konverterade · ${droppedLeads} ej konverterade`,
+      description: "3-stegs e-postsekvens för prospects. Importera och följ upp.",
+      alert: false,
+    },
+    {
+      href: "/cleaning",
+      label: "AI Cleaning Lab",
+      short: "CL",
+      color: "bg-yellow-300",
+      stat: null as number | null,
+      statLabel: null as string | null,
+      description: "Städa och validera utrustningssträngar med heuristik och LLM.",
+      alert: false,
+    },
+    {
+      href: "/users",
+      label: "User Management",
+      short: "US",
+      color: "bg-orange-300",
+      stat: totalUsers,
+      statLabel: "registrerade användare",
+      description: "Visa alla profiler i huvud-appen och logga in som användare.",
+      alert: false,
+    },
+    {
+      href: "/health",
+      label: "System Health",
+      short: "SH",
+      color: openErrors > 0 ? "bg-red-400" : "bg-red-300",
+      stat: openErrors,
+      statLabel: openErrors > 0 ? "öppna fel – kräver åtgärd" : "inga aktiva fel",
+      description: "Övervaka tekniska fel från huvud-appen och Command Center.",
+      alert: openErrors > 0,
+    },
+  ];
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-2 md:flex-row md:items-baseline md:justify-between">
@@ -56,7 +97,7 @@ export default function Home() {
           <Link
             key={m.href}
             href={m.href}
-            className="group flex flex-col rounded-2xl border-2 border-black bg-white p-4 shadow-[4px_4px_0_0_rgba(0,0,0,1)] transition hover:-translate-y-0.5 hover:shadow-[6px_6px_0_0_rgba(0,0,0,1)]"
+            className={`group flex flex-col rounded-2xl border-2 border-black p-4 shadow-[4px_4px_0_0_rgba(0,0,0,1)] transition hover:-translate-y-0.5 hover:shadow-[6px_6px_0_0_rgba(0,0,0,1)] ${m.alert ? "bg-red-50" : "bg-white"}`}
           >
             <div className="mb-3 flex items-center gap-2">
               <span
@@ -68,7 +109,21 @@ export default function Home() {
                 {m.label}
               </span>
             </div>
-            <p className="text-[11px] leading-relaxed text-slate-700">
+
+            {m.stat !== null && (
+              <div className="mb-2">
+                <span className={`text-3xl font-black tabular-nums ${m.alert ? "text-red-700" : "text-black"}`}>
+                  {m.stat}
+                </span>
+                {m.statLabel && (
+                  <p className={`mt-0.5 text-[11px] font-medium ${m.alert ? "text-red-600" : "text-slate-600"}`}>
+                    {m.statLabel}
+                  </p>
+                )}
+              </div>
+            )}
+
+            <p className="mt-auto text-[11px] leading-relaxed text-slate-600">
               {m.description}
             </p>
             <span className="mt-3 text-[10px] font-bold uppercase tracking-wide text-slate-400 group-hover:text-black">

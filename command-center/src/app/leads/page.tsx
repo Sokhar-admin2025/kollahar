@@ -9,7 +9,7 @@ export default async function LeadsPage() {
   const { data, error } = await supabase
     .from("marketing_leads")
     .select(
-      "id, company_name, contact_name, email, status, current_step, last_sent_at"
+      "id, company_name, contact_name, email, status, current_step, last_sent_at, created_at"
     )
     .order("created_at", { ascending: false });
 
@@ -20,10 +20,10 @@ export default async function LeadsPage() {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-baseline sm:justify-between">
         <div>
           <h1 className="text-2xl font-black tracking-tight text-black">
-            Lead Management
+            Marketing Automation
           </h1>
           <p className="text-xs font-medium text-slate-600">
-            Hantera marketing_leads-sekvensen och manuella imports.
+            3-stegs e-postsekvens för prospects. Importera, följ upp och se konverteringar.
           </p>
         </div>
         {error && (

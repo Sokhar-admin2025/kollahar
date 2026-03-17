@@ -19,7 +19,7 @@ type CommandShellProps = {
 
 const navItems = [
   { href: "/", label: "Dashboard", short: "DB" },
-  { href: "/leads", label: "Lead Management", short: "LD" },
+  { href: "/leads", label: "Marketing Automation", short: "MA" },
   { href: "/cleaning", label: "AI Cleaning Lab", short: "CL" },
   { href: "/users", label: "User Management", short: "US" },
   { href: "/health", label: "System Health", short: "SH" },

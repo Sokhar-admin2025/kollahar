@@ -1,9 +1,17 @@
 "use client";
 
-import { useState } from "react";
-import { importLeads, pauseLead, deleteLead, forceNextStep } from "./actions";
+import { useState, useActionState, useEffect, useTransition } from "react";
+import {
+  importLeads,
+  pauseLead,
+  deleteLead,
+  resetLeadCooldown,
+  triggerEmailQueue,
+  type ImportResult,
+  type TriggerResult,
+} from "./actions";
 
-type LeadStatus = "active" | "unsubscribed" | "paused" | string;
+type LeadStatus = "active" | "onboarded" | "unsubscribed" | "paused" | string;
 
 export type Lead = {
   id: string;
@@ -26,18 +34,28 @@ const STEP_LABELS: Record<number, string> = {
   3: "Sekvens klar",
 };
 
+const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
+
 function formatStep(step: number | null | undefined) {
   if (step == null) return "–";
   return STEP_LABELS[step] ?? `Steg ${step}`;
 }
 
+function isOnCooldown(lastSentAt: string | null) {
+  if (!lastSentAt) return false;
+  const last = new Date(lastSentAt).getTime();
+  if (Number.isNaN(last)) return false;
+  return Date.now() - last < THREE_DAYS_MS;
+}
+
 function StatusBadge({ status }: { status: LeadStatus | null | undefined }) {
   const base =
     "inline-flex items-center rounded-sm border-2 border-black px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide shadow-[2px_2px_0_0_rgba(0,0,0,1)]";
-
   switch (status) {
     case "active":
       return <span className={`${base} bg-green-300 text-black`}>Aktiv</span>;
+    case "onboarded":
+      return <span className={`${base} bg-blue-300 text-black`}>Konverterad</span>;
     case "unsubscribed":
       return <span className={`${base} bg-red-300 text-black`}>Avprenumererad</span>;
     case "paused":
@@ -51,19 +69,92 @@ function StatusBadge({ status }: { status: LeadStatus | null | undefined }) {
   }
 }
 
-function isOnCooldown(lastSentAt: string | null) {
-  if (!lastSentAt) return false;
-  const last = new Date(lastSentAt).getTime();
-  if (Number.isNaN(last)) return false;
-  return Date.now() - last < 3 * 24 * 60 * 60 * 1000;
-}
-
 export function LeadsClient({ leads }: Props) {
   const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [importResult, importAction, isImporting] = useActionState(
+    importLeads,
+    null
+  );
+  const [showToast, setShowToast] = useState(false);
+  const [triggerResult, setTriggerResult] = useState<TriggerResult | null>(null);
+  const [isTriggerPending, startTriggerTransition] = useTransition();
+
+  useEffect(() => {
+    if (importResult) {
+      setShowToast(true);
+    }
+  }, [importResult]);
+
+  const handleTriggerQueue = () => {
+    startTriggerTransition(async () => {
+      const res = await triggerEmailQueue();
+      setTriggerResult(res);
+    });
+  };
+
+  // Konverteringsstatistik beräknad från leads-listan
+  const converted = leads.filter((l) => l.status === "onboarded");
+  const notConverted = leads.filter(
+    (l) =>
+      l.status === "active" &&
+      l.current_step === 3 &&
+      l.last_sent_at &&
+      Date.now() - new Date(l.last_sent_at).getTime() > THREE_DAYS_MS
+  );
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-end">
+    <div className="space-y-4">
+      {/* Import-toast */}
+      {showToast && importResult && (
+        <div
+          className={`flex items-start justify-between gap-4 rounded-xl border-2 border-black px-4 py-3 shadow-[3px_3px_0_0_rgba(0,0,0,1)] ${importResult.inserted > 0 ? "bg-green-100" : "bg-yellow-100"}`}
+        >
+          <p className="text-[11px] font-semibold text-slate-900">
+            {importResult.inserted > 0 ? (
+              <>
+                ✓ <strong>{importResult.inserted}</strong> ny{importResult.inserted !== 1 ? "a" : ""} lead{importResult.inserted !== 1 ? "s" : ""} importerad{importResult.inserted !== 1 ? "e" : ""}.
+                {importResult.duplicates > 0 && (
+                  <> <strong>{importResult.duplicates}</strong> fanns redan i systemet och hoppades över.</>
+                )}
+              </>
+            ) : (
+              <>
+                Inga nya leads importerades.
+                {importResult.duplicates > 0 && (
+                  <> Alla <strong>{importResult.duplicates}</strong> adresser finns redan i systemet.</>
+                )}
+              </>
+            )}
+          </p>
+          <button
+            type="button"
+            onClick={() => setShowToast(false)}
+            className="shrink-0 text-[11px] font-bold text-slate-600 hover:text-black"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
+      {/* Trigga kö + Importera-knappar */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={handleTriggerQueue}
+            disabled={isTriggerPending}
+            className="inline-flex items-center gap-1 rounded-md border-2 border-black bg-yellow-300 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-black shadow-[3px_3px_0_0_rgba(0,0,0,1)] hover:bg-yellow-200 disabled:opacity-50"
+          >
+            {isTriggerPending ? "Kör..." : "▶ Kör e-postkö nu"}
+          </button>
+          {triggerResult && (
+            <span
+              className={`text-[11px] font-semibold ${triggerResult.success ? "text-green-700" : "text-red-700"}`}
+            >
+              {triggerResult.success ? "✓" : "✗"} {triggerResult.message}
+            </span>
+          )}
+        </div>
         <button
           type="button"
           onClick={() => setImportDialogOpen(true)}
@@ -73,6 +164,47 @@ export function LeadsClient({ leads }: Props) {
         </button>
       </div>
 
+      {/* Konverteringssektion */}
+      {(converted.length > 0 || notConverted.length > 0) && (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {converted.length > 0 && (
+            <div className="rounded-xl border-2 border-black bg-blue-50 p-3 shadow-[3px_3px_0_0_rgba(0,0,0,1)]">
+              <p className="mb-2 text-[10px] font-black uppercase tracking-wide text-slate-700">
+                ✓ Konverterade ({converted.length})
+              </p>
+              <ul className="space-y-0.5">
+                {converted.map((l) => (
+                  <li key={l.id} className="text-[11px] text-slate-800">
+                    {l.company_name || l.email}
+                    {l.company_name && l.email && (
+                      <span className="ml-1 text-slate-500">({l.email})</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {notConverted.length > 0 && (
+            <div className="rounded-xl border-2 border-black bg-orange-50 p-3 shadow-[3px_3px_0_0_rgba(0,0,0,1)]">
+              <p className="mb-2 text-[10px] font-black uppercase tracking-wide text-slate-700">
+                ✗ Ej konverterade efter sekvens ({notConverted.length})
+              </p>
+              <ul className="space-y-0.5">
+                {notConverted.map((l) => (
+                  <li key={l.id} className="text-[11px] text-slate-800">
+                    {l.company_name || l.email}
+                    {l.company_name && l.email && (
+                      <span className="ml-1 text-slate-500">({l.email})</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Leads-tabell */}
       <div className="overflow-hidden rounded-xl border-2 border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)]">
         <div className="overflow-x-auto">
           <table className="min-w-full border-collapse bg-white text-left text-[11px]">
@@ -132,17 +264,14 @@ export function LeadsClient({ leads }: Props) {
                         <span className="flex items-center gap-1">
                           {formatStep(lead.current_step)}
                           {cooldown && (
-                            <span
-                              title="Cooldown aktiv – nästa steg väntar"
-                              aria-label="Cooldown aktiv"
-                            >
+                            <span title="Cooldown aktiv – nästa mail skickas om 3 dagar" aria-label="Cooldown aktiv">
                               ⏳
                             </span>
                           )}
                         </span>
                       </td>
                       <td className="px-3 py-2.5 text-right">
-                        <RowActionsDropdown leadId={lead.id} />
+                        <RowActionsDropdown lead={lead} />
                       </td>
                     </tr>
                   );
@@ -154,17 +283,23 @@ export function LeadsClient({ leads }: Props) {
       </div>
 
       {importDialogOpen && (
-        <ImportDialog onClose={() => setImportDialogOpen(false)} />
+        <ImportDialog
+          importAction={importAction}
+          isImporting={isImporting}
+          onClose={() => setImportDialogOpen(false)}
+        />
       )}
     </div>
   );
 }
 
 type ImportDialogProps = {
+  importAction: (payload: FormData) => void;
+  isImporting: boolean;
   onClose: () => void;
 };
 
-function ImportDialog({ onClose }: ImportDialogProps) {
+function ImportDialog({ importAction, isImporting, onClose }: ImportDialogProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
       <div className="w-full max-w-lg rounded-2xl border-4 border-black bg-white p-5 shadow-[6px_6px_0_0_rgba(0,0,0,1)]">
@@ -174,8 +309,8 @@ function ImportDialog({ onClose }: ImportDialogProps) {
               Importera Leads
             </h2>
             <p className="mt-1 text-[11px] text-slate-600">
-              Klistra in en lista med mejladresser, en per rad. Dubbletter
-              hoppar vi automatiskt över.
+              Klistra in en lista med mejladresser, en per rad. Befintliga
+              adresser hoppas automatiskt över.
             </p>
           </div>
           <button
@@ -188,7 +323,7 @@ function ImportDialog({ onClose }: ImportDialogProps) {
         </div>
 
         <form
-          action={importLeads}
+          action={importAction}
           onSubmit={() => onClose()}
           className="space-y-4"
         >
@@ -204,8 +339,7 @@ function ImportDialog({ onClose }: ImportDialogProps) {
               required
             />
             <p className="mt-1 text-[11px] text-slate-500">
-              Sätter automatiskt <code>current_step = 0</code> och{" "}
-              <code>status = active</code> för alla nya leads.
+              Nya adresser får <code>current_step = 0</code> och <code>status = active</code> – de skickas vid nästa kron-körning.
             </p>
           </div>
 
@@ -219,9 +353,10 @@ function ImportDialog({ onClose }: ImportDialogProps) {
             </button>
             <button
               type="submit"
-              className="rounded-md border-2 border-black bg-green-400 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-black shadow-[2px_2px_0_0_rgba(0,0,0,1)] hover:bg-green-300"
+              disabled={isImporting}
+              className="rounded-md border-2 border-black bg-green-400 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-black shadow-[2px_2px_0_0_rgba(0,0,0,1)] hover:bg-green-300 disabled:opacity-50"
             >
-              Importera
+              {isImporting ? "Importerar..." : "Importera"}
             </button>
           </div>
         </form>
@@ -231,11 +366,17 @@ function ImportDialog({ onClose }: ImportDialogProps) {
 }
 
 type RowActionsDropdownProps = {
-  leadId: string;
+  lead: Lead;
 };
 
-function RowActionsDropdown({ leadId }: RowActionsDropdownProps) {
+function RowActionsDropdown({ lead }: RowActionsDropdownProps) {
   const [open, setOpen] = useState(false);
+
+  const canQueue =
+    lead.status === "active" &&
+    (lead.current_step ?? 0) > 0 &&
+    (lead.current_step ?? 0) < 3 &&
+    isOnCooldown(lead.last_sent_at);
 
   return (
     <div className="relative inline-block text-left">
@@ -247,13 +388,9 @@ function RowActionsDropdown({ leadId }: RowActionsDropdownProps) {
         Åtgärder <span aria-hidden="true">▾</span>
       </button>
       {open && (
-        <div className="absolute right-0 z-40 mt-1 w-48 rounded-xl border-2 border-black bg-white p-1 shadow-[4px_4px_0_0_rgba(0,0,0,1)]">
-          <form
-            action={pauseLead}
-            className="w-full"
-            onSubmit={() => setOpen(false)}
-          >
-            <input type="hidden" name="id" value={leadId} />
+        <div className="absolute right-0 z-40 mt-1 w-52 rounded-xl border-2 border-black bg-white p-1 shadow-[4px_4px_0_0_rgba(0,0,0,1)]">
+          <form action={pauseLead} className="w-full" onSubmit={() => setOpen(false)}>
+            <input type="hidden" name="id" value={lead.id} />
             <button
               type="submit"
               className="block w-full rounded-md px-2 py-1.5 text-left text-[11px] font-medium text-slate-800 hover:bg-yellow-100"
@@ -261,26 +398,25 @@ function RowActionsDropdown({ leadId }: RowActionsDropdownProps) {
               Pausa sekvens
             </button>
           </form>
-          <form
-            action={forceNextStep}
-            className="w-full"
-            onSubmit={() => setOpen(false)}
-          >
-            <input type="hidden" name="id" value={leadId} />
-            <button
-              type="submit"
-              className="block w-full rounded-md px-2 py-1.5 text-left text-[11px] font-medium text-slate-800 hover:bg-yellow-100"
+          {canQueue && (
+            <form
+              action={resetLeadCooldown}
+              className="w-full"
+              onSubmit={() => setOpen(false)}
             >
-              Skicka nästa mail (Force)
-            </button>
-          </form>
+              <input type="hidden" name="id" value={lead.id} />
+              <button
+                type="submit"
+                className="block w-full rounded-md px-2 py-1.5 text-left text-[11px] font-medium text-slate-800 hover:bg-yellow-100"
+              >
+                Hoppa över väntetid
+                <span className="ml-1 text-[10px] text-slate-500">(skickas vid nästa körning)</span>
+              </button>
+            </form>
+          )}
           <div className="my-1 border-t border-black/20" />
-          <form
-            action={deleteLead}
-            className="w-full"
-            onSubmit={() => setOpen(false)}
-          >
-            <input type="hidden" name="id" value={leadId} />
+          <form action={deleteLead} className="w-full" onSubmit={() => setOpen(false)}>
+            <input type="hidden" name="id" value={lead.id} />
             <button
               type="submit"
               className="block w-full rounded-md px-2 py-1.5 text-left text-[11px] font-medium text-red-700 hover:bg-red-50"

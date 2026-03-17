@@ -5,7 +5,15 @@ import { createClient } from "../../lib/supabase/server";
 
 const LEADS_PATH = "/leads";
 
-export async function importLeads(formData: FormData) {
+export type ImportResult = {
+  inserted: number;
+  duplicates: number;
+};
+
+export async function importLeads(
+  _prevState: ImportResult | null,
+  formData: FormData
+): Promise<ImportResult> {
   const raw = (formData.get("emails") as string | null) ?? "";
   const lines = raw
     .split(/\r?\n/)
@@ -13,7 +21,7 @@ export async function importLeads(formData: FormData) {
     .filter(Boolean);
 
   if (!lines.length) {
-    return;
+    return { inserted: 0, duplicates: 0 };
   }
 
   const emails = Array.from(new Set(lines.map((line) => line.toLowerCase())));
@@ -27,7 +35,7 @@ export async function importLeads(formData: FormData) {
 
   if (existingError) {
     console.error("importLeads: failed to load existing leads", existingError);
-    return;
+    return { inserted: 0, duplicates: 0 };
   }
 
   const existingEmails = new Set(
@@ -52,10 +60,12 @@ export async function importLeads(formData: FormData) {
 
     if (insertError) {
       console.error("importLeads: failed to insert leads", insertError);
+      return { inserted: 0, duplicates: existingEmails.size };
     }
   }
 
   revalidatePath(LEADS_PATH);
+  return { inserted: toInsert.length, duplicates: existingEmails.size };
 }
 
 export async function pauseLead(formData: FormData) {
@@ -92,39 +102,61 @@ export async function deleteLead(formData: FormData) {
   revalidatePath(LEADS_PATH);
 }
 
-export async function forceNextStep(formData: FormData) {
+// Nollställer cooldown så att leaden plockas upp vid nästa kron-körning.
+// Avancerar INTE steget – mejlet skickas av kron-jobbet.
+export async function resetLeadCooldown(formData: FormData) {
   const id = formData.get("id") as string | null;
   if (!id) return;
 
+  // Sätt last_sent_at till 4 dagar sedan → omedelbart redo för nästa körning
+  const fourDaysAgo = new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString();
+
   const supabase = await createClient();
-
-  const { data: lead, error: fetchError } = await supabase
+  const { error } = await supabase
     .from("marketing_leads")
-    .select("current_step")
-    .eq("id", id)
-    .maybeSingle();
-
-  if (fetchError || !lead) {
-    console.error("forceNextStep: failed to load lead", fetchError);
-    return;
-  }
-
-  const currentStep =
-    typeof lead.current_step === "number" ? lead.current_step : 0;
-  const nextStep = Math.min(3, currentStep + 1);
-
-  const { error: updateError } = await supabase
-    .from("marketing_leads")
-    .update({
-      current_step: nextStep,
-      last_sent_at: new Date().toISOString(),
-    })
+    .update({ last_sent_at: fourDaysAgo })
     .eq("id", id);
 
-  if (updateError) {
-    console.error("forceNextStep: failed to update lead", updateError);
+  if (error) {
+    console.error("resetLeadCooldown: failed to update lead", error);
   }
 
   revalidatePath(LEADS_PATH);
 }
 
+export type TriggerResult = {
+  success: boolean;
+  message: string;
+};
+
+export async function triggerEmailQueue(): Promise<TriggerResult> {
+  const mainAppUrl = process.env.MAIN_APP_URL;
+  const cronSecret = process.env.CRON_SECRET;
+
+  if (!mainAppUrl || !cronSecret) {
+    return {
+      success: false,
+      message: "MAIN_APP_URL eller CRON_SECRET saknas i miljövariabler.",
+    };
+  }
+
+  try {
+    const res = await fetch(`${mainAppUrl}/api/cron/process-marketing`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${cronSecret}` },
+    });
+
+    if (!res.ok) {
+      return { success: false, message: `Kön svarade med HTTP ${res.status}.` };
+    }
+
+    const data = (await res.json()) as { sent?: number; skipped?: number; failed?: number };
+    return {
+      success: true,
+      message: `Kört: ${data.sent ?? 0} skickade, ${data.skipped ?? 0} hoppade över, ${data.failed ?? 0} misslyckades.`,
+    };
+  } catch (e) {
+    console.error("triggerEmailQueue error", e);
+    return { success: false, message: "Kunde inte nå huvud-appens kron-endpoint." };
+  }
+}
