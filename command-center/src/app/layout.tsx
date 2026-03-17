@@ -31,29 +31,32 @@ export default async function RootLayout({
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Ej inloggad – proxy hanterar detta normalt, men som fallback
-  if (!user) redirect("/login");
+  let staff: StaffUser | null = null;
 
-  // Staff-kontroll med admin-klient (Node.js runtime, inga Edge-begränsningar)
-  const adminClient = createAdminClient();
-  const { data: staffData } = await adminClient
-    .from("internal_staff")
-    .select("id, email, name, role")
-    .eq("id", user.id)
-    .in("role", ["superadmin", "admin"])
-    .maybeSingle();
+  // Staff-kontroll körs bara om användaren är inloggad.
+  // Proxy hanterar redirect till /login för oinloggade – vi gör det inte
+  // här eftersom layouten även wrapprar /login och /access-denied.
+  if (user) {
+    const adminClient = createAdminClient();
+    const { data: staffData } = await adminClient
+      .from("internal_staff")
+      .select("id, email, name, role")
+      .eq("id", user.id)
+      .in("role", ["superadmin", "admin"])
+      .maybeSingle();
 
-  if (!staffData) {
-    await supabase.auth.signOut();
-    redirect("/access-denied");
+    if (!staffData) {
+      await supabase.auth.signOut();
+      redirect("/access-denied");
+    }
+
+    staff = {
+      id: staffData.id as string,
+      email: (staffData as any).email ?? null,
+      name: (staffData as any).name ?? null,
+      role: (staffData as any).role ?? null,
+    };
   }
-
-  const staff: StaffUser = {
-    id: staffData.id as string,
-    email: (staffData as any).email ?? null,
-    name: (staffData as any).name ?? null,
-    role: (staffData as any).role ?? null,
-  };
 
   return (
     <html lang="sv">
