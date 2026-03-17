@@ -29,10 +29,10 @@ type Props = {
 };
 
 const STEP_LABELS: Record<number, string> = {
-  0: "Väntar i kö",
-  1: "Mail 1 skickat",
-  2: "Mail 2 skickat",
-  3: "Sekvens klar",
+  0: "Ej kontaktad än",
+  1: "Första mejlet skickat",
+  2: "Andra mejlet skickat",
+  3: "Alla mejl skickade",
 };
 
 const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
@@ -171,7 +171,7 @@ export function LeadsClient({ leads }: Props) {
           {converted.length > 0 && (
             <div className="rounded-xl border-2 border-black bg-blue-50 p-3 shadow-[3px_3px_0_0_rgba(0,0,0,1)]">
               <p className="mb-2 text-[10px] font-black uppercase tracking-wide text-slate-700">
-                ✓ Konverterade ({converted.length})
+                ✓ Har blivit kunder ({converted.length})
               </p>
               <ul className="space-y-0.5">
                 {converted.map((l) => (
@@ -188,7 +188,7 @@ export function LeadsClient({ leads }: Props) {
           {notConverted.length > 0 && (
             <div className="rounded-xl border-2 border-black bg-orange-50 p-3 shadow-[3px_3px_0_0_rgba(0,0,0,1)]">
               <p className="mb-2 text-[10px] font-black uppercase tracking-wide text-slate-700">
-                ✗ Ej konverterade efter sekvens ({notConverted.length})
+                ✗ Har inte registrerat sig – alla mejl skickade ({notConverted.length})
               </p>
               <ul className="space-y-0.5">
                 {notConverted.map((l) => (
@@ -238,7 +238,7 @@ export function LeadsClient({ leads }: Props) {
                     colSpan={6}
                     className="px-3 py-6 text-center text-[11px] text-slate-500"
                   >
-                    Inga leads ännu. Importera första batchen för att komma igång.
+                    Inga prospects inlagda än. Klicka på "Importera Leads" för att lägga till e-postadresser.
                   </td>
                 </tr>
               ) : (
@@ -265,7 +265,7 @@ export function LeadsClient({ leads }: Props) {
                         <span className="flex items-center gap-1">
                           {formatStep(lead.current_step)}
                           {cooldown && (
-                            <span title="Cooldown aktiv – nästa mail skickas om 3 dagar" aria-label="Cooldown aktiv">
+                            <span title="Väntar – nästa mejl skickas tidigast om 3 dagar" aria-label="Väntar på nästa mejl">
                               ⏳
                             </span>
                           )}
@@ -310,8 +310,8 @@ function ImportDialog({ importAction, isImporting, onClose }: ImportDialogProps)
               Importera Leads
             </h2>
             <p className="mt-1 text-[11px] text-slate-600">
-              Klistra in en lista med mejladresser, en per rad. Befintliga
-              adresser hoppas automatiskt över.
+              Klistra in en lista med mejladresser, en per rad. Adresser som
+              redan finns i systemet hoppas automatiskt över.
             </p>
           </div>
           <button
@@ -340,7 +340,7 @@ function ImportDialog({ importAction, isImporting, onClose }: ImportDialogProps)
               required
             />
             <p className="mt-1 text-[11px] text-slate-500">
-              Nya adresser får <code>current_step = 0</code> och <code>status = active</code> – de skickas vid nästa kron-körning.
+              Nya adresser läggs in i kön och det första mejlet skickas automatiskt vid nästa schemalagda utskick.
             </p>
           </div>
 
@@ -422,7 +422,7 @@ function RowActionsDropdown({ lead }: RowActionsDropdownProps) {
                 className="block w-full rounded-md px-2 py-1.5 text-left text-[11px] font-medium text-slate-800 hover:bg-yellow-100"
               >
                 Hoppa över väntetid
-                <span className="ml-1 text-[10px] text-slate-500">(skickas vid nästa körning)</span>
+                <span className="ml-1 text-[10px] text-slate-500">(mejlet skickas automatiskt inom kort)</span>
               </button>
             </form>
           )}

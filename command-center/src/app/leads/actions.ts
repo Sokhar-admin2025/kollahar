@@ -153,7 +153,8 @@ export async function triggerEmailQueue(): Promise<TriggerResult> {
   if (!mainAppUrl || !cronSecret) {
     return {
       success: false,
-      message: "MAIN_APP_URL eller CRON_SECRET saknas i miljövariabler.",
+      message:
+        "Funktionen är inte aktiverad ännu. Rapportera till dev-teamet: e-postkön behöver konfigureras i Command Centers inställningar (Vercel).",
     };
   }
 
@@ -164,16 +165,32 @@ export async function triggerEmailQueue(): Promise<TriggerResult> {
     });
 
     if (!res.ok) {
-      return { success: false, message: `Kön svarade med HTTP ${res.status}.` };
+      return {
+        success: false,
+        message: `E-postjobbet svarade med ett fel. Försök igen om en stund eller rapportera till dev-teamet om det kvarstår.`,
+      };
     }
 
     const data = (await res.json()) as { sent?: number; skipped?: number; failed?: number };
+    const sent = data.sent ?? 0;
+    const skipped = data.skipped ?? 0;
+    const failed = data.failed ?? 0;
+    const parts: string[] = [];
+    if (sent > 0) parts.push(`${sent} mejl skickade`);
+    if (skipped > 0) parts.push(`${skipped} prospects behövde inget mejl just nu`);
+    if (failed > 0) parts.push(`${failed} misslyckades – kontrollera Resend`);
     return {
       success: true,
-      message: `Kört: ${data.sent ?? 0} skickade, ${data.skipped ?? 0} hoppade över, ${data.failed ?? 0} misslyckades.`,
+      message: sent === 0 && skipped > 0
+        ? "Inga mejl att skicka just nu – alla prospects väntar på sitt nästa intervall."
+        : `Klart! ${parts.join(", ")}.`,
     };
   } catch (e) {
     console.error("triggerEmailQueue error", e);
-    return { success: false, message: "Kunde inte nå huvud-appens kron-endpoint." };
+    return {
+      success: false,
+      message:
+        "Kunde inte starta e-postjobbet – tjänsten verkar otillgänglig. Försök igen eller rapportera till dev-teamet.",
+    };
   }
 }

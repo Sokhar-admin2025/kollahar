@@ -37,7 +37,7 @@ export default async function Home() {
       short: "MA",
       color: "bg-green-300",
       stat: activeLeads,
-      statLabel: `${onboardedLeads} konverterade · ${droppedLeads} ej konverterade`,
+      statLabel: `${onboardedLeads} har blivit kunder · ${droppedLeads} svarade ej`,
       description: "3-stegs e-postsekvens för prospects. Importera och följ upp.",
       alert: false,
     },
