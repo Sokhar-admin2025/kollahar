@@ -167,7 +167,7 @@ export async function triggerEmailQueue(): Promise<TriggerResult> {
     if (!res.ok) {
       return {
         success: false,
-        message: `E-postjobbet svarade med ett fel. Försök igen om en stund eller rapportera till dev-teamet om det kvarstår.`,
+        message: `E-postjobbet svarade med ett fel (kod ${res.status}). Försök igen om en stund eller rapportera till dev-teamet om det kvarstår.`,
       };
     }
 
