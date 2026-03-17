@@ -129,6 +129,23 @@ export type TriggerResult = {
   message: string;
 };
 
+export async function markAsOnboarded(formData: FormData) {
+  const id = formData.get("id") as string | null;
+  if (!id) return;
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("marketing_leads")
+    .update({ status: "onboarded" })
+    .eq("id", id);
+
+  if (error) {
+    console.error("markAsOnboarded: failed to update lead", error);
+  }
+
+  revalidatePath(LEADS_PATH);
+}
+
 export async function triggerEmailQueue(): Promise<TriggerResult> {
   const mainAppUrl = process.env.MAIN_APP_URL;
   const cronSecret = process.env.CRON_SECRET;

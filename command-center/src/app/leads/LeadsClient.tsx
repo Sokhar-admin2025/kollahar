@@ -6,6 +6,7 @@ import {
   pauseLead,
   deleteLead,
   resetLeadCooldown,
+  markAsOnboarded,
   triggerEmailQueue,
   type ImportResult,
   type TriggerResult,
@@ -389,6 +390,17 @@ function RowActionsDropdown({ lead }: RowActionsDropdownProps) {
       </button>
       {open && (
         <div className="absolute right-0 z-40 mt-1 w-52 rounded-xl border-2 border-black bg-white p-1 shadow-[4px_4px_0_0_rgba(0,0,0,1)]">
+          {lead.status !== "onboarded" && (
+            <form action={markAsOnboarded} className="w-full" onSubmit={() => setOpen(false)}>
+              <input type="hidden" name="id" value={lead.id} />
+              <button
+                type="submit"
+                className="block w-full rounded-md px-2 py-1.5 text-left text-[11px] font-medium text-blue-700 hover:bg-blue-50"
+              >
+                Markera som konverterad
+              </button>
+            </form>
+          )}
           <form action={pauseLead} className="w-full" onSubmit={() => setOpen(false)}>
             <input type="hidden" name="id" value={lead.id} />
             <button
