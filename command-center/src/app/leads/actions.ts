@@ -158,6 +158,10 @@ export async function triggerEmailQueue(): Promise<TriggerResult> {
     };
   }
 
+  // DEBUG: logga första 4 tecknen + längd för att verifiera att rätt secret används
+  console.log(`[triggerEmailQueue] secret: "${cronSecret.slice(0, 4)}..." längd: ${cronSecret.length}`);
+  console.log(`[triggerEmailQueue] url: ${mainAppUrl}/api/cron/process-marketing`);
+
   try {
     const res = await fetch(`${mainAppUrl}/api/cron/process-marketing`, {
       method: "POST",
