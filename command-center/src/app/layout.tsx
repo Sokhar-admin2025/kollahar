@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { redirect } from "next/navigation";
 import "./globals.css";
 import { createClient } from "../lib/supabase/server";
+import { createAdminClient } from "../lib/supabase/admin";
 import { CommandShell, type StaffUser } from "./command-shell";
 
 const geistSans = Geist({
@@ -29,24 +31,29 @@ export default async function RootLayout({
     data: { user },
   } = await supabase.auth.getUser();
 
-  let staff: StaffUser | null = null;
+  // Ej inloggad – proxy hanterar detta normalt, men som fallback
+  if (!user) redirect("/login");
 
-  if (user) {
-    const { data } = await supabase
-      .from("internal_staff")
-      .select("id, email, name, role")
-      .eq("id", user.id)
-      .maybeSingle();
+  // Staff-kontroll med admin-klient (Node.js runtime, inga Edge-begränsningar)
+  const adminClient = createAdminClient();
+  const { data: staffData } = await adminClient
+    .from("internal_staff")
+    .select("id, email, name, role")
+    .eq("id", user.id)
+    .in("role", ["superadmin", "admin"])
+    .maybeSingle();
 
-    if (data) {
-      staff = {
-        id: data.id as string,
-        email: (data as any).email ?? null,
-        name: (data as any).name ?? null,
-        role: (data as any).role ?? null,
-      };
-    }
+  if (!staffData) {
+    await supabase.auth.signOut();
+    redirect("/access-denied");
   }
+
+  const staff: StaffUser = {
+    id: staffData.id as string,
+    email: (staffData as any).email ?? null,
+    name: (staffData as any).name ?? null,
+    role: (staffData as any).role ?? null,
+  };
 
   return (
     <html lang="sv">
