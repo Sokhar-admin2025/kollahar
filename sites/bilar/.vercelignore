@@ -1,0 +1,5 @@
+instrumentation.ts
+instrumentation-client.ts
+sentry.client.config.ts
+sentry.edge.config.ts
+sentry.server.config.ts
