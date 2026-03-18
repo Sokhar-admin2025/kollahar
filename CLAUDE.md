@@ -23,7 +23,7 @@
 |-----|-------|-------------|----------------|-------|
 | Main | www.kollahar.se | `/` (root) | sokhar | B2C marknadsplats + B2B dealer-dashboard |
 | Command Center | admin.kollahar.se | `/command-center/` | sokhar-admin | Internt ops-verktyg för medarbetare |
-| Bilar *(planerad)* | bilar.kollahar.se | `/sites/bilar/` | sokhar-bilar | B2B syskon för bilhandlare |
+| Bilar | bilar.kollahar.se | `/sites/bilar/` | sokhar-bilar | B2B syskon för bilhandlare |
 | Båtar *(planerad)* | batar.kollahar.se | `/sites/batar/` | sokhar-batar | B2B syskon för båthandlare |
 | Lokaler *(planerad)* | lokaler.kollahar.se | `/sites/lokaler/` | sokhar-lokaler | B2B syskon för fastighetsföretag |
 

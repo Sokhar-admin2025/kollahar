@@ -84,9 +84,22 @@ Service-layer: `lib/features/leados/`, `lib/features/dealer/`, `lib/features/lis
 
 - [x] `source_site` på `listings` och `leads`
       (`20260319100000_listings_leads_source_site.sql`)
-- [ ] `organization_sites`-tabellen (spårning av syskon-registrering)
+- [x] `organization_sites`-tabellen (spårning av syskon-registrering)
+      (`20260319110000_organization_sites.sql`)
 - [ ] Eventuella bilar-specifika kolumner på `listings`
       (t.ex. registreringsnummer, besiktning — utreds i designfas)
+
+---
+
+## Vercel-driftsättning
+
+Manuell checklista för att sätta upp `sokhar-bilar` i Vercel:
+
+- [ ] Skapa nytt Vercel-projekt `sokhar-bilar`
+- [ ] Sätt **Root Directory** = `sites/bilar`
+- [ ] Lägg till miljövariabler från `sites/bilar/.env.example`
+- [ ] Koppla domän `bilar.kollahar.se`
+- [ ] Konfigurera 301-redirect: `kollabilar.se` → `bilar.kollahar.se`
 
 ---
 
