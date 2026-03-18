@@ -55,6 +55,7 @@ sokhar/                              ← Repo-rot
 ├── CLAUDE.md                        ← Den här filen (läs alltid först)
 ├── ARCHITECTURE.md                  ← Kodstandard och separation of concerns
 ├── vercel.json
+├── proxy.ts                         ← Next.js proxy (tidigare middleware.ts)
 ├── instrumentation.ts               ← Sentry server/edge
 ├── instrumentation-client.ts        ← Sentry klient
 ├── sentry.client.config.ts
