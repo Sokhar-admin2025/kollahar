@@ -4,7 +4,7 @@ import { createServerClient } from '@supabase/ssr'
 // Rutter som aldrig kräver auth
 const PUBLIC_PATHS = ['/']
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Låt publika rutter passera utan kontroll
