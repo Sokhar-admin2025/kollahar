@@ -547,6 +547,7 @@ Migrations ligger i `supabase/migrations/`:
 - `20260306105000_leads_guest_flags.sql`: Lägger till `is_guest` (boolean) och `source` (text) på `leads` för att kunna särskilja gästleads (skapade utan konto) och teknisk leadkälla (t.ex. `guest_form`, `lead_card`).
  - `20260306111000_leads_internal_note.sql`: Lägger till `internal_note` och `internal_note_updated_at` på `leads` för intern säljaranteckning i Lead Detail-vyn (endast intern, ej synlig för köpare).
 - `20260319100000_listings_leads_source_site.sql`: Lägger till `source_site` (`text NOT NULL DEFAULT 'main'`, check: `main/bilar/batar/lokaler`) på `listings` och `leads` — möjliggör syskon-arkitektur. Backfillar befintliga rader med `'main'`. Skapar index `idx_listings_source_site`, `idx_listings_source_site_status` och `idx_leads_source_site`.
+- `20260319110000_organization_sites.sql`: Skapar `organization_sites`-tabellen (PK: `organization_id` + `site`) som spårar vilka syskon ett företag är registrerat på. RLS: läsning för eget org, skrivning via service role. Index på `site` för CC-listning per syskon.
 
 ### Legacy image backfill (engångskörning)
 

@@ -35,6 +35,7 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 
 ## Projektanteckningar
 
+- **organization_sites (syskon-registrering)**: Ny tabell som spårar vilka syskon-sajter ett företag är registrerat på — grund för SSO-onboarding-flöde och CC-fakturering.
 - **source_site (grund för syskon-arkitektur)**: Kolumnen `source_site` är nu lagd på `listings` och `leads` med allowed values `main/bilar/batar/lokaler`. Möjliggör per-sajt-filtrering när syskon-sajterna byggs.
 - **Publik sök – bilar**: Sökfiltret för bilar använder nu separata fält för märke och modell (matchar flödet i “Skapa annons”) och synkar fortsatt mot URL-parametrar (`make`, `model`).
 - **Legacy image-backfill**: Admin-funktionen för att backfilla externa bilder är nu städad bort ur dashboard-UI och kvarstår endast som bakomliggande API-funktionalitet vid behov.
