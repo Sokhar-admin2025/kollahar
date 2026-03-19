@@ -1,14 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
+import { checkProfileComplete } from './lib/supabase/check-profile-complete'
 
-// Rutter som aldrig kräver auth
-const PUBLIC_PATHS = ['/']
+// Rutter som alltid passerar utan guard-kontroll
+function isExemptPath(pathname: string): boolean {
+  return (
+    pathname === '/' ||
+    pathname === '/login' ||
+    pathname === '/inte-foretag' ||
+    pathname.startsWith('/registrera') ||
+    pathname.startsWith('/bil/') ||
+    pathname.startsWith('/handlare/')
+  )
+}
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Låt publika rutter passera utan kontroll
-  if (PUBLIC_PATHS.includes(pathname)) {
+  if (isExemptPath(pathname)) {
     return NextResponse.next()
   }
 
@@ -29,43 +38,50 @@ export async function proxy(request: NextRequest) {
     }
   )
 
-  // 1. Auth-check
   const { data: { user } } = await supabase.auth.getUser()
+
+  // Guard 1: oinloggad på skyddad route (/dashboard/*)
   if (!user) {
-    const loginUrl = new URL('/login', process.env.MAIN_APP_URL)
-    loginUrl.searchParams.set('next', request.url)
-    return NextResponse.redirect(loginUrl)
+    if (pathname.startsWith('/dashboard')) {
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
+    return response
   }
 
-  // 2. account_type-check: endast company-konton
   const { data: profile } = await supabase
     .from('profiles')
     .select('account_type, organization_id')
     .eq('id', user.id)
     .single()
 
+  // Guard 2: inloggad privatperson → /inte-foretag
   if (!profile || profile.account_type !== 'company') {
-    const mainUrl = new URL('/', process.env.MAIN_APP_URL)
-    return NextResponse.redirect(mainUrl)
+    return NextResponse.redirect(new URL('/inte-foretag', request.url))
   }
 
-  // 3. organization_sites-check: org måste vara registrerad på 'bilar'
-  if (profile.organization_id) {
-    const { data: registration } = await supabase
-      .from('organization_sites')
-      .select('status')
-      .eq('organization_id', profile.organization_id)
-      .eq('site', 'bilar')
-      .single()
-
-    if (!registration || registration.status !== 'active') {
-      // Onboarding-flöde — ej byggt ännu, skicka till Main
-      const onboardingUrl = new URL('/', process.env.MAIN_APP_URL)
-      onboardingUrl.searchParams.set('onboarding', 'bilar')
-      return NextResponse.redirect(onboardingUrl)
-    }
+  // Guard 3: company-konto saknar aktiv rad i organization_sites för 'bilar' → /registrera
+  if (!profile.organization_id) {
+    return NextResponse.redirect(new URL('/registrera', request.url))
   }
 
+  const { data: registration } = await supabase
+    .from('organization_sites')
+    .select('status')
+    .eq('organization_id', profile.organization_id)
+    .eq('site', 'bilar')
+    .single()
+
+  if (!registration || registration.status !== 'active') {
+    return NextResponse.redirect(new URL('/registrera', request.url))
+  }
+
+  // Guard 4: org registrerad men profilen inte ifylld → /registrera/profil
+  const profileComplete = await checkProfileComplete(supabase)
+  if (!profileComplete) {
+    return NextResponse.redirect(new URL('/registrera/profil', request.url))
+  }
+
+  // Guard 5: allt OK
   return response
 }
 
