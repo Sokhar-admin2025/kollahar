@@ -152,16 +152,19 @@ export async function getRecentLeads(
     }
   }
 
-  return leads.map((l: {
+  // Supabase returnerar FK-joins som array — vi tar första elementet
+  type LeadRow = {
     id: string
     status: string | null
     source_site: string | null
     created_at: string
     buyer_id: string | null
     listing_id: string | null
-    listings: { title?: string | null; make?: string | null; model?: string | null } | null
-  }) => {
-    const listing = l.listings
+    listings: { title?: string | null; make?: string | null; model?: string | null }[] | null
+  }
+
+  return (leads as LeadRow[]).map((l) => {
+    const listing = Array.isArray(l.listings) ? l.listings[0] : null
     const listingTitle = listing?.title?.trim()
       || [listing?.make, listing?.model].filter(Boolean).join(' ')
       || 'Okänd annons'

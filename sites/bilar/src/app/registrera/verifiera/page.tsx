@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import { createClient } from '../../../lib/supabase/client'
@@ -12,6 +12,18 @@ const VERIFY_TIMEOUT_MS = 15000
 const STEPS = ['Kontouppgifter', 'Företagsinfo', 'Bekräftelse']
 
 export default function VerifieraPage() {
+  return (
+    <Suspense fallback={
+      <main className="min-h-screen bg-bg-page flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-brand-blue" />
+      </main>
+    }>
+      <VerifieraContent />
+    </Suspense>
+  )
+}
+
+function VerifieraContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
