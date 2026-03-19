@@ -1,4 +1,12 @@
 import type { Metadata } from 'next'
+import { Urbanist } from 'next/font/google'
+import './globals.css'
+
+const urbanist = Urbanist({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-urbanist',
+})
 
 export const metadata: Metadata = {
   title: 'bilar.kollahar.se',
@@ -12,7 +20,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="sv">
-      <body>{children}</body>
+      <body className={urbanist.variable}>{children}</body>
     </html>
   )
 }

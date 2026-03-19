@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+@theme {
+  /* Typografi — Urbanist laddas via next/font och injiceras som --font-urbanist */
+  --font-sans: var(--font-urbanist), sans-serif;
+
+  /* Brand */
+  --color-brand-blue:        #2563EB;
+  --color-brand-blue-hover:  #1D4ED8;
+  --color-brand-blue-light:  #EFF6FF;
+  --color-brand-blue-border: #BFDBFE;
+
+  /* Bakgrund */
+  --color-bg-page:   #F7F8FA;
+  --color-bg-card:   #FFFFFF;
+  --color-bg-subtle: #F8FAFC;
+
+  /* Text */
+  --color-text-primary:   #0F172A;
+  --color-text-secondary: #64748B;
+  --color-text-hint:      #94A3B8;
+
+  /* Border */
+  --color-border-standard: #E2E8F0;
+  --color-border-subtle:   #F1F5F9;
+
+  /* Status */
+  --color-success:       #16A34A;
+  --color-success-light: #F0FDF4;
+  --color-warning:       #D97706;
+  --color-warning-light: #FEF9C3;
+  --color-danger:        #EF4444;
+
+  /* Dashboard sidebar */
+  --color-sidebar: #0F172A;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-bg-page);
+  color: var(--color-text-primary);
+}
