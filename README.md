@@ -39,3 +39,7 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 - **source_site (grund för syskon-arkitektur)**: Kolumnen `source_site` är nu lagd på `listings` och `leads` med allowed values `main/bilar/batar/lokaler`. Möjliggör per-sajt-filtrering när syskon-sajterna byggs.
 - **Publik sök – bilar**: Sökfiltret för bilar använder nu separata fält för märke och modell (matchar flödet i “Skapa annons”) och synkar fortsatt mot URL-parametrar (`make`, `model`).
 - **Legacy image-backfill**: Admin-funktionen för att backfilla externa bilder är nu städad bort ur dashboard-UI och kvarstår endast som bakomliggande API-funktionalitet vid behov.
+- **bilar.kollahar.se — registreringsflöde**: Tre-stegs onboarding för bilhandlare: kontouppgifter (med domänvalidering), OTP-verifiering och företagsprofil. Upsert i `organization_sites` vid verifiering.
+- **bilar.kollahar.se — proxy-guards**: Fem guards i `src/proxy.ts` skyddar dashboard: auth, account_type, organization_sites, profile_completed och pass-through. Next.js 16 proxy-konvention.
+- **bilar.kollahar.se — dashboard v1**: Sidebar med fem routes, KPI-översikt (aktiva annonser, visningar, leads, konvertering, försäljningar), senaste leads och senaste annonser. Service-lager i `bilar-dashboard-service.ts` med `supabaseAdmin`.
+- **bilar.kollahar.se — Tailwind v4**: Design-tokens definierade via `@theme` i `globals.css` (CSS-first). Urbanist-typsnitt via `next/font/google`. Spec i `docs/sites/bilar-design-tokens.md`.

@@ -8,6 +8,62 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ### ✨ Tillagt
 
+---
+
+## [1.4.0] - 2026-03-20
+
+### ✨ Tillagt — bilar.kollahar.se (syskon-sajt v1)
+
+#### Registreringsflöde — 3 steg
+- **Steg 1 – Kontouppgifter** (`/registrera`): Formulär med e-post, lösenord (min 8 tecken, visa/dölj-toggle), webbplats och automatisk domänextraktion. Domänvalidering: e-postdomänen måste matcha webbplatsen. Anropar Supabase `signUp()` och lagrar webbplatsen i user metadata.
+- **Steg 2 – OTP-verifiering** (`/registrera/verifiera`): Sex separata sifferinmatningar med auto-fokus, klistra-in-stöd och auto-submit. 6-minuters (360 s) nedräkningstimer, max 5 försök. Testar `verifyOtp(type: 'signup')` med fallback `type: 'email'`. Vid lyckad verifiering: upsert i `organization_sites` för `source_site = 'bilar'`.
+- **Steg 3 – Företagsprofil** (`/registrera/profil`): Formulär med företagsnamn, organisationsnummer (XXXXXX-XXXX-format), adress och stad. Uppdaterar `organizations` (name, address, city) och `profiles` (org_number, profile_completed = true). Redirectar till `/dashboard`.
+
+#### Proxy-guards (`src/proxy.ts`)
+- **Guard 1 – Auth:** Ej inloggad + `/dashboard/*` → `/login`
+- **Guard 2 – account_type:** Inloggad privatperson → `/inte-foretag`
+- **Guard 3 – organization_sites:** Company utan rad i `organization_sites` för `'bilar'` → `/registrera`
+- **Guard 4 – profile_completed:** Org registrerad men `organizations.name` tomt (`checkProfileComplete()`) → `/registrera/profil`
+- **Guard 5 – Pass through:** Alla övriga requests passerar
+- Undantagna sökvägar: `/`, `/login`, `/inte-foretag`, `/registrera*`, `/bil/*`, `/handlare/*`
+
+#### Informationssidor
+- **`/login`:** Enkel landningssida med inloggningsformulär (e-post + OTP-länk via Supabase Magic Link). Länk till `/registrera` för nya handlare.
+- **`/inte-foretag`:** Informationssida för privatpersoner som försöker logga in — hänvisar till www.kollahar.se.
+
+#### Dashboard-skelett
+- **Sidebar** med Kollahär Bilar-logotyp, fem navigationsroutes: Översikt, Annonser, Leads, Analytics, Inställningar. Markering av aktiv route via `usePathname`.
+- **Topbar** med välkomsttext och profilavatar.
+- **Fem routes skapade:** `/dashboard`, `/dashboard/annonser`, `/dashboard/leads`, `/dashboard/analytics`, `/dashboard/installningar` — de fyra sista visar "Under konstruktion"-placeholder.
+- Layout med kollapsbar sidebar och responsivt grid.
+
+#### Översiktssida (`/dashboard`) med KPI och senaste aktivitet
+- **5 KPI-kort:** Aktiva annonser, Totalt visningar, Inkommande leads, Konverteringsgrad, Bekräftade försäljningar — hämtas parallellt via `Promise.all` med `supabaseAdmin`.
+- **Senaste leads:** De 5 senaste leads med köparens namn och annonstitel.
+- **Senaste annonser:** De 5 senaste aktiva annonserna med märke, modell, år och pris.
+- **Service-lager:** `src/lib/features/bilar-dashboard-service.ts` med `getDashboardKpis()` och `getRecentLeads()` + `getRecentListings()`.
+
+#### Design-system
+- **Typografi:** Urbanist (Google Fonts) via `next/font/google`, injiceras som CSS-variabel `--font-urbanist`.
+- **Design-tokens:** Definierade i `src/app/globals.css` via `@theme` (Tailwind v4 CSS-first). Spec i `docs/sites/bilar-design-tokens.md`.
+- **Brand:** `--color-brand-blue: #2563EB`, sidebar `--color-sidebar: #0F172A`, bakgrund `--color-bg-page: #F7F8FA`.
+
+#### Infrastruktur
+- `sites/bilar/vercel.json` — Vercel-konfiguration (`framework: nextjs`, `rootDirectory: sites/bilar`).
+- `sites/bilar/.vercelignore` — exkluderar `instrumentation.ts` och `sentry.*.config.ts` från repo-roten.
+- `sites/bilar/src/proxy.ts` — Next.js 16-konvention (ersätter `middleware.ts`).
+- `sites/bilar/src/lib/supabase/check-profile-complete.ts` — hjälpfunktion för Guard 4.
+
+### 🗃️ Migrationer
+- **`20260319100000_listings_leads_source_site.sql`** — `source_site`-kolumn på `listings` och `leads` (allowed: `main|bilar|batar|lokaler`, default `main`). Backfill av befintliga rader.
+- **`20260319110000_organization_sites.sql`** — Ny tabell `organization_sites` för att spåra vilka syskon ett företag är registrerat på. RLS: service role + `organization_id`-ägarskap.
+- **`20260320100000_organizations_address_profiles_completion.sql`** — Lägger till `organizations.address` (text), `organizations.city` (text), `profiles.profile_completed` (boolean, default false), `profiles.reminder_count` (integer, default 0).
+
+### 🐛 Buggfixar
+- **FK-join typannotation:** Supabase FK-join returnerar `listings[]` (array), inte `listings | null`. Fixad genom att typa som `{ title?: string; make?: string; model?: string }[]` och använda `listings[0]`.
+- **`useSearchParams()` utan Suspense:** `/registrera/verifiera/page.tsx` kraschade vid bygge. Fixad genom att extrahera komponentkroppen till `VerifieraContent` och wrappar export default med `<Suspense>`.
+- **Tailwind v4-konfiguration:** Styling saknades i produktion. Root cause: `theme.extend.colors` i `tailwind.config.ts` ignoreras av Tailwind v4 utan `@config`-direktiv. Fixad genom att skapa `postcss.config.mjs` (med `@tailwindcss/postcss`), `globals.css` (med `@import "tailwindcss"` och alla tokens i `@theme`), och uppdatera `layout.tsx` att importera `globals.css`.
+
 #### Marketing Leads – 3-stegs e-postkampanj (feb 2026)
 - **Tabell `marketing_leads`:** E-post, kontaktnamn, företagsnamn, `current_step` (1–3), `last_sent_at`. Migration `20260310100000_marketing_leads.sql` inkl. RLS (service role) och index.
 - **Tre mejl:** Mail 1 (Välkommen / Mission Control), Mail 2 (Sniper Mode), Mail 3 (Framtiden & SEO). Varje mejl har React-komponent (`app/emails/MarketingMail1–3.tsx`), HTML-renderer (`lib/email/marketing-mail1–3.ts`) och gemensam visuell stil (CTA, bilder 560×320, border-radius, box-shadow).
