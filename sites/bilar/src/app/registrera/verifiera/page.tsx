@@ -157,7 +157,10 @@ function VerifieraContent() {
       // Hämta lösenord från sessionStorage och logga in
       const storedPassword = sessionStorage.getItem('signup_password_pending_verify')
       if (storedPassword) {
-        try { sessionStorage.removeItem('signup_password_pending_verify') } catch { /* ignore */ }
+        try {
+          sessionStorage.removeItem('signup_password_pending_verify')
+          sessionStorage.removeItem('bilar_signup_email')
+        } catch { /* ignore */ }
         const { error: signInError } = await supabase.auth.signInWithPassword({ email, password: storedPassword })
         if (signInError) {
           setMessage({ text: 'Verifieringen lyckades men inloggningen misslyckades. Försök logga in manuellt.', type: 'error' })

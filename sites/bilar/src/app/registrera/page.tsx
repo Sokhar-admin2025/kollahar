@@ -76,7 +76,15 @@ export default function RegistreraPage() {
       return
     }
 
-    router.push('/registrera/verifiera')
+    // Spara e-post och lösenord i sessionStorage — läses av verifiera-sidan
+    try {
+      sessionStorage.setItem('bilar_signup_email', email.trim())
+      sessionStorage.setItem('signup_password_pending_verify', password)
+    } catch {
+      // sessionStorage kan vara blockerat i vissa privata lägen — fortsätt ändå
+    }
+
+    router.push(`/registrera/verifiera?email=${encodeURIComponent(email.trim())}`)
   }
 
   return (
