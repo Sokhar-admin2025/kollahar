@@ -10,6 +10,21 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ---
 
+## [1.5.1] - 2026-03-21
+
+### 🐛 Bugfixar — bilar.kollahar.se registreringsflöde (end-to-end-testning)
+
+- **E-post steg 1→2:** E-postadressen skickades inte korrekt från `/registrera` till `/registrera/verifiera` — router.push saknade `?email=`-parameter. Löst.
+- **OTP-mail vid mount:** `signInWithOtp()` saknades i steg 1 — OTP-mailet skickades aldrig automatiskt. Lagt till `signUp → signOut → signInWithOtp`-sekvens i `registrera/page.tsx`.
+- **`organization_sites` INSERT:** Browser-klienten saknar INSERT-policy (RLS) — upsert misslyckades tyst. Löst med ny server action `createOrganizationSiteAction` som använder `supabaseAdmin`.
+- **`organizations`-rad skapades inte:** Browser-klientens upsert blockerades av RLS — `profiles.organization_id` pekade på UUID som inte fanns i `organizations`. Löst med `setupOrganizationAction` (supabaseAdmin) som skapar raden atomärt. `completeRegistrationAction` använder nu UPSERT istället för UPDATE för att garantera att raden alltid skapas.
+- **proxy Guard 4:** Kollade `organizations.name` via anon-key klient — möjlig RLS-blockering gav falsk negativ. Ersatt med direkt koll på `profiles.profile_completed` som redan hämtas i samma query.
+- **Dashboard-knapp:** Visades för alla inloggade användare. `BilarPublicHeader` hämtar nu full profilstatus (account_type + organization_sites + profile_completed) och visar Dashboard-länk enbart när `profile_completed = true` och aktiv `organization_sites`-rad finns.
+- **Login redirect:** `router.refresh()` navigerade inte bort från `/login` (exempt path i proxy). Ersatt med `window.location.href = '/dashboard'` — full navigation som låter proxy sätta korrekt destination.
+- **Org-nummer format:** Valideringen accepterar nu båda svenska format — `XXXXXX-XXXX` och `XXXXXXXXXX`. Normaliseras till `XXXXXX-XXXX` vid sparning.
+
+---
+
 ## [1.5.0] - 2026-03-21
 
 ### ✨ Tillagt — bilar.kollahar.se v1 komplett
