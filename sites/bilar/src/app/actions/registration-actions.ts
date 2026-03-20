@@ -7,6 +7,46 @@
 import { supabaseAdmin } from '../../lib/supabase/admin'
 
 /**
+ * Skapar organizations-raden och sätter profiles.organization_id.
+ * Måste köras server-side — organizations har ingen INSERT-policy för klienter.
+ * organizations.id sätts till userId (multi-tenant-konvention).
+ * profiles.organization_id sätts till samma UUID.
+ */
+export async function setupOrganizationAction(
+  userId: string
+): Promise<{ success: boolean; error?: string }> {
+  if (!supabaseAdmin) return { success: false, error: 'Admin-klient saknas.' }
+
+  const slug = 'org-' + userId.replace(/-/g, '')
+
+  // Skapa organizations-rad med id = userId (ignorera konflikt om raden redan finns)
+  const { error: orgError } = await supabaseAdmin
+    .from('organizations')
+    .upsert(
+      { id: userId, name: '', slug },
+      { onConflict: 'id', ignoreDuplicates: true }
+    )
+
+  if (orgError) {
+    console.error('[bilar] setupOrganizationAction organizations upsert fel:', orgError)
+    return { success: false, error: orgError.message }
+  }
+
+  // Sätt profiles.organization_id = userId (samma UUID)
+  const { error: profileError } = await supabaseAdmin
+    .from('profiles')
+    .update({ organization_id: userId })
+    .eq('id', userId)
+
+  if (profileError) {
+    console.error('[bilar] setupOrganizationAction profiles update fel:', profileError)
+    return { success: false, error: profileError.message }
+  }
+
+  return { success: true }
+}
+
+/**
  * Skapar/uppdaterar organization_sites-raden för bilar.
  * Måste köras server-side — organization_sites har ingen INSERT-policy för klienter.
  */

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import { createClient } from '../../../lib/supabase/client'
-import { createOrganizationSiteAction } from '../../actions/registration-actions'
+import { setupOrganizationAction, createOrganizationSiteAction } from '../../actions/registration-actions'
 
 const MAX_ATTEMPTS = 5
 const CODE_EXPIRY_SECONDS = 15 * 60
@@ -201,30 +201,16 @@ function VerifieraContent() {
         }
 
         // organization_id är NULL för nya användare (handle_new_user sätter det inte automatiskt).
-        // Sätt det explicit till userId — konsekvent med multi-tenant backfill-mönstret.
+        // Sätt det explicit till userId via server action (organizations har ingen INSERT-policy
+        // för browser-klienten — upsert skulle misslyckas tyst och bryta FK i organization_sites).
         const orgId: string = profile?.organization_id ?? userId
 
         if (!profile?.organization_id) {
-          // Uppdatera profilen med organization_id
-          const { error: profileUpdateErr } = await supabase
-            .from('profiles')
-            .update({ organization_id: userId })
-            .eq('id', userId)
-
-          if (profileUpdateErr) {
-            console.error('[bilar] profile organization_id update fel:', profileUpdateErr)
-          }
-
-          // Skapa organizations-rad (ignorera konflikt om den redan finns)
-          const { error: orgInsertErr } = await supabase
-            .from('organizations')
-            .upsert(
-              { id: orgId, name: '', slug: 'org-' + orgId.replace(/-/g, '') },
-              { onConflict: 'id', ignoreDuplicates: true }
-            )
-
-          if (orgInsertErr) {
-            console.error('[bilar] organizations upsert fel:', orgInsertErr)
+          // Skapar organizations-rad (id = userId) och sätter profiles.organization_id
+          // via supabaseAdmin — garanterar att FK-constraint i organization_sites uppfylls.
+          const setupResult = await setupOrganizationAction(userId)
+          if (!setupResult.success) {
+            console.error('[bilar] setupOrganizationAction fel:', setupResult.error)
           }
         }
 
