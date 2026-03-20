@@ -42,27 +42,39 @@ export async function completeRegistrationAction(
   city: string,
   orgNumber: string
 ): Promise<{ success: boolean; error?: string }> {
-  if (!supabaseAdmin) return { success: false, error: 'Admin-klient saknas.' }
+  console.log('[bilar][completeRegistrationAction] START', { userId, organizationId, name, address, city, orgNumber })
 
-  const { error: orgError } = await supabaseAdmin
+  if (!supabaseAdmin) {
+    console.error('[bilar][completeRegistrationAction] supabaseAdmin saknas — NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY kanske inte är satt')
+    return { success: false, error: 'Admin-klient saknas.' }
+  }
+
+  const { data: orgData, error: orgError } = await supabaseAdmin
     .from('organizations')
     .update({ name, address, city })
     .eq('id', organizationId)
+    .select()
+
+  console.log('[bilar][completeRegistrationAction] organizations UPDATE', { orgData, orgError })
 
   if (orgError) {
-    console.error('[bilar] completeRegistration organizations-fel:', orgError)
+    console.error('[bilar][completeRegistrationAction] organizations-fel:', orgError)
     return { success: false, error: 'Kunde inte spara företagsuppgifterna.' }
   }
 
-  const { error: profileError } = await supabaseAdmin
+  const { data: profileData, error: profileError } = await supabaseAdmin
     .from('profiles')
     .update({ org_number: orgNumber, profile_completed: true })
     .eq('id', userId)
+    .select()
+
+  console.log('[bilar][completeRegistrationAction] profiles UPDATE', { profileData, profileError })
 
   if (profileError) {
-    console.error('[bilar] completeRegistration profiles-fel:', profileError)
+    console.error('[bilar][completeRegistrationAction] profiles-fel:', profileError)
     return { success: false, error: 'Företaget sparades men profilinformationen misslyckades.' }
   }
 
+  console.log('[bilar][completeRegistrationAction] KLAR — success: true')
   return { success: true }
 }
