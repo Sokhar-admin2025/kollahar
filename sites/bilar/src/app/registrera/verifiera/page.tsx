@@ -172,33 +172,62 @@ function VerifieraContent() {
       const userId = verifiedUserId ?? (await supabase.auth.getUser()).data.user?.id ?? null
 
       if (userId) {
-        // Sätt otp_verified = true
+        // Sätt otp_verified = true (logga fel men avbryt inte flödet)
         const { error: otpVerifiedErr } = await supabase
           .from('profiles')
           .update({ otp_verified: true })
           .eq('id', userId)
 
         if (otpVerifiedErr) {
-          setMessage({ text: 'Verifieringen lyckades men något gick fel. Försök logga in igen.', type: 'error' })
-          setLoading(false)
-          return
+          console.error('[bilar] otp_verified update fel:', otpVerifiedErr)
         }
 
-        // Hämta organization_id och skapa rad i organization_sites
+        // Hämta organization_id
         const { data: profile } = await supabase
           .from('profiles')
           .select('organization_id')
           .eq('id', userId)
           .single()
 
-        if (profile?.organization_id) {
-          await supabase
-            .from('organization_sites')
-            .upsert({
-              organization_id: profile.organization_id,
-              site: 'bilar',
-              status: 'active',
-            })
+        // organization_id är NULL för nya användare (handle_new_user sätter det inte automatiskt).
+        // Sätt det explicit till userId — konsekvent med multi-tenant backfill-mönstret.
+        let orgId: string = profile?.organization_id ?? userId
+
+        if (!profile?.organization_id) {
+          // Uppdatera profilen med organization_id och account_type
+          const { error: profileUpdateErr } = await supabase
+            .from('profiles')
+            .update({ organization_id: userId, account_type: 'company' })
+            .eq('id', userId)
+
+          if (profileUpdateErr) {
+            console.error('[bilar] profile organization_id update fel:', profileUpdateErr)
+          }
+
+          // Skapa organizations-rad (ignorera konflikt om den redan finns)
+          const { error: orgInsertErr } = await supabase
+            .from('organizations')
+            .upsert(
+              { id: orgId, name: '', slug: 'org-' + orgId.replace(/-/g, '') },
+              { onConflict: 'id', ignoreDuplicates: true }
+            )
+
+          if (orgInsertErr) {
+            console.error('[bilar] organizations upsert fel:', orgInsertErr)
+          }
+        }
+
+        // Skapa/uppdatera rad i organization_sites
+        const { error: orgSiteErr } = await supabase
+          .from('organization_sites')
+          .upsert({
+            organization_id: orgId,
+            site: 'bilar',
+            status: 'active',
+          })
+
+        if (orgSiteErr) {
+          console.error('[bilar] organization_sites upsert fel:', orgSiteErr)
         }
       }
 

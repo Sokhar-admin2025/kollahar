@@ -45,13 +45,12 @@ export default function ProfilPage() {
         .eq('id', user.id)
         .single()
 
-      if (!profile?.organization_id) {
-        router.replace('/registrera')
-        return
-      }
+      // organization_id kan vara null för nyregistrerade användare om verifiera-steget
+      // inte hann sätta det. Använd user.id som fallback (konsekvent med multi-tenant-mönstret).
+      const orgId = profile?.organization_id ?? user.id
 
       setUserId(user.id)
-      setOrganizationId(profile.organization_id)
+      setOrganizationId(orgId)
       setLoadingUser(false)
     }
 

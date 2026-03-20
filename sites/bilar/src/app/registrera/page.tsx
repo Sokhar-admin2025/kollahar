@@ -65,7 +65,7 @@ export default function RegistreraPage() {
       email: email.trim(),
       password,
       options: {
-        data: { website: extractedDomain },
+        data: { website: extractedDomain, account_type: 'company' },
       },
     })
 
