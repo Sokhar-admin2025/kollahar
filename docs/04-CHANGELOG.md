@@ -10,6 +10,60 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ---
 
+## [1.5.0] - 2026-03-21
+
+### ✨ Tillagt — bilar.kollahar.se v1 komplett
+
+#### Dashboard — Leads-sida
+- **Lista (`/dashboard/leads`):** Tabell med alla inkommande leads (köpare, annons, status, tid). Filter på status (`new/contacted/qualified/sold/archived`) och fritextsök. Inline statusändring via Server Action. Paginering.
+- **Detalj (`/dashboard/leads/[id]`):** Fullständig lead-vy med köparinfo, annonsinfo, statushistorik och intern LeadChat (`lead_messages`). Rollbaserade meddelanden (seller/owner/system). Realtidsuppdaterad chatt med polling.
+- **Commander-vy:** Omfördelning av leads inom organisationen — tilldelar `assigned_to` till annan säljare. Endast tillgänglig för org-ägare.
+- **Service-lager:** Utökat `bilar-leads-service.ts` med `getLeads()`, `getLead()`, `updateLeadStatus()`, `assignLead()`, `createLeadMessage()`.
+
+#### Dashboard — Annonser-sida
+- **Inventory (`/dashboard/annonser`):** Tabell med alla organisationens annonser. Filter på status (active/draft/sold). Knappar för skapa, redigera och arkivera. Visar pris, märke/modell/år och status-badge.
+- **Skapa annons (`/dashboard/annonser/ny`):** Fullständigt formulär med `BilarListingForm`. Bilduppladdning med `browser-image-compression` (maxSizeMB:1, maxWidthOrHeight:1920) till Supabase Storage `listing-images`. Auto-genererad titel från märke+modell+år (redigerbar). Utrustningschips (Enter att lägga till). Kontaktkanalsvalidering (minst en aktiv). Status-toggle (draft/active). Sparar med `source_site = 'bilar'`, `category = 'cars'`, `seller_type = 'company'`.
+- **Redigera annons (`/dashboard/annonser/[id]`):** Återanvänder `BilarListingForm`. Hämtar befintlig annons via `getListing()`. Sparar via `updateListing()`.
+- **Komponenter:** `BilarListingForm`, `BilarCarMakeModelFields`, `BilarYearInput`.
+- **Service-lager:** `createListing()`, `getListing()`, `updateListing()` i `bilar-listings-service.ts`.
+
+#### Påminnelse-cron för ofullständiga profiler
+- **Cron (`/api/cron/remind-incomplete-profiles`):** Daglig körning 09:00 (UTC) via Vercel Crons. Hämtar `company`-profiler med `profile_completed = false` och `reminder_count < 3`. Skickar max 3 påminnelsemejl per handlare och inkrementerar `reminder_count`.
+- **E-postmall:** HTML-mejl med CTA till `/registrera/profil`, "Påminnelse X av 3"-footer. Implementerat i `src/lib/email/remind-incomplete-profile.ts` via Resend.
+- **Resend-wrapper:** `src/lib/email/resend.ts` — initialiseras villkorligt om `RESEND_API_KEY` finns.
+
+#### Publik startsida (`/`)
+- **Hero-sökning:** Sökfält med fritextsök, synkar mot `q`-URL-parameter.
+- **Filterrad:** Märke/modell-dropdown, drivmedel, växellåda, expanderbart prisintervall (`BilarDualRangeSlider`), årsintervall. Synkar alla filter mot URL-parametrar.
+- **Annons-grid:** 5-kols grid (2 mobil) med `BilarListingCard`. Favorithjärta med optimistisk UI. Logga in-toast för ej inloggade.
+- **Ladda mer:** Server Action `loadMoreAction` appender resultat — ingen sidomladdning.
+- **`BilarPublicHeader`:** Logo, sökfält, Dashboard-länk (inloggad) eller Logga in + Registrera handlare (ej inloggad). Wrappas i `<Suspense>` (använder `useSearchParams`).
+- **Service-lager:** `getPublicListings()`, `getFeaturedMakes()`, `getFavoriteIds()` i `bilar-public-service.ts`.
+
+#### Annonsdetaljsida (`/bil/[id]`)
+- **Layout:** Tvåkolumn `lg:grid-cols-[1fr_320px]`. Fullbredd relaterade annonser nederst.
+- **Bildgalleri:** 300px huvudbild, 5 thumbnails med `+N`-overlay. Favoritknapp + delningsknapp.
+- **Spec-sektion:** SpecRow-hjälpkomponent för märke, modell, år, drivmedel, växellåda, miltal, färg, besiktning.
+- **Utrustningskort:** Grid med utrustningschips. "Visa mer"-toggle om fler än 12 utrustningsval.
+- **Handlarkort:** Logo/initialer, BadgeCheck om verifierad, 3 stats (betyg, sålda bilar, år som member), länk till handlarprofil.
+- **Prisbox + CTA:** Pris i brand-blue, tre CTA-knappar (Skicka förfrågan, Ring, Lägg till favorit).
+- **Finansieringsmodul:** Annuitetsberäkning (0% ränta), kontantinsats 10% default, löptid 24–84 månader, visas om `organizations.show_financing = true`.
+- **Lead-modal (`BilarLeadModal`):** Namn (valfri), e-post (obligatorisk), meddelande (valfri), GDPR-samtyckescheckbox. `buyer_email = null` om ej samtycke. Meddelande lagras i `lead_messages` med `role = 'system'`.
+- **Visningslogg:** `logView()` med sessionStorage-dedup (nyckel `listing_view_[id]`, 30 min TTL) — anropas via Server Action.
+- **Service-lager:** `getPublicListing()`, `getRelatedListings()`, `logView()` i `bilar-public-service.ts`.
+
+#### Publik handlarprofil (`/handlare/[slug]`)
+- **Hero:** Logo/initialer (BadgeCheck om verifierad), företagsnamn, stad och adress, "Medlem sedan N år". Tre stats: aktiva annonser, sålda bilar, betyg.
+- **Filterrad:** Märke-dropdown (unikt från handlarens annonser), prisintervall (`BilarDualRangeSlider`), Filtrera/Rensa-knappar, synkar mot URL-parametrar.
+- **Annons-grid:** 5-kols grid med `BilarListingCard`. Ladda mer-knapp (Server Action).
+- **`BilarDealerProfileClient`:** Wrappas i `<Suspense>` (använder `useSearchParams`).
+- **Service-lager:** `getOrganizationBySlug()`, `getOrganizationListings()` i `bilar-public-service.ts`.
+
+### 🗃️ Migrationer
+- **`20260320200000_organizations_show_financing.sql`** — Lägger till `organizations.show_financing` (boolean, default false). Styr om finansieringsmodulen visas på annonsdetaljsidan.
+
+---
+
 ## [1.4.0] - 2026-03-20
 
 ### ✨ Tillagt — bilar.kollahar.se (syskon-sajt v1)

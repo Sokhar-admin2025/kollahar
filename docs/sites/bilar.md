@@ -1,6 +1,6 @@
 # bilar.kollahar.se — Syskon-sajt spec
 
-> Status: **DRIFTSATT — v1 i produktion (2026-03-20)**
+> Status: **v1 KOMPLETT — driftsatt (2026-03-21)**
 > Läs `CLAUDE.md` för syskon-arkitekturregler.
 
 ---
@@ -150,15 +150,41 @@ Se `docs/03-FRONTEND_UI.md` för komponentmönster.
 | Route | Status |
 |-------|--------|
 | `/dashboard` | Klar — KPI-kort, senaste leads, senaste annonser |
-| `/dashboard/annonser` | Placeholder |
-| `/dashboard/leads` | Placeholder |
+| `/dashboard/annonser` | Klar — inventory, skapa, redigera annons |
+| `/dashboard/leads` | Klar — lista, detalj med LeadChat, Commander-omfördelning |
 | `/dashboard/analytics` | Placeholder |
 | `/dashboard/installningar` | Placeholder |
 
+### Publika routes
+| Route | Status |
+|-------|--------|
+| `/` | Klar — hero-sök, filter, 5-kols annons-grid, ladda mer |
+| `/bil/[id]` | Klar — galleri, specs, utrustning, handlarkort, lead-modal, finansiering |
+| `/handlare/[slug]` | Klar — stats, filtrerbart annons-grid, ladda mer |
+
+### Komponenter (public)
+- `BilarPublicHeader` — Logo, sök, auth-knappar (Suspense-wrappat)
+- `BilarListingCard` — Annons-kort med optimistiskt favorithjärta
+- `BilarDualRangeSlider` — Prisintervall-slider (bilar-blue `#2563EB`)
+- `BilarHomeClient` — Publik startsida med filter och grid
+- `BilarListingDetailClient` — Annonsdetaljsida tvåkolumn-layout
+- `BilarLeadModal` — GDPR-kompatibel lead-förfrågan med samtycke
+- `BilarDealerProfileClient` — Handlarprofil med stats och annons-grid
+
+### Komponenter (dashboard)
+- `BilarListingForm` — Skapa/redigera annons med bilduppladdning
+- `BilarCarMakeModelFields` — Märke/modell-dropdown
+- `BilarYearInput` — Årsvalidering
+
 ### Service-lager
 - `src/lib/features/bilar-dashboard-service.ts` — `getDashboardKpis()`, `getRecentLeads()`, `getRecentListings()`
+- `src/lib/features/bilar-listings-service.ts` — `createListing()`, `getListing()`, `updateListing()`
+- `src/lib/features/bilar-leads-service.ts` — `getLeads()`, `getLead()`, `updateLeadStatus()`, `assignLead()`, `createLeadMessage()`
+- `src/lib/features/bilar-public-service.ts` — `getPublicListings()`, `getPublicListing()`, `getRelatedListings()`, `getFeaturedMakes()`, `getFavoriteIds()`, `logView()`, `getOrganizationBySlug()`, `getOrganizationListings()`
 - `src/lib/supabase/check-profile-complete.ts` — Guard 4-hjälpfunktion
-- Använder `supabaseAdmin` (service role) för analytics — aldrig på klienten
+- `src/lib/email/resend.ts` — Resend-wrapper (villkorlig init)
+- `src/lib/email/remind-incomplete-profile.ts` — Påminnelsemejl (max 3)
+- Alla service-funktioner använder `supabaseAdmin` (service role) — aldrig på klienten
 
 ### Migrationer i produktion
 | Fil | Beskrivning |
@@ -166,3 +192,4 @@ Se `docs/03-FRONTEND_UI.md` för komponentmönster.
 | `20260319100000_listings_leads_source_site.sql` | `source_site`-kolumn på listings och leads |
 | `20260319110000_organization_sites.sql` | Ny tabell för syskon-registrering |
 | `20260320100000_organizations_address_profiles_completion.sql` | address/city på organizations, profile_completed/reminder_count på profiles |
+| `20260320200000_organizations_show_financing.sql` | `show_financing`-kolumn på organizations (finansieringsmodul per handlare) |

@@ -43,3 +43,10 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 - **bilar.kollahar.se — proxy-guards**: Fem guards i `src/proxy.ts` skyddar dashboard: auth, account_type, organization_sites, profile_completed och pass-through. Next.js 16 proxy-konvention.
 - **bilar.kollahar.se — dashboard v1**: Sidebar med fem routes, KPI-översikt (aktiva annonser, visningar, leads, konvertering, försäljningar), senaste leads och senaste annonser. Service-lager i `bilar-dashboard-service.ts` med `supabaseAdmin`.
 - **bilar.kollahar.se — Tailwind v4**: Design-tokens definierade via `@theme` i `globals.css` (CSS-first). Urbanist-typsnitt via `next/font/google`. Spec i `docs/sites/bilar-design-tokens.md`.
+- **bilar.kollahar.se — leads-sida**: Leads-lista med statusfilter, lead-detalj med intern LeadChat (`lead_messages`) och Commander-vy för omfördelning av leads inom organisationen.
+- **bilar.kollahar.se — annonser-sida**: Inventory-lista, skapa annons och redigera annons med bilduppladdning (browser-image-compression), utrustningschips och kontaktkanalsvalidering.
+- **bilar.kollahar.se — påminnelse-cron**: Daglig cron (09:00 UTC) skickar max 3 påminnelsemejl via Resend till handlare med ofullständiga profiler (`profile_completed = false`).
+- **bilar.kollahar.se — publik startsida**: Hero-sökning, filterrad (märke/modell/drivmedel/växellåda/pris/år), 5-kols annons-grid med optimistiska favoriter och Server Action för ladda mer.
+- **bilar.kollahar.se — annonsdetaljsida**: Bildgalleri, specifikationer, utrustningskort, handlarkort, lead-modal med GDPR-samtycke, finansieringsmodul (annuitet) och visningslogg med sessionStorage-dedup.
+- **bilar.kollahar.se — publik handlarprofil**: Stats (aktiva annonser, sålda bilar, betyg), filtrerbart annons-grid med märkesfilter och prisintervall, ladda mer via Server Action.
+- **bilar.kollahar.se — v1 komplett**: Alla planerade v1-routes driftsatta. Se `docs/sites/bilar.md` och `docs/04-CHANGELOG.md` v1.5.0 för fullständig dokumentation.
