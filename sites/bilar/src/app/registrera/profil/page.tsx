@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import { createClient } from '../../../lib/supabase/client'
+import { completeRegistrationAction } from '../../actions/registration-actions'
 
 // Accepterar XXXXXX-XXXX eller XXXXXXXXXX — normaliseras till XXXXXX-XXXX vid sparning
 const ORG_NUMBER_REGEX = /^(\d{6}-\d{4}|\d{10})$/
@@ -86,35 +87,19 @@ export default function ProfilPage() {
     if (!userId || !organizationId) return
 
     setSaving(true)
-    const supabase = createClient()
 
-    // Uppdatera organizations (address och city kräver migration — se rapport nedan)
-    const { error: orgError } = await supabase
-      .from('organizations')
-      .update({
-        name: companyName.trim(),
-        address: address.trim(),
-        city: city.trim(),
-      })
-      .eq('id', organizationId)
+    // Uppdatera organizations + profiles via server action (kräver service role för RLS-bypass)
+    const result = await completeRegistrationAction(
+      userId,
+      organizationId,
+      companyName.trim(),
+      address.trim(),
+      city.trim(),
+      normalizeOrgNumber(orgNumber.trim())
+    )
 
-    if (orgError) {
-      setError('Kunde inte spara företagsuppgifterna. Försök igen.')
-      setSaving(false)
-      return
-    }
-
-    // Uppdatera profiles: org_number och profile_completed (profile_completed kräver migration)
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .update({
-        org_number: normalizeOrgNumber(orgNumber.trim()),
-        profile_completed: true,
-      })
-      .eq('id', userId)
-
-    if (profileError) {
-      setError('Företaget sparades men profilinformationen misslyckades. Försök igen.')
+    if (!result.success) {
+      setError(result.error ?? 'Kunde inte spara uppgifterna. Försök igen.')
       setSaving(false)
       return
     }

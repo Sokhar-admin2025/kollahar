@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import { createClient } from '../../../lib/supabase/client'
+import { createOrganizationSiteAction } from '../../actions/registration-actions'
 
 const MAX_ATTEMPTS = 5
 const CODE_EXPIRY_SECONDS = 15 * 60
@@ -227,17 +228,10 @@ function VerifieraContent() {
           }
         }
 
-        // Skapa/uppdatera rad i organization_sites
-        const { error: orgSiteErr } = await supabase
-          .from('organization_sites')
-          .upsert({
-            organization_id: orgId,
-            site: 'bilar',
-            status: 'active',
-          })
-
-        if (orgSiteErr) {
-          console.error('[bilar] organization_sites upsert fel:', orgSiteErr)
+        // Skapa/uppdatera rad i organization_sites via server action (kräver service role)
+        const orgSiteResult = await createOrganizationSiteAction(orgId)
+        if (!orgSiteResult.success) {
+          console.error('[bilar] organization_sites upsert fel:', orgSiteResult.error)
         }
       }
 
