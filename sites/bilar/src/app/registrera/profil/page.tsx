@@ -5,8 +5,14 @@ import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import { createClient } from '../../../lib/supabase/client'
 
-// Svensk org-nummer: XXXXXX-XXXX
-const ORG_NUMBER_REGEX = /^\d{6}-\d{4}$/
+// Accepterar XXXXXX-XXXX eller XXXXXXXXXX — normaliseras till XXXXXX-XXXX vid sparning
+const ORG_NUMBER_REGEX = /^(\d{6}-\d{4}|\d{10})$/
+
+function normalizeOrgNumber(value: string): string {
+  const digits = value.replace(/-/g, '')
+  if (digits.length === 10) return `${digits.slice(0, 6)}-${digits.slice(6)}`
+  return value
+}
 
 const STEPS = ['Kontouppgifter', 'Företagsinfo', 'Bekräftelse']
 
@@ -66,7 +72,7 @@ export default function ProfilPage() {
       return
     }
     if (!ORG_NUMBER_REGEX.test(orgNumber.trim())) {
-      setError('Ange org-nummer i formatet XXXXXX-XXXX.')
+      setError('Ange org-nummer i formatet 556123-4567 eller 5561234567')
       return
     }
     if (!address.trim()) {
@@ -102,7 +108,7 @@ export default function ProfilPage() {
     const { error: profileError } = await supabase
       .from('profiles')
       .update({
-        org_number: orgNumber.trim(),
+        org_number: normalizeOrgNumber(orgNumber.trim()),
         profile_completed: true,
       })
       .eq('id', userId)
@@ -203,7 +209,7 @@ export default function ProfilPage() {
               />
               {orgNumberInvalid && (
                 <p className="mt-1.5 text-xs text-danger" role="alert">
-                  Formatet ska vara XXXXXX-XXXX (t.ex. 556123-4567).
+                  Ange org-nummer i formatet 556123-4567 eller 5561234567
                 </p>
               )}
             </div>
