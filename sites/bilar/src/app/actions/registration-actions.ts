@@ -89,13 +89,20 @@ export async function completeRegistrationAction(
     return { success: false, error: 'Admin-klient saknas.' }
   }
 
+  // Använd UPSERT istället för UPDATE — om organizations-raden saknas (t.ex. vid ny registrering
+  // där setupOrganizationAction inte hann köra) skapas den här med korrekt name/address/city.
+  // PostgREST-beteende: UPDATE som träffar 0 rader returnerar { data: [], error: null } —
+  // tyst miss som inte fångas av error-check.
+  const slug = 'org-' + organizationId.replace(/-/g, '')
   const { data: orgData, error: orgError } = await supabaseAdmin
     .from('organizations')
-    .update({ name, address, city })
-    .eq('id', organizationId)
+    .upsert(
+      { id: organizationId, name, address, city, slug },
+      { onConflict: 'id' }
+    )
     .select()
 
-  console.log('[bilar][completeRegistrationAction] organizations UPDATE', { orgData, orgError })
+  console.log('[bilar][completeRegistrationAction] organizations UPSERT', { orgData, orgError })
 
   if (orgError) {
     console.error('[bilar][completeRegistrationAction] organizations-fel:', orgError)
@@ -108,11 +115,16 @@ export async function completeRegistrationAction(
     .eq('id', userId)
     .select()
 
-  console.log('[bilar][completeRegistrationAction] profiles UPDATE', { profileData, profileError })
+  console.log('[bilar][completeRegistrationAction] profiles UPDATE', { profileData, profileError, rowsAffected: profileData?.length ?? 0 })
 
   if (profileError) {
     console.error('[bilar][completeRegistrationAction] profiles-fel:', profileError)
     return { success: false, error: 'Företaget sparades men profilinformationen misslyckades.' }
+  }
+
+  if (!profileData || profileData.length === 0) {
+    console.error('[bilar][completeRegistrationAction] profiles UPDATE träffade 0 rader — fel userId?', { userId })
+    return { success: false, error: 'Användarprofilen hittades inte. Kontakta support.' }
   }
 
   console.log('[bilar][completeRegistrationAction] KLAR — success: true')
