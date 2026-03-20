@@ -14,13 +14,16 @@ import {
   MessageCircle,
   ShieldAlert,
   Send,
+  Users,
 } from 'lucide-react'
 import { createClient } from '../../../../lib/supabase/client'
 import type {
   BilarLeadDetail,
   LeadMessage,
   LeadStatus,
+  OrgMember,
 } from '../../../../lib/features/bilar-leads-service'
+import BilarCommanderModal from './BilarCommanderModal'
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -29,6 +32,13 @@ interface BilarLeadDetailClientProps {
   currentUserId: string
   organizationId: string
   nowIso: string
+  orgMembers: OrgMember[]
+  isOwner: boolean
+  reassignAction: (
+    leadId: string,
+    organizationId: string,
+    newAssigneeProfileId: string
+  ) => Promise<{ success: boolean; error?: string }>
   sendMessageAction: (
     leadId: string,
     organizationId: string,
@@ -480,6 +490,9 @@ export default function BilarLeadDetailClient({
   currentUserId,
   organizationId,
   nowIso,
+  orgMembers,
+  isOwner,
+  reassignAction,
   sendMessageAction,
   updateStatusAction,
   saveNoteAction,
@@ -489,6 +502,7 @@ export default function BilarLeadDetailClient({
 
   const [status, setStatus] = useState<LeadStatus>(initialLead.status)
   const [updatingStatus, setUpdatingStatus] = useState(false)
+  const [commanderOpen, setCommanderOpen] = useState(false)
   const [, startTransition] = useTransition()
 
   const handleStatusChange = (newStatus: LeadStatus) => {
@@ -657,6 +671,19 @@ export default function BilarLeadDetailClient({
                 {slaIcon}
                 {slaText}
               </div>
+
+              {/* Omfördela-knapp — synlig för org-ägare */}
+              {isOwner && (
+                <button
+                  type="button"
+                  onClick={() => setCommanderOpen(true)}
+                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border py-2 text-sm font-medium transition hover:bg-[#F8FAFC]"
+                  style={{ borderColor: '#E2E8F0', color: '#2563EB' }}
+                >
+                  <Users className="h-4 w-4" />
+                  Omfördela lead
+                </button>
+              )}
             </div>
 
             {/* Intern anteckning */}
@@ -683,6 +710,18 @@ export default function BilarLeadDetailClient({
           />
         </div>
       </div>
+
+      {/* Commander Modal */}
+      {commanderOpen && (
+        <BilarCommanderModal
+          leadId={initialLead.id}
+          organizationId={organizationId}
+          currentAssignedTo={initialLead.assigned_to}
+          orgMembers={orgMembers}
+          onClose={() => setCommanderOpen(false)}
+          reassignAction={reassignAction}
+        />
+      )}
     </div>
   )
 }

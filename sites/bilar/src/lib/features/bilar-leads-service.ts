@@ -442,3 +442,117 @@ export async function updateLeadStatus(
 
   return { success: true }
 }
+
+// ─── getOrganizationMembers ───────────────────────────────────────────────────
+
+export interface OrgMember {
+  id: string
+  full_name: string | null
+  avatar_url: string | null
+}
+
+export async function getOrganizationMembers(
+  supabase: SupabaseClient,
+  organizationId: string
+): Promise<OrgMember[]> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, full_name, avatar_url')
+    .eq('organization_id', organizationId)
+    .order('full_name', { ascending: true })
+
+  if (error) {
+    console.error('[bilar-leads-service] getOrganizationMembers error', error)
+    return []
+  }
+
+  return (data ?? []).map((row) => ({
+    id: String(row.id),
+    full_name: (row.full_name as string | null) ?? null,
+    avatar_url: (row.avatar_url as string | null) ?? null,
+  }))
+}
+
+// ─── reassignLead ─────────────────────────────────────────────────────────────
+
+export async function reassignLead(
+  supabase: SupabaseClient,
+  leadId: string,
+  organizationId: string,
+  newAssigneeProfileId: string,
+  reassignedByProfileId: string
+): Promise<{ success: true } | { success: false; error: string }> {
+  if (!supabaseAdmin) return { success: false, error: 'Databasanslutning saknas.' }
+
+  // Hämta lead + ny assignee parallellt
+  const [{ data: leadRow, error: leadError }, { data: assigneeRow, error: assigneeError }] =
+    await Promise.all([
+      supabaseAdmin
+        .from('leads')
+        .select('id, organization_id, assigned_to')
+        .eq('id', leadId)
+        .eq('organization_id', organizationId)
+        .maybeSingle(),
+      supabaseAdmin
+        .from('profiles')
+        .select('id, full_name, organization_id')
+        .eq('id', newAssigneeProfileId)
+        .maybeSingle(),
+    ])
+
+  if (leadError || !leadRow) {
+    return { success: false, error: 'Leadet hittades inte eller tillhör inte din organisation.' }
+  }
+
+  if (assigneeError || !assigneeRow) {
+    return { success: false, error: 'Den valda profilens konto hittades inte.' }
+  }
+
+  const assigneeOrgId = (assigneeRow as { organization_id?: string | null }).organization_id
+  if (!assigneeOrgId || assigneeOrgId !== organizationId) {
+    return { success: false, error: 'Du kan bara omfördela till profiler i din egen organisation.' }
+  }
+
+  // Hämta namn på den som omfördelar
+  const { data: byProfile } = await supabaseAdmin
+    .from('profiles')
+    .select('full_name')
+    .eq('id', reassignedByProfileId)
+    .maybeSingle()
+
+  const assigneeName =
+    (assigneeRow as { full_name?: string | null }).full_name?.trim() || newAssigneeProfileId
+  const byName =
+    (byProfile as { full_name?: string | null } | null)?.full_name?.trim() ||
+    reassignedByProfileId
+
+  // Uppdatera assigned_to
+  const { error: updateError } = await supabaseAdmin
+    .from('leads')
+    .update({ assigned_to: newAssigneeProfileId })
+    .eq('id', leadId)
+    .eq('organization_id', organizationId)
+
+  if (updateError) {
+    console.error('[bilar-leads-service] reassignLead update error', updateError)
+    return { success: false, error: 'Kunde inte omfördela leadet.' }
+  }
+
+  // Systemmeddelande i lead_messages
+  const { error: msgError } = await supabaseAdmin
+    .from('lead_messages')
+    .insert({
+      lead_id: leadId,
+      organization_id: organizationId,
+      author_profile_id: reassignedByProfileId,
+      role: 'system',
+      content: `Lead omfördelat till ${assigneeName} av ${byName}.`,
+    })
+
+  if (msgError) {
+    console.error('[bilar-leads-service] reassignLead system message error', msgError)
+    // Icke-kritiskt — fortsätt ändå
+  }
+
+  return { success: true }
+}
