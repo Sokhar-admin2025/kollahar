@@ -155,6 +155,248 @@ export async function getLeads(
   })
 }
 
+// ─── Detaljtyper ─────────────────────────────────────────────────────────────
+
+export type LeadMessageRole = 'seller' | 'owner' | 'system'
+
+export interface LeadMessage {
+  id: string
+  lead_id: string
+  organization_id: string
+  author_profile_id: string
+  role: LeadMessageRole
+  content: string
+  created_at: string
+}
+
+export interface BilarLeadDetail {
+  id: string
+  status: LeadStatus
+  source_site: SourceSite
+  created_at: string
+  first_response_at: string | null
+  assigned_to: string | null
+  is_guest: boolean
+  internal_note: string | null
+  buyer_name: string
+  buyer_email: string | null
+  listing_id: string | null
+  listing_title: string
+  listing_make: string | null
+  listing_model: string | null
+  listing_year: number | null
+  listing_price: number | null
+  listing_image: string | null
+  messages: LeadMessage[]
+  sla_missed: boolean
+  sla_warning: boolean
+  sla_deadline: string
+}
+
+// ─── getLead ──────────────────────────────────────────────────────────────────
+
+export async function getLead(
+  supabase: SupabaseClient,
+  leadId: string,
+  organizationId: string
+): Promise<BilarLeadDetail | null> {
+  if (!supabaseAdmin) return null
+
+  const { data, error } = await supabaseAdmin
+    .from('leads')
+    .select(`
+      id,
+      status,
+      source_site,
+      created_at,
+      first_response_at,
+      assigned_to,
+      is_guest,
+      internal_note,
+      buyer_name,
+      buyer_email,
+      listing_id,
+      listings (
+        title,
+        make,
+        model,
+        year,
+        price,
+        images
+      ),
+      lead_messages (
+        id,
+        lead_id,
+        organization_id,
+        author_profile_id,
+        role,
+        content,
+        created_at
+      )
+    `)
+    .eq('id', leadId)
+    .eq('organization_id', organizationId)
+    .order('created_at', { referencedTable: 'lead_messages', ascending: true })
+    .maybeSingle()
+
+  if (error) {
+    console.error('[bilar-leads-service] getLead error', error)
+    return null
+  }
+  if (!data) return null
+
+  const now = new Date()
+  const listing = Array.isArray(data.listings) ? data.listings[0] : data.listings
+  const images = (listing as { images?: unknown } | null)?.images
+  const firstImage = Array.isArray(images) && images.length > 0 ? String(images[0]) : null
+
+  const { sla_missed, sla_warning, sla_deadline } = computeSlaFlags(
+    data.created_at as string,
+    data.first_response_at as string | null,
+    data.status as LeadStatus,
+    now
+  )
+
+  const rawMessages = Array.isArray(data.lead_messages) ? data.lead_messages : []
+  const messages: LeadMessage[] = rawMessages.map((m) => ({
+    id: String(m.id),
+    lead_id: String(m.lead_id),
+    organization_id: String(m.organization_id ?? ''),
+    author_profile_id: String(m.author_profile_id ?? ''),
+    role: (m.role ?? 'seller') as LeadMessageRole,
+    content: String(m.content ?? ''),
+    created_at: String(m.created_at),
+  }))
+
+  return {
+    id: data.id as string,
+    status: data.status as LeadStatus,
+    source_site: (data.source_site ?? 'main') as SourceSite,
+    created_at: data.created_at as string,
+    first_response_at: data.first_response_at as string | null,
+    assigned_to: data.assigned_to as string | null,
+    is_guest: Boolean(data.is_guest),
+    internal_note: (data.internal_note as string | null) ?? null,
+    buyer_name: String(data.buyer_name ?? 'Anonym gäst'),
+    buyer_email: (data.buyer_email as string | null) ?? null,
+    listing_id: data.listing_id as string | null,
+    listing_title: (listing as { title?: string } | null)?.title ?? 'Okänd annons',
+    listing_make: (listing as { make?: string } | null)?.make ?? null,
+    listing_model: (listing as { model?: string } | null)?.model ?? null,
+    listing_year: (listing as { year?: number } | null)?.year ?? null,
+    listing_price: (listing as { price?: number } | null)?.price ?? null,
+    listing_image: firstImage,
+    messages,
+    sla_missed,
+    sla_warning,
+    sla_deadline,
+  }
+}
+
+// ─── sendLeadMessage ──────────────────────────────────────────────────────────
+
+export async function sendLeadMessage(
+  supabase: SupabaseClient,
+  leadId: string,
+  organizationId: string,
+  content: string,
+  authorProfileId: string
+): Promise<{ success: true; message: LeadMessage } | { success: false; error: string }> {
+  if (!supabaseAdmin) return { success: false, error: 'Databasanslutning saknas.' }
+
+  const trimmed = content.trim()
+  if (!trimmed) return { success: false, error: 'Meddelandet kan inte vara tomt.' }
+  if (trimmed.length > 4000) return { success: false, error: 'Meddelandet är för långt.' }
+
+  // Verifiera att lead tillhör org
+  const { data: leadRow, error: leadError } = await supabaseAdmin
+    .from('leads')
+    .select('id, organization_id, first_response_at, assigned_to')
+    .eq('id', leadId)
+    .eq('organization_id', organizationId)
+    .maybeSingle()
+
+  if (leadError || !leadRow) {
+    return { success: false, error: 'Leadet hittades inte.' }
+  }
+
+  const nowIso = new Date().toISOString()
+
+  const { data: inserted, error: insertError } = await supabaseAdmin
+    .from('lead_messages')
+    .insert({
+      lead_id: leadId,
+      organization_id: organizationId,
+      author_profile_id: authorProfileId,
+      role: 'seller',
+      content: trimmed,
+    })
+    .select('id, lead_id, organization_id, author_profile_id, role, content, created_at')
+    .single()
+
+  if (insertError || !inserted) {
+    console.error('[bilar-leads-service] sendLeadMessage insert error', insertError)
+    return { success: false, error: 'Kunde inte spara meddelandet.' }
+  }
+
+  // Sätt first_response_at om det saknas
+  if (!(leadRow as { first_response_at?: string | null }).first_response_at) {
+    await supabaseAdmin
+      .from('leads')
+      .update({ first_response_at: nowIso })
+      .eq('id', leadId)
+      .eq('organization_id', organizationId)
+  }
+
+  // Auto-assign vid första svar
+  if (!(leadRow as { assigned_to?: string | null }).assigned_to) {
+    await supabaseAdmin
+      .from('leads')
+      .update({ assigned_to: authorProfileId })
+      .eq('id', leadId)
+      .eq('organization_id', organizationId)
+  }
+
+  return {
+    success: true,
+    message: {
+      id: String(inserted.id),
+      lead_id: String(inserted.lead_id),
+      organization_id: String(inserted.organization_id ?? ''),
+      author_profile_id: String(inserted.author_profile_id ?? ''),
+      role: (inserted.role ?? 'seller') as LeadMessageRole,
+      content: String(inserted.content),
+      created_at: String(inserted.created_at),
+    },
+  }
+}
+
+// ─── updateInternalNote ───────────────────────────────────────────────────────
+
+export async function updateInternalNote(
+  supabase: SupabaseClient,
+  leadId: string,
+  organizationId: string,
+  note: string
+): Promise<{ success: true } | { success: false; error: string }> {
+  const { error } = await supabase
+    .from('leads')
+    .update({
+      internal_note: note,
+      internal_note_updated_at: new Date().toISOString(),
+    })
+    .eq('id', leadId)
+    .eq('organization_id', organizationId)
+
+  if (error) {
+    console.error('[bilar-leads-service] updateInternalNote error', error)
+    return { success: false, error: 'Kunde inte spara anteckning.' }
+  }
+  return { success: true }
+}
+
+// ─── updateLeadStatus ─────────────────────────────────────────────────────────
+
 export async function updateLeadStatus(
   supabase: SupabaseClient,
   leadId: string,
