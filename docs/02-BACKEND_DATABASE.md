@@ -549,6 +549,7 @@ Migrations ligger i `supabase/migrations/`:
 - `20260319100000_listings_leads_source_site.sql`: Lägger till `source_site` (`text NOT NULL DEFAULT 'main'`, check: `main/bilar/batar/lokaler`) på `listings` och `leads` — möjliggör syskon-arkitektur. Backfillar befintliga rader med `'main'`. Skapar index `idx_listings_source_site`, `idx_listings_source_site_status` och `idx_leads_source_site`.
 - `20260319110000_organization_sites.sql`: Skapar `organization_sites`-tabellen (PK: `organization_id` + `site`) som spårar vilka syskon ett företag är registrerat på. RLS: läsning för eget org, skrivning via service role. Index på `site` för CC-listning per syskon.
 - `20260320100000_organizations_address_profiles_completion.sql`: Lägger till `address` och `city` (text, nullable) på `organizations` för handlaradress i syskon-registreringsflödet. Lägger till `profile_completed` (boolean NOT NULL DEFAULT false) och `reminder_count` (integer NOT NULL DEFAULT 0) på `profiles` för att spåra om steg 3 i registreringsflödet är slutfört samt antal påminnelse-e-post skickade.
+- `20260320200000_organizations_show_financing.sql`: Lägger till `show_financing` (boolean NOT NULL DEFAULT false) på `organizations` för att aktivera finansieringsmodulen per handlare på annonsdetaljsidan (bilar.kollahar.se).
 
 ### Legacy image backfill (engångskörning)
 
