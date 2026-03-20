@@ -1,36 +1,91 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { supabaseAdmin } from '../../../../lib/supabase/admin'
+import { sendIncompleteProfileReminder } from '../../../../lib/email/remind-incomplete-profile'
 
 /**
  * Cron: Påminnelse till company-konton med ofullständig handlarprofil.
  *
- * Schema: en gång per dag (t.ex. "0 9 * * *" i vercel.json för sokhar-bilar).
- * Kräver: Authorization: Bearer <CRON_SECRET> i request-headern.
- *
- * Logik (ej implementerad):
- * 1. Verifiera CRON_SECRET.
- * 2. Hämta alla profiles där:
- *    - account_type = 'company'
- *    - organization_id IS NOT NULL
- *    - profile_completed IS NOT TRUE          (kräver migration: profiles.profile_completed)
- *    - reminder_count < 3 ELLER reminder_count IS NULL  (kräver migration: profiles.reminder_count)
- * 3. För varje profil: hämta tillhörande organizations.name.
- *    Om name IS NULL eller tom → skicka påminnelse-e-post via Resend.
- * 4. Öka profiles.reminder_count med 1 per skickad påminnelse.
- * 5. Logga antal skickade påminnelser i svaret.
- *
- * Beroenden som saknas och kräver migrationer innan implementering:
- * - profiles.profile_completed (boolean, default false)
- * - profiles.reminder_count    (int, default 0)
- * - organizations.address      (text, nullable)
- * - organizations.city         (text, nullable)
+ * Schema: "0 9 * * *" (kl 09:00 varje dag) — konfigurerat i vercel.json.
+ * Kräver: Authorization: Bearer <CRON_SECRET>
  */
 
+const MAX_REMINDERS = 3
+const GRACE_PERIOD_MS = 60 * 60 * 1000 // 1 timme
+
 export async function GET(request: NextRequest) {
+  // ── Auth ───────────────────────────────────────────────────────────────────
   const authHeader = request.headers.get('authorization')
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!process.env.CRON_SECRET || authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  // TODO: implementera logiken beskriven ovan
-  return NextResponse.json({ message: 'Not implemented' }, { status: 501 })
+  if (!supabaseAdmin) {
+    return NextResponse.json({ error: 'Databasanslutning saknas.' }, { status: 500 })
+  }
+
+  // ── Hämta ofullständiga profiler ───────────────────────────────────────────
+  const graceCutoff = new Date(Date.now() - GRACE_PERIOD_MS).toISOString()
+
+  const { data: profiles, error: fetchError } = await supabaseAdmin
+    .from('profiles')
+    .select('id, email, reminder_count')
+    .eq('account_type', 'company')
+    .eq('profile_completed', false)
+    .lt('reminder_count', MAX_REMINDERS)
+    .lt('created_at', graceCutoff)
+
+  if (fetchError) {
+    console.error('[cron/remind-incomplete-profiles] Hämtningsfel:', fetchError)
+    return NextResponse.json({ error: 'Databasfel.' }, { status: 500 })
+  }
+
+  if (!profiles || profiles.length === 0) {
+    return NextResponse.json({ sent: 0, message: 'Inga profiler att påminna.' })
+  }
+
+  // ── Skicka påminnelser ─────────────────────────────────────────────────────
+  let sent = 0
+  let failed = 0
+
+  for (const profile of profiles) {
+    const email = profile.email as string | null
+    if (!email) continue
+
+    const currentCount = (profile.reminder_count as number) ?? 0
+    const nextCount = currentCount + 1
+
+    const result = await sendIncompleteProfileReminder({
+      to: email,
+      reminderCount: nextCount,
+    })
+
+    if (!result.success) {
+      failed++
+      continue
+    }
+
+    // Öka reminder_count
+    const { error: updateError } = await supabaseAdmin
+      .from('profiles')
+      .update({ reminder_count: nextCount })
+      .eq('id', profile.id)
+
+    if (updateError) {
+      console.error(
+        `[cron/remind-incomplete-profiles] Kunde inte uppdatera reminder_count för ${profile.id}:`,
+        updateError
+      )
+      failed++
+    } else {
+      sent++
+    }
+  }
+
+  console.log(`[cron/remind-incomplete-profiles] Klart — skickade: ${sent}, misslyckades: ${failed}`)
+
+  return NextResponse.json({
+    sent,
+    failed,
+    total: profiles.length,
+  })
 }
