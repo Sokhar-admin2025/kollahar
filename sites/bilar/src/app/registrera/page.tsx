@@ -60,31 +60,56 @@ export default function RegistreraPage() {
 
     setLoading(true)
     const supabase = createClient()
+    const cleanEmail = email.trim()
 
+    // 1. Skapa användarkontot
     const { error: signUpError } = await supabase.auth.signUp({
-      email: email.trim(),
+      email: cleanEmail,
       password,
       options: {
         data: { website: extractedDomain, account_type: 'company' },
       },
     })
 
-    setLoading(false)
-
     if (signUpError) {
       setError(signUpError.message)
+      setLoading(false)
       return
     }
 
-    // Spara e-post och lösenord i sessionStorage — läses av verifiera-sidan
+    // 2. Logga ut direkt — OTP-verifiering sker separat, ingen session innan dess
     try {
-      sessionStorage.setItem('bilar_signup_email', email.trim())
+      await supabase.auth.signOut()
+      await new Promise((resolve) => setTimeout(resolve, 100))
+    } catch {
+      // ignorera
+    }
+
+    // 3. Skicka OTP-mailet (6-siffrig kod) — samma mönster som Main
+    const { error: otpError } = await supabase.auth.signInWithOtp({
+      email: cleanEmail,
+      options: { shouldCreateUser: false },
+    })
+
+    if (otpError) {
+      setError(
+        otpError.message?.includes('rate limit')
+          ? 'För många försök. Vänta en stund och försök igen.'
+          : 'Kunde inte skicka verifieringskod. Försök igen.'
+      )
+      setLoading(false)
+      return
+    }
+
+    // 4. Spara lösenord i sessionStorage — läses av verifiera-sidan för auto-inloggning
+    try {
+      sessionStorage.setItem('bilar_signup_email', cleanEmail)
       sessionStorage.setItem('signup_password_pending_verify', password)
     } catch {
       // sessionStorage kan vara blockerat i vissa privata lägen — fortsätt ändå
     }
 
-    router.push(`/registrera/verifiera?email=${encodeURIComponent(email.trim())}`)
+    router.push(`/registrera/verifiera?email=${encodeURIComponent(cleanEmail)}`)
   }
 
   return (
