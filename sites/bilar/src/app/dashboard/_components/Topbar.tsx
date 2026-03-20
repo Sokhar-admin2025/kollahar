@@ -1,7 +1,8 @@
 'use client'
 
-import { usePathname } from 'next/navigation'
-import { Bell } from 'lucide-react'
+import { usePathname, useRouter } from 'next/navigation'
+import { Bell, LogOut } from 'lucide-react'
+import { createClient } from '../../../lib/supabase/client'
 
 const ROUTE_TITLES: Record<string, string> = {
   '/dashboard':                'Översikt',
@@ -18,7 +19,14 @@ interface TopbarProps {
 
 export function Topbar({ orgName, logoUrl }: TopbarProps) {
   const pathname = usePathname()
+  const router = useRouter()
   const title = ROUTE_TITLES[pathname] ?? 'Dashboard'
+
+  const handleSignOut = async () => {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push('/login')
+  }
 
   return (
     <header
@@ -70,6 +78,17 @@ export function Topbar({ orgName, logoUrl }: TopbarProps) {
             {orgName}
           </span>
         </div>
+
+        {/* Utloggningsknapp */}
+        <button
+          type="button"
+          onClick={handleSignOut}
+          aria-label="Logga ut"
+          title="Logga ut"
+          className="flex items-center justify-center w-8 h-8 rounded-lg transition hover:bg-bg-subtle"
+        >
+          <LogOut size={16} strokeWidth={1.75} style={{ color: '#64748B' }} />
+        </button>
       </div>
     </header>
   )
