@@ -3,6 +3,51 @@ import { supabaseAdmin } from '../supabase/admin'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+export interface PublicOrganizationDetail {
+  id: string
+  name: string | null
+  slug: string | null
+  logo_url: string | null
+  address: string | null
+  city: string | null
+  created_at: string
+  is_company_verified: boolean
+  show_financing: boolean
+  sold_count: number
+}
+
+export interface PublicListingDetail {
+  id: string
+  title: string
+  make: string | null
+  model: string | null
+  year: number | null
+  price: number | null
+  images: string[]
+  contact_via_chat: boolean
+  show_phone: boolean
+  contact_phone: string | null
+  show_email: boolean
+  attributes: {
+    fuel_type?: string
+    mileage?: number
+    gearbox?: string
+    color?: string
+    body_type?: string
+    condition?: string
+    inspection_valid_until?: string
+    down_payment?: number
+    is_upcoming?: boolean
+    equipment?: string[]
+    description?: string
+  }
+  created_at: string
+  views_count: number
+  seller_id: string | null
+  organization_id: string | null
+  organization: PublicOrganizationDetail | null
+}
+
 export interface PublicListing {
   id: string
   title: string
@@ -173,4 +218,165 @@ export async function getFavoriteIds(supabase: SupabaseClient): Promise<string[]
     .eq('user_id', user.id)
 
   return (data ?? []).map((r) => String(r.listing_id))
+}
+
+// ─── getPublicListing ─────────────────────────────────────────────────────────
+
+export async function getPublicListing(
+  _supabase: SupabaseClient,
+  listingId: string
+): Promise<PublicListingDetail | null> {
+  if (!supabaseAdmin) return null
+
+  const { data: row, error } = await supabaseAdmin
+    .from('listings')
+    .select(
+      'id, title, make, model, year, price, images, contact_via_chat, show_phone, contact_phone, show_email, attributes, created_at, user_id, organization_id, organizations(id, name, slug, logo_url, address, city, created_at)'
+    )
+    .eq('id', listingId)
+    .eq('status', 'active')
+    .maybeSingle()
+
+  if (error || !row) return null
+
+  const orgRaw = Array.isArray(row.organizations) ? row.organizations[0] : row.organizations
+  const orgId = (row.organization_id as string | null) ?? null
+
+  // Views count, sold count, is_company_verified, show_financing parallellt
+  const [viewsResult, soldResult, verifiedResult, financingResult] = await Promise.all([
+    supabaseAdmin
+      .from('listing_views')
+      .select('*', { count: 'exact', head: true })
+      .eq('listing_id', listingId),
+
+    orgId
+      ? supabaseAdmin
+          .from('listing_sales')
+          .select('*', { count: 'exact', head: true })
+          .eq('organization_id', orgId)
+      : Promise.resolve({ count: 0 }),
+
+    orgId
+      ? supabaseAdmin
+          .from('profiles')
+          .select('id', { count: 'exact', head: true })
+          .eq('organization_id', orgId)
+          .eq('is_company_verified', true)
+      : Promise.resolve({ count: 0 }),
+
+    orgId
+      ? supabaseAdmin
+          .from('organizations')
+          .select('show_financing')
+          .eq('id', orgId)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+  ])
+
+  const viewsCount = (viewsResult as { count: number | null }).count ?? 0
+  const soldCount = (soldResult as { count: number | null }).count ?? 0
+  const isVerified = ((verifiedResult as { count: number | null }).count ?? 0) > 0
+  const showFinancing =
+    Boolean((financingResult as { data: { show_financing?: boolean } | null })?.data?.show_financing) ?? false
+
+  const organization: PublicOrganizationDetail | null = orgRaw
+    ? {
+        id: String((orgRaw as { id: unknown }).id ?? ''),
+        name: ((orgRaw as { name?: string | null }).name as string | null) ?? null,
+        slug: ((orgRaw as { slug?: string | null }).slug as string | null) ?? null,
+        logo_url: ((orgRaw as { logo_url?: string | null }).logo_url as string | null) ?? null,
+        address: ((orgRaw as { address?: string | null }).address as string | null) ?? null,
+        city: ((orgRaw as { city?: string | null }).city as string | null) ?? null,
+        created_at: String((orgRaw as { created_at?: unknown }).created_at ?? ''),
+        is_company_verified: isVerified,
+        show_financing: showFinancing,
+        sold_count: soldCount,
+      }
+    : null
+
+  return {
+    id: String(row.id),
+    title: String(row.title ?? ''),
+    make: (row.make as string | null) ?? null,
+    model: (row.model as string | null) ?? null,
+    year: (row.year as number | null) ?? null,
+    price: (row.price as number | null) ?? null,
+    images: Array.isArray(row.images) ? (row.images as string[]) : [],
+    contact_via_chat: Boolean(row.contact_via_chat ?? true),
+    show_phone: Boolean(row.show_phone ?? false),
+    contact_phone: (row.contact_phone as string | null) ?? null,
+    show_email: Boolean(row.show_email ?? false),
+    attributes: (row.attributes as PublicListingDetail['attributes']) ?? {},
+    created_at: String(row.created_at),
+    views_count: viewsCount,
+    seller_id: (row.user_id as string | null) ?? null,
+    organization_id: orgId,
+    organization,
+  }
+}
+
+// ─── getRelatedListings ───────────────────────────────────────────────────────
+
+export async function getRelatedListings(
+  _supabase: SupabaseClient,
+  organizationId: string,
+  excludeListingId: string
+): Promise<PublicListing[]> {
+  if (!supabaseAdmin) return []
+
+  const { data: rows, error } = await supabaseAdmin
+    .from('listings')
+    .select('id, title, make, model, year, price, images, attributes, seller_type, organizations(name, slug, logo_url)')
+    .eq('source_site', 'bilar')
+    .eq('status', 'active')
+    .eq('organization_id', organizationId)
+    .neq('id', excludeListingId)
+    .order('created_at', { ascending: false })
+    .limit(5)
+
+  if (error || !rows) return []
+
+  return rows.map((row): PublicListing => {
+    const images = row.images
+    const thumbnail =
+      Array.isArray(images) && images.length > 0 ? String(images[0]) : null
+    const orgs = row.organizations
+    const org = Array.isArray(orgs) ? orgs[0] : orgs
+
+    return {
+      id: String(row.id),
+      title: String(row.title ?? ''),
+      make: (row.make as string | null) ?? null,
+      model: (row.model as string | null) ?? null,
+      year: (row.year as number | null) ?? null,
+      price: (row.price as number | null) ?? null,
+      thumbnail,
+      seller_type: String(row.seller_type ?? 'company'),
+      organization: org
+        ? {
+            name: (org.name as string | null) ?? null,
+            slug: (org.slug as string | null) ?? null,
+            logo_url: (org.logo_url as string | null) ?? null,
+          }
+        : null,
+      attributes: (row.attributes as PublicListing['attributes']) ?? {},
+    }
+  })
+}
+
+// ─── logView ──────────────────────────────────────────────────────────────────
+
+export async function logView(
+  _supabase: SupabaseClient,
+  listingId: string,
+  sellerId: string | null,
+  viewerId?: string
+): Promise<void> {
+  if (!supabaseAdmin) return
+
+  await supabaseAdmin.from('listing_views').insert({
+    listing_id: listingId,
+    seller_id: sellerId,
+    viewer_id: viewerId ?? null,
+  })
 }
