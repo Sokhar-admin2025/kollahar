@@ -380,3 +380,147 @@ export async function logView(
     viewer_id: viewerId ?? null,
   })
 }
+
+// ─── DealerProfile ────────────────────────────────────────────────────────────
+
+export interface DealerProfile {
+  id: string
+  name: string | null
+  slug: string | null
+  logo_url: string | null
+  address: string | null
+  city: string | null
+  created_at: string
+  is_company_verified: boolean
+  active_count: number
+  sold_count: number
+}
+
+export interface DealerListingsFilters {
+  make?: string
+  minPrice?: number
+  maxPrice?: number
+}
+
+// ─── getOrganizationBySlug ────────────────────────────────────────────────────
+
+export async function getOrganizationBySlug(
+  _supabase: SupabaseClient,
+  slug: string
+): Promise<DealerProfile | null> {
+  if (!supabaseAdmin) return null
+
+  const { data: org, error } = await supabaseAdmin
+    .from('organizations')
+    .select('id, name, slug, logo_url, address, city, created_at')
+    .eq('slug', slug)
+    .maybeSingle()
+
+  if (error || !org) return null
+
+  const orgId = String(org.id)
+
+  const [activeResult, soldResult, verifiedResult] = await Promise.all([
+    supabaseAdmin
+      .from('listings')
+      .select('*', { count: 'exact', head: true })
+      .eq('organization_id', orgId)
+      .eq('source_site', 'bilar')
+      .eq('status', 'active'),
+
+    supabaseAdmin
+      .from('listing_sales')
+      .select('*', { count: 'exact', head: true })
+      .eq('organization_id', orgId),
+
+    supabaseAdmin
+      .from('profiles')
+      .select('id', { count: 'exact', head: true })
+      .eq('organization_id', orgId)
+      .eq('is_company_verified', true),
+  ])
+
+  return {
+    id: orgId,
+    name: (org.name as string | null) ?? null,
+    slug: (org.slug as string | null) ?? null,
+    logo_url: (org.logo_url as string | null) ?? null,
+    address: (org.address as string | null) ?? null,
+    city: (org.city as string | null) ?? null,
+    created_at: String(org.created_at),
+    is_company_verified: ((verifiedResult as { count: number | null }).count ?? 0) > 0,
+    active_count: (activeResult as { count: number | null }).count ?? 0,
+    sold_count: (soldResult as { count: number | null }).count ?? 0,
+  }
+}
+
+// ─── getOrganizationListings ──────────────────────────────────────────────────
+
+export async function getOrganizationListings(
+  _supabase: SupabaseClient,
+  organizationId: string,
+  filters?: DealerListingsFilters,
+  page = 1
+): Promise<{ listings: PublicListing[]; total: number }> {
+  if (!supabaseAdmin) return { listings: [], total: 0 }
+
+  const offset = (page - 1) * PAGE_SIZE
+
+  let query = supabaseAdmin
+    .from('listings')
+    .select(
+      'id, title, make, model, year, price, images, attributes, seller_type, organizations(name, slug, logo_url)',
+      { count: 'exact' }
+    )
+    .eq('organization_id', organizationId)
+    .eq('source_site', 'bilar')
+    .eq('status', 'active')
+    .order('created_at', { ascending: false })
+    .range(offset, offset + PAGE_SIZE - 1)
+
+  if (filters?.make) {
+    query = query.eq('make', filters.make)
+  }
+  if (filters?.minPrice) {
+    query = query.gte('price', filters.minPrice)
+  }
+  if (filters?.maxPrice) {
+    query = query.lte('price', filters.maxPrice)
+  }
+
+  const { data: rows, error, count } = await query
+
+  if (error) {
+    console.error('[bilar-public-service] getOrganizationListings error', error)
+    return { listings: [], total: 0 }
+  }
+
+  const listings = (rows ?? []).map((row): PublicListing => {
+    const images = row.images
+    const thumbnail =
+      Array.isArray(images) && images.length > 0 ? String(images[0]) : null
+    const orgs = row.organizations
+    const org = Array.isArray(orgs) ? orgs[0] : orgs
+
+    return {
+      id: String(row.id),
+      title: String(row.title ?? ''),
+      make: (row.make as string | null) ?? null,
+      model: (row.model as string | null) ?? null,
+      year: (row.year as number | null) ?? null,
+      price: (row.price as number | null) ?? null,
+      thumbnail,
+      seller_type: String(row.seller_type ?? 'company'),
+      organization: org
+        ? {
+            name: (org.name as string | null) ?? null,
+            slug: (org.slug as string | null) ?? null,
+            logo_url: (org.logo_url as string | null) ?? null,
+          }
+        : null,
+      attributes: (row.attributes as PublicListing['attributes']) ?? {},
+    }
+  })
+
+  return { listings, total: count ?? 0 }
+}
