@@ -189,15 +189,25 @@ function VerifieraContent() {
           .eq('id', userId)
           .single()
 
+        // Sätt alltid account_type = 'company' — kan vara 'private' p.g.a. legacy-data
+        // (signUp anropades tidigare utan account_type i metadata).
+        const { error: accountTypeErr } = await supabase
+          .from('profiles')
+          .update({ account_type: 'company' })
+          .eq('id', userId)
+        if (accountTypeErr) {
+          console.error('[bilar] account_type update fel:', accountTypeErr)
+        }
+
         // organization_id är NULL för nya användare (handle_new_user sätter det inte automatiskt).
         // Sätt det explicit till userId — konsekvent med multi-tenant backfill-mönstret.
-        let orgId: string = profile?.organization_id ?? userId
+        const orgId: string = profile?.organization_id ?? userId
 
         if (!profile?.organization_id) {
-          // Uppdatera profilen med organization_id och account_type
+          // Uppdatera profilen med organization_id
           const { error: profileUpdateErr } = await supabase
             .from('profiles')
-            .update({ organization_id: userId, account_type: 'company' })
+            .update({ organization_id: userId })
             .eq('id', userId)
 
           if (profileUpdateErr) {

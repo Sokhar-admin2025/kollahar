@@ -54,28 +54,38 @@ export async function proxy(request: NextRequest) {
     .eq('id', user.id)
     .single()
 
-  // Guard 2: inloggad privatperson → /inte-foretag
-  if (!profile || profile.account_type !== 'company') {
+  if (!profile) {
     return NextResponse.redirect(new URL('/inte-foretag', request.url))
   }
 
-  // Guard 3: company-konto saknar aktiv rad i organization_sites för 'bilar' → /registrera
-  if (!profile.organization_id) {
+  // Guards 2+3: kontrollera bilar-registrering via organization_sites.
+  // organization_sites är primär källa för bilar-behörighet — account_type kan vara
+  // 'private' på grund av legacy-data (signUp utan account_type i metadata).
+  // Logik:
+  //   - Aktiv organization_sites-rad → bilar-handlare, fortsätt till Guard 4
+  //   - Ingen organization_sites-rad + account_type !== 'company' → privatperson → /inte-foretag
+  //   - Ingen organization_sites-rad + account_type = 'company' → ej registrerad → /registrera
+  let hasBilarRegistration = false
+  if (profile.organization_id) {
+    const { data: registration } = await supabase
+      .from('organization_sites')
+      .select('status')
+      .eq('organization_id', profile.organization_id)
+      .eq('site', 'bilar')
+      .single()
+    hasBilarRegistration = registration?.status === 'active'
+  }
+
+  if (!hasBilarRegistration) {
+    if (profile.account_type !== 'company') {
+      // Guard 2: privatperson utan bilar-registrering → /inte-foretag
+      return NextResponse.redirect(new URL('/inte-foretag', request.url))
+    }
+    // Guard 3: company-konto utan aktiv bilar-registrering → /registrera
     return NextResponse.redirect(new URL('/registrera', request.url))
   }
 
-  const { data: registration } = await supabase
-    .from('organization_sites')
-    .select('status')
-    .eq('organization_id', profile.organization_id)
-    .eq('site', 'bilar')
-    .single()
-
-  if (!registration || registration.status !== 'active') {
-    return NextResponse.redirect(new URL('/registrera', request.url))
-  }
-
-  // Guard 4: org registrerad men profilen inte ifylld → /registrera/profil
+  // Guard 4: bilar-registrering OK men profilen inte ifylld → /registrera/profil
   const profileComplete = await checkProfileComplete(supabase)
   if (!profileComplete) {
     return NextResponse.redirect(new URL('/registrera/profil', request.url))
