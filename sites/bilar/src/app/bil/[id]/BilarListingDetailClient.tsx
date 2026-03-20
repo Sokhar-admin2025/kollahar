@@ -162,7 +162,7 @@ export default function BilarListingDetailClient({
 
   return (
     <div className="min-h-screen" style={{ background: '#F7F8FA' }}>
-      <BilarPublicHeader isLoggedIn={isLoggedIn} />
+      <BilarPublicHeader />
 
       {/* Login-toast */}
       {loginToast && (

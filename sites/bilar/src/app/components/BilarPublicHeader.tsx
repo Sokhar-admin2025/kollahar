@@ -2,17 +2,54 @@
 
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Search } from 'lucide-react'
+import { createClient } from '../../lib/supabase/client'
 
-interface BilarPublicHeaderProps {
-  isLoggedIn: boolean
-}
+// 'full'       = inloggad handlare med aktiv bilar-registrering och ifylld profil → Dashboard
+// 'incomplete' = inloggad men profil/registrering ofullständig → Slutför registrering
+// 'none'       = ej inloggad eller privatperson → Logga in + Registrera handlare
+type DealerStatus = 'loading' | 'full' | 'incomplete' | 'none'
 
-export default function BilarPublicHeader({ isLoggedIn }: BilarPublicHeaderProps) {
+export default function BilarPublicHeader() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [query, setQuery] = useState(searchParams.get('q') ?? '')
+  const [status, setStatus] = useState<DealerStatus>('loading')
+
+  useEffect(() => {
+    const supabase = createClient()
+
+    const loadStatus = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { setStatus('none'); return }
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('account_type, organization_id, profile_completed')
+        .eq('id', user.id)
+        .single()
+
+      if (!profile || profile.account_type !== 'company') {
+        setStatus('none'); return
+      }
+
+      if (!profile.organization_id || !profile.profile_completed) {
+        setStatus('incomplete'); return
+      }
+
+      const { data: reg } = await supabase
+        .from('organization_sites')
+        .select('status')
+        .eq('organization_id', profile.organization_id)
+        .eq('site', 'bilar')
+        .maybeSingle()
+
+      setStatus(reg?.status === 'active' ? 'full' : 'incomplete')
+    }
+
+    loadStatus()
+  }, [])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -60,9 +97,9 @@ export default function BilarPublicHeader({ isLoggedIn }: BilarPublicHeaderProps
         {/* Spacer */}
         <div className="flex-1" />
 
-        {/* Auth-knappar */}
+        {/* Auth-knappar — renderas när status är känd */}
         <div className="flex items-center gap-2 shrink-0">
-          {isLoggedIn ? (
+          {status === 'full' && (
             <Link
               href="/dashboard"
               className="px-3 py-1.5 rounded-lg text-sm font-medium transition"
@@ -70,7 +107,19 @@ export default function BilarPublicHeader({ isLoggedIn }: BilarPublicHeaderProps
             >
               Dashboard
             </Link>
-          ) : (
+          )}
+
+          {status === 'incomplete' && (
+            <Link
+              href="/registrera/profil"
+              className="px-3 py-1.5 rounded-lg text-sm font-medium transition hover:opacity-90"
+              style={{ background: '#FEF3C7', color: '#92400E' }}
+            >
+              Slutför registrering
+            </Link>
+          )}
+
+          {status === 'none' && (
             <>
               <Link
                 href="/login"
@@ -88,6 +137,7 @@ export default function BilarPublicHeader({ isLoggedIn }: BilarPublicHeaderProps
               </Link>
             </>
           )}
+          {/* status === 'loading': ingen knapp visas (undviker flicker) */}
         </div>
       </div>
     </header>

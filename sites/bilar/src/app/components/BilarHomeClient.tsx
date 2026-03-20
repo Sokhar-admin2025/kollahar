@@ -173,7 +173,7 @@ function BilarHomeInner({
   return (
     <div className="min-h-screen" style={{ background: '#F7F8FA' }}>
       {/* Header */}
-      <BilarPublicHeader isLoggedIn={isLoggedIn} />
+      <BilarPublicHeader />
 
       {/* Login-toast */}
       {loginToast && (
