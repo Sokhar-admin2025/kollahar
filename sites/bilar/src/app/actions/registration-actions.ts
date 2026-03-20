@@ -102,7 +102,7 @@ export async function completeRegistrationAction(
     )
     .select()
 
-  console.log('[bilar][completeRegistrationAction] organizations UPSERT', { orgData, orgError })
+  console.log('[bilar][completeRegistrationAction] organizations UPSERT', { orgData, orgError, nameInDB: orgData?.[0]?.name ?? 'SAKNAS' })
 
   if (orgError) {
     console.error('[bilar][completeRegistrationAction] organizations-fel:', orgError)

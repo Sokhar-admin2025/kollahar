@@ -18,13 +18,19 @@ export async function checkProfileComplete(supabase: SupabaseClient): Promise<bo
     .eq('id', user.id)
     .single()
 
+  console.log('[bilar][checkProfileComplete] user.id:', user.id, '| profile.organization_id:', profile?.organization_id ?? 'NULL')
+
   if (!profile?.organization_id) return false
 
-  const { data: org } = await supabase
+  const { data: org, error: orgError } = await supabase
     .from('organizations')
     .select('name')
     .eq('id', profile.organization_id)
     .single()
 
-  return Boolean(org?.name && org.name.trim().length > 0)
+  console.log('[bilar][checkProfileComplete] organizations-rad:', org, '| error:', orgError, '| name:', org?.name ?? 'NULL/SAKNAS')
+
+  const result = Boolean(org?.name && org.name.trim().length > 0)
+  console.log('[bilar][checkProfileComplete] returnerar:', result)
+  return result
 }
