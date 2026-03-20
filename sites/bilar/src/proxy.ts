@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
-import { checkProfileComplete } from './lib/supabase/check-profile-complete'
 
 // Rutter som alltid passerar utan guard-kontroll
 function isExemptPath(pathname: string): boolean {
@@ -50,7 +49,7 @@ export async function proxy(request: NextRequest) {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('account_type, organization_id')
+    .select('account_type, organization_id, profile_completed')
     .eq('id', user.id)
     .single()
 
@@ -94,10 +93,9 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/registrera', request.url))
   }
 
-  // Guard 4: bilar-registrering OK men profilen inte ifylld → /registrera/profil
-  const profileComplete = await checkProfileComplete(supabase)
-  console.log('[bilar][proxy] checkProfileComplete:', profileComplete)
-  if (!profileComplete) {
+  // Guard 4: bilar-registrering OK men profiles.profile_completed = false → /registrera/profil
+  console.log('[bilar][proxy] profile_completed:', profile.profile_completed)
+  if (!profile.profile_completed) {
     console.log('[bilar][proxy] GUARD 4 → /registrera/profil')
     return NextResponse.redirect(new URL('/registrera/profil', request.url))
   }
