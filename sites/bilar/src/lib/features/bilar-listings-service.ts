@@ -240,6 +240,7 @@ export async function createListing(
       contact_phone: data.contact_phone || null,
       show_email: data.show_email,
       description: data.attributes.description || '',
+      location: '',
       attributes: data.attributes,
       organization_id: organizationId,
       user_id: userId,
