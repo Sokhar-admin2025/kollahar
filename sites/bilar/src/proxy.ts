@@ -45,61 +45,48 @@ async function runGuards(request: NextRequest, response: NextResponse): Promise<
     return response
   }
 
-  // Query 2: profiles + organization_sites i ett enda anrop via PostgREST-join.
-  // profiles.organization_id → organizations.id → organization_sites (reverse FK).
-  // Eliminerar det tidigare tredje sekventiella anropet.
+  // Query 2: profiles (behöver user.id)
   const { data: profile } = await supabase
     .from('profiles')
-    .select('account_type, organization_id, profile_completed, organizations(organization_sites(site, status))')
+    .select('account_type, organization_id, profile_completed')
     .eq('id', user.id)
     .single()
 
   if (!profile) {
-    console.log('[proxy] profile saknas för user.id:', user.id, '→ /inte-foretag')
     return NextResponse.redirect(new URL('/inte-foretag', request.url))
   }
 
-  // Extrahera organization_sites från den inbäddade joinen.
-  // Supabase infererar organizations som array (reverse FK) — vi tar första raden.
-  type OrgSite = { site: string; status: string }
-  type OrgRow = { organization_sites: OrgSite[] }
-  const orgsRaw = profile.organizations as unknown as OrgRow | OrgRow[] | null
-  const orgRow = Array.isArray(orgsRaw) ? orgsRaw[0] : orgsRaw
-  const orgSites = orgRow?.organization_sites ?? []
-  const hasBilarRegistration = orgSites.some(
-    (s) => s.site === 'bilar' && s.status === 'active'
-  )
-
-  console.log('[proxy] user.id:', user.id)
-  console.log('[proxy] profile:', {
-    account_type: profile.account_type,
-    organization_id: profile.organization_id,
-    profile_completed: profile.profile_completed,
-  })
-  console.log('[proxy] organizations (raw):', JSON.stringify(profile.organizations))
-  console.log('[proxy] orgSites:', JSON.stringify(orgSites))
-  console.log('[proxy] hasBilarRegistration:', hasBilarRegistration)
+  // Query 3: organization_sites (behöver organization_id från profiles).
+  // Körs som separat query — inbäddad PostgREST-join med anon-key evaluerar
+  // inte RLS-policyn korrekt i joinkontext och returnerar tom array.
+  let hasBilarRegistration = false
+  if (profile.organization_id) {
+    const { data: orgSite } = await supabase
+      .from('organization_sites')
+      .select('status')
+      .eq('organization_id', profile.organization_id)
+      .eq('site', 'bilar')
+      .eq('status', 'active')
+      .maybeSingle()
+    hasBilarRegistration = orgSite !== null
+  }
 
   // Guard 2: privatperson utan bilar-registrering → /inte-foretag
   if (!hasBilarRegistration && profile.account_type !== 'company') {
-    console.log('[proxy] GUARD 2 → /inte-foretag')
     return NextResponse.redirect(new URL('/inte-foretag', request.url))
   }
 
   // Guard 3: company-konto utan aktiv bilar-registrering → /registrera
   if (!hasBilarRegistration) {
-    console.log('[proxy] GUARD 3 → /registrera | account_type:', profile.account_type)
     return NextResponse.redirect(new URL('/registrera', request.url))
   }
 
   // Guard 4: bilar-registrering OK men profiles.profile_completed = false → /registrera/profil
   if (!profile.profile_completed) {
-    console.log('[proxy] GUARD 4 → /registrera/profil | profile_completed:', profile.profile_completed)
     return NextResponse.redirect(new URL('/registrera/profil', request.url))
   }
 
   // Guard 5: allt OK
-  console.log('[proxy] GUARD 5 → pass through')
   return response
 }
 
