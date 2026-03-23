@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 
+const PROXY_TIMEOUT_MS = 5000
+
 // Rutter som alltid passerar utan guard-kontroll
 function isExemptPath(pathname: string): boolean {
   return (
@@ -9,18 +11,13 @@ function isExemptPath(pathname: string): boolean {
     pathname === '/inte-foretag' ||
     pathname.startsWith('/registrera') ||
     pathname.startsWith('/bil/') ||
-    pathname.startsWith('/handlare/')
+    pathname.startsWith('/handlare/') ||
+    pathname.startsWith('/api/')
   )
 }
 
-export async function proxy(request: NextRequest) {
+async function runGuards(request: NextRequest, response: NextResponse): Promise<NextResponse> {
   const { pathname } = request.nextUrl
-
-  if (isExemptPath(pathname)) {
-    return NextResponse.next()
-  }
-
-  const response = NextResponse.next()
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -37,9 +34,10 @@ export async function proxy(request: NextRequest) {
     }
   )
 
+  // Query 1: auth — måste göras först för att validera session
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Guard 1: oinloggad på skyddad route (/dashboard/*)
+  // Guard 1: oinloggad på skyddad route
   if (!user) {
     if (pathname.startsWith('/dashboard')) {
       return NextResponse.redirect(new URL('/login', request.url))
@@ -47,9 +45,12 @@ export async function proxy(request: NextRequest) {
     return response
   }
 
+  // Query 2: profiles + organization_sites i ett enda anrop via PostgREST-join.
+  // profiles.organization_id → organizations.id → organization_sites (reverse FK).
+  // Eliminerar det tidigare tredje sekventiella anropet.
   const { data: profile } = await supabase
     .from('profiles')
-    .select('account_type, organization_id, profile_completed')
+    .select('account_type, organization_id, profile_completed, organizations(organization_sites(site, status))')
     .eq('id', user.id)
     .single()
 
@@ -57,52 +58,56 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/inte-foretag', request.url))
   }
 
-  console.log('[bilar][proxy] user.id:', user.id, '| pathname:', pathname)
-  console.log('[bilar][proxy] profile:', { account_type: profile.account_type, organization_id: profile.organization_id })
+  // Extrahera organization_sites från den inbäddade joinen.
+  // Supabase infererar organizations som array (reverse FK) — vi tar första raden.
+  type OrgSite = { site: string; status: string }
+  type OrgRow = { organization_sites: OrgSite[] }
+  const orgsRaw = profile.organizations as unknown as OrgRow | OrgRow[] | null
+  const orgRow = Array.isArray(orgsRaw) ? orgsRaw[0] : orgsRaw
+  const orgSites = orgRow?.organization_sites ?? []
+  const hasBilarRegistration = orgSites.some(
+    (s) => s.site === 'bilar' && s.status === 'active'
+  )
 
-  // Guards 2+3: kontrollera bilar-registrering via organization_sites.
-  // organization_sites är primär källa för bilar-behörighet — account_type kan vara
-  // 'private' på grund av legacy-data (signUp utan account_type i metadata).
-  // Logik:
-  //   - Aktiv organization_sites-rad → bilar-handlare, fortsätt till Guard 4
-  //   - Ingen organization_sites-rad + account_type !== 'company' → privatperson → /inte-foretag
-  //   - Ingen organization_sites-rad + account_type = 'company' → ej registrerad → /registrera
-  let hasBilarRegistration = false
-  let orgSiteRow: { status: string } | null = null
-  if (profile.organization_id) {
-    const { data: registration } = await supabase
-      .from('organization_sites')
-      .select('status')
-      .eq('organization_id', profile.organization_id)
-      .eq('site', 'bilar')
-      .single()
-    orgSiteRow = registration
-    hasBilarRegistration = registration?.status === 'active'
+  // Guard 2: privatperson utan bilar-registrering → /inte-foretag
+  if (!hasBilarRegistration && profile.account_type !== 'company') {
+    return NextResponse.redirect(new URL('/inte-foretag', request.url))
   }
 
-  console.log('[bilar][proxy] organization_sites-rad:', orgSiteRow, '| hasBilarRegistration:', hasBilarRegistration)
-
+  // Guard 3: company-konto utan aktiv bilar-registrering → /registrera
   if (!hasBilarRegistration) {
-    if (profile.account_type !== 'company') {
-      // Guard 2: privatperson utan bilar-registrering → /inte-foretag
-      console.log('[bilar][proxy] GUARD 2 → /inte-foretag')
-      return NextResponse.redirect(new URL('/inte-foretag', request.url))
-    }
-    // Guard 3: company-konto utan aktiv bilar-registrering → /registrera
-    console.log('[bilar][proxy] GUARD 3 → /registrera')
     return NextResponse.redirect(new URL('/registrera', request.url))
   }
 
   // Guard 4: bilar-registrering OK men profiles.profile_completed = false → /registrera/profil
-  console.log('[bilar][proxy] profile_completed:', profile.profile_completed)
   if (!profile.profile_completed) {
-    console.log('[bilar][proxy] GUARD 4 → /registrera/profil')
     return NextResponse.redirect(new URL('/registrera/profil', request.url))
   }
 
   // Guard 5: allt OK
-  console.log('[bilar][proxy] GUARD 5 → pass through')
   return response
+}
+
+export async function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl
+
+  if (isExemptPath(pathname)) {
+    return NextResponse.next()
+  }
+
+  const response = NextResponse.next()
+
+  try {
+    return await Promise.race<NextResponse>([
+      runGuards(request, response),
+      new Promise<NextResponse>((_, reject) =>
+        setTimeout(() => reject(new Error('proxy timeout')), PROXY_TIMEOUT_MS)
+      ),
+    ])
+  } catch {
+    // Fail safe: vid timeout eller oväntat fel → /login
+    return NextResponse.redirect(new URL('/login', request.url))
+  }
 }
 
 export const config = {
