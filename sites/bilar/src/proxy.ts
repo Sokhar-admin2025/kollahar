@@ -55,6 +55,7 @@ async function runGuards(request: NextRequest, response: NextResponse): Promise<
     .single()
 
   if (!profile) {
+    console.log('[proxy] profile saknas för user.id:', user.id, '→ /inte-foretag')
     return NextResponse.redirect(new URL('/inte-foretag', request.url))
   }
 
@@ -69,22 +70,36 @@ async function runGuards(request: NextRequest, response: NextResponse): Promise<
     (s) => s.site === 'bilar' && s.status === 'active'
   )
 
+  console.log('[proxy] user.id:', user.id)
+  console.log('[proxy] profile:', {
+    account_type: profile.account_type,
+    organization_id: profile.organization_id,
+    profile_completed: profile.profile_completed,
+  })
+  console.log('[proxy] organizations (raw):', JSON.stringify(profile.organizations))
+  console.log('[proxy] orgSites:', JSON.stringify(orgSites))
+  console.log('[proxy] hasBilarRegistration:', hasBilarRegistration)
+
   // Guard 2: privatperson utan bilar-registrering → /inte-foretag
   if (!hasBilarRegistration && profile.account_type !== 'company') {
+    console.log('[proxy] GUARD 2 → /inte-foretag')
     return NextResponse.redirect(new URL('/inte-foretag', request.url))
   }
 
   // Guard 3: company-konto utan aktiv bilar-registrering → /registrera
   if (!hasBilarRegistration) {
+    console.log('[proxy] GUARD 3 → /registrera | account_type:', profile.account_type)
     return NextResponse.redirect(new URL('/registrera', request.url))
   }
 
   // Guard 4: bilar-registrering OK men profiles.profile_completed = false → /registrera/profil
   if (!profile.profile_completed) {
+    console.log('[proxy] GUARD 4 → /registrera/profil | profile_completed:', profile.profile_completed)
     return NextResponse.redirect(new URL('/registrera/profil', request.url))
   }
 
   // Guard 5: allt OK
+  console.log('[proxy] GUARD 5 → pass through')
   return response
 }
 
