@@ -239,6 +239,7 @@ export async function createListing(
       show_phone: data.show_phone,
       contact_phone: data.contact_phone || null,
       show_email: data.show_email,
+      description: data.attributes.description || '',
       attributes: data.attributes,
       organization_id: organizationId,
       user_id: userId,

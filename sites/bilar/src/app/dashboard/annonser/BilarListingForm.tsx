@@ -191,6 +191,11 @@ export default function BilarListingForm({
       return
     }
 
+    if (!description.trim()) {
+      setError('Beskrivning är obligatorisk.')
+      return
+    }
+
     const data: BilarListingFormData = {
       title: finalTitle,
       make,
