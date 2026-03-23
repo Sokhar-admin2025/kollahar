@@ -80,9 +80,6 @@ export default function BilarListingForm({
   const [showPhone, setShowPhone] = useState(listing?.show_phone ?? false)
   const [contactPhone, setContactPhone] = useState(listing?.contact_phone ?? '')
   const [showEmail, setShowEmail] = useState(listing?.show_email ?? false)
-  const [status, setStatus] = useState<'active' | 'draft'>(
-    (listing?.status === 'active' || listing?.status === 'draft') ? listing.status : 'draft'
-  )
 
   // Auto-generera titel
   const derivedTitle = autoTitle(make, model, year)
@@ -179,8 +176,8 @@ export default function BilarListingForm({
   const atLeastOneChannel = contactViaChat || showPhone || showEmail
 
   // ─── Submit ───────────────────────────────────────────────────────────────
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+  // Status skickas explicit från knappen — undviker async state-problem.
+  const handleSubmitWithStatus = (submitStatus: 'active' | 'draft') => {
     setError(null)
 
     if (!atLeastOneChannel) {
@@ -200,7 +197,7 @@ export default function BilarListingForm({
       model,
       year: year ? parseInt(year, 10) : null,
       price: price ? parseInt(formatNumber(price), 10) : null,
-      status,
+      status: submitStatus,
       images,
       contact_via_chat: contactViaChat,
       show_phone: showPhone,
@@ -239,7 +236,7 @@ export default function BilarListingForm({
 
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
 
       {/* ── Bilder ─────────────────────────────────────────────────────────── */}
       <section
@@ -734,42 +731,11 @@ export default function BilarListingForm({
         )}
       </section>
 
-      {/* ── Status & Spara ─────────────────────────────────────────────────── */}
+      {/* ── Spara / Publicera ──────────────────────────────────────────────── */}
       <section
         className="rounded-xl p-5"
         style={{ background: '#FFFFFF', border: '0.5px solid #E2E8F0' }}
       >
-        <h2 className="text-sm font-semibold mb-4" style={{ color: '#0F172A' }}>
-          Publicering
-        </h2>
-
-        <div className="flex gap-3 mb-5">
-          <button
-            type="button"
-            onClick={() => setStatus('draft')}
-            className="flex-1 py-2.5 rounded-lg text-sm font-medium border transition"
-            style={{
-              background: status === 'draft' ? '#F8FAFC' : '#FFFFFF',
-              borderColor: status === 'draft' ? '#2563EB' : '#E2E8F0',
-              color: status === 'draft' ? '#2563EB' : '#64748B',
-            }}
-          >
-            Spara som utkast
-          </button>
-          <button
-            type="button"
-            onClick={() => setStatus('active')}
-            className="flex-1 py-2.5 rounded-lg text-sm font-medium border transition"
-            style={{
-              background: status === 'active' ? '#EFF6FF' : '#FFFFFF',
-              borderColor: status === 'active' ? '#2563EB' : '#E2E8F0',
-              color: status === 'active' ? '#2563EB' : '#64748B',
-            }}
-          >
-            Publicera direkt
-          </button>
-        </div>
-
         {error && (
           <div
             className="mb-4 flex items-start gap-2 rounded-lg px-3 py-2.5"
@@ -793,7 +759,18 @@ export default function BilarListingForm({
             Avbryt
           </button>
           <button
-            type="submit"
+            type="button"
+            onClick={() => handleSubmitWithStatus('draft')}
+            disabled={isPending || uploading || !atLeastOneChannel}
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium border transition disabled:opacity-50"
+            style={{ borderColor: '#E2E8F0', color: '#64748B', background: '#F8FAFC' }}
+          >
+            {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+            Spara som utkast
+          </button>
+          <button
+            type="button"
+            onClick={() => handleSubmitWithStatus('active')}
             disabled={isPending || uploading || !atLeastOneChannel}
             className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold text-white transition disabled:opacity-50"
             style={{ background: '#2563EB' }}
@@ -803,10 +780,8 @@ export default function BilarListingForm({
                 <Loader2 className="w-4 h-4 animate-spin" />
                 Sparar...
               </>
-            ) : listing ? (
-              'Spara ändringar'
             ) : (
-              'Skapa annons'
+              'Publicera'
             )}
           </button>
         </div>
