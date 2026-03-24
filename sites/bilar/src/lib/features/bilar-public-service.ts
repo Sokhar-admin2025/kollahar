@@ -371,6 +371,7 @@ export async function getRelatedListings(
             name: (org.name as string | null) ?? null,
             slug: (org.slug as string | null) ?? null,
             logo_url: (org.logo_url as string | null) ?? null,
+            city: (org.city as string | null) ?? null,
           }
         : null,
       attributes: (row.attributes as PublicListing['attributes']) ?? {},
