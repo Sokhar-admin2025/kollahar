@@ -158,12 +158,14 @@ export async function getListings(
 // ─── updateListingStatus ──────────────────────────────────────────────────────
 
 export async function updateListingStatus(
-  supabase: SupabaseClient,
+  _supabase: SupabaseClient,
   listingId: string,
   organizationId: string,
   status: 'active' | 'paused' | 'sold'
 ): Promise<{ success: true } | { success: false; error: string }> {
-  const { error } = await supabase
+  if (!supabaseAdmin) return { success: false, error: 'Databasanslutning saknas.' }
+
+  const { error } = await supabaseAdmin
     .from('listings')
     .update({ status })
     .eq('id', listingId)
