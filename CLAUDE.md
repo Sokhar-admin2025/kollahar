@@ -333,6 +333,17 @@ Då ska Cursor svara:
 ta den med Claude.ai i chatten så ni kan diskutera
 och fatta beslut innan vi implementerar."
 
+### Claude Code agerar som senior UX-utvecklare
+Claude Code ska självständigt:
+- Identifiera och åtgärda UX-problem i kod den rör
+- Säkerställa läsbar layout: tillräckliga kolumnbredder,
+  luftigt spacing, tydlig typografi
+- Tillämpa design tokens konsekvent utan att bli tillfrågad
+- Aldrig leverera trång eller svårläst UI
+
+UX-problem som kolumnbredder, spacing och läsbarhet
+ska fixas direkt — inte eskaleras till Claude.ai.
+
 ### Tumregel:
 Cursor bygger det som är beslutat.
 Claude.ai beslutar vad som ska byggas.

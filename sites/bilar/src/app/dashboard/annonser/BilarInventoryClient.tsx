@@ -507,14 +507,14 @@ export default function BilarInventoryClient({
             <>
               {/* Tabellhuvud */}
               <div
-                className="hidden grid-cols-[56px_1fr_auto_auto_auto_auto_40px] items-center gap-3 border-b px-4 py-2 text-[11px] font-medium uppercase tracking-wide md:grid"
+                className="hidden grid-cols-[56px_1fr_120px_100px_72px_72px_40px] items-center gap-4 border-b px-4 py-2 text-[11px] font-medium uppercase tracking-wide md:grid"
                 style={{ borderColor: '#F1F5F9', color: '#94A3B8' }}
               >
                 <span />
                 <span>Bil</span>
                 <span className="text-right">Pris</span>
                 <span>Status</span>
-                <span className="text-right">Visn.</span>
+                <span className="text-right">Visningar</span>
                 <span className="text-right">Leads</span>
                 <span />
               </div>
@@ -527,7 +527,7 @@ export default function BilarInventoryClient({
                   return (
                     <div
                       key={listing.id}
-                      className="grid grid-cols-[56px_1fr_auto] items-center gap-3 px-4 py-3 md:grid-cols-[56px_1fr_auto_auto_auto_auto_40px]"
+                      className="grid grid-cols-[56px_1fr_auto] items-center gap-4 px-4 py-3 md:grid-cols-[56px_1fr_120px_100px_72px_72px_40px]"
                       style={{ opacity: isPending ? 0.6 : 1 }}
                     >
                       {/* Thumbnail */}
@@ -562,16 +562,16 @@ export default function BilarInventoryClient({
 
                       {/* Pris — desktop */}
                       <p
-                        className="hidden text-right text-sm font-semibold md:block"
-                        style={{ color: '#2563EB' }}
+                        className="hidden text-right font-semibold tabular-nums md:block"
+                        style={{ color: '#2563EB', fontSize: 13 }}
                       >
                         {formatPrice(listing.price)}
                       </p>
 
                       {/* Status — desktop */}
-                      <div className="hidden md:block">
+                      <div className="hidden md:flex md:items-center">
                         <span
-                          className="rounded-full px-2.5 py-1 text-xs font-semibold"
+                          className="rounded-full px-2.5 py-1 text-xs font-semibold whitespace-nowrap"
                           style={{ background: cfg.bg, color: cfg.text }}
                         >
                           {cfg.label}
@@ -580,16 +580,16 @@ export default function BilarInventoryClient({
 
                       {/* Visningar — desktop */}
                       <p
-                        className="hidden text-right text-sm tabular-nums md:block"
-                        style={{ color: '#64748B' }}
+                        className="hidden text-right tabular-nums md:block"
+                        style={{ color: '#64748B', fontSize: 13 }}
                       >
                         {listing.views_count}
                       </p>
 
                       {/* Leads — desktop */}
                       <p
-                        className="hidden text-right text-sm font-medium tabular-nums md:block"
-                        style={{ color: listing.leads_count > 0 ? '#2563EB' : '#94A3B8' }}
+                        className="hidden text-right font-medium tabular-nums md:block"
+                        style={{ color: listing.leads_count > 0 ? '#2563EB' : '#94A3B8', fontSize: 13 }}
                       >
                         {listing.leads_count}
                       </p>
