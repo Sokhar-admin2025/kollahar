@@ -4,7 +4,6 @@ import { useState, useTransition, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Search, SlidersHorizontal, X, ChevronDown, Loader2 } from 'lucide-react'
 import BilarListingCard from './BilarListingCard'
-import BilarDualRangeSlider from './BilarDualRangeSlider'
 import BilarPublicHeader from './BilarPublicHeader'
 import type { PublicListing, FeaturedMake } from '../../lib/features/bilar-public-service'
 
@@ -354,17 +353,34 @@ function BilarHomeInner({
           {showFilters && (
             <div className="mt-4 pt-4 grid grid-cols-1 sm:grid-cols-3 gap-6" style={{ borderTop: '0.5px solid #F1F5F9' }}>
               {/* Prisintervall */}
-              <BilarDualRangeSlider
-                label="Pris (SEK)"
-                min={0}
-                max={MAX_PRICE}
-                minValue={minPrice}
-                maxValue={maxPrice}
-                onMinChange={setMinPrice}
-                onMaxChange={setMaxPrice}
-                step={PRICE_STEP}
-                unit=" kr"
-              />
+              <div>
+                <label className="block text-xs font-medium mb-2" style={{ color: '#64748B' }}>
+                  Pris (SEK)
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    value={minPrice > 0 ? minPrice : ''}
+                    onChange={(e) => setMinPrice(Number(e.target.value) || 0)}
+                    placeholder="Min"
+                    min={0}
+                    step={PRICE_STEP}
+                    className="w-full px-3 py-2 border rounded-lg text-sm outline-none transition focus:border-[#2563EB] focus:ring-1 focus:ring-[#BFDBFE]"
+                    style={{ borderColor: '#E2E8F0', color: '#0F172A' }}
+                  />
+                  <span className="text-xs shrink-0" style={{ color: '#94A3B8' }}>–</span>
+                  <input
+                    type="number"
+                    value={maxPrice < MAX_PRICE ? maxPrice : ''}
+                    onChange={(e) => setMaxPrice(Number(e.target.value) || MAX_PRICE)}
+                    placeholder="Max"
+                    min={0}
+                    step={PRICE_STEP}
+                    className="w-full px-3 py-2 border rounded-lg text-sm outline-none transition focus:border-[#2563EB] focus:ring-1 focus:ring-[#BFDBFE]"
+                    style={{ borderColor: '#E2E8F0', color: '#0F172A' }}
+                  />
+                </div>
+              </div>
 
               {/* Årsmodell från */}
               <div>

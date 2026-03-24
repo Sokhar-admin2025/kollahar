@@ -160,21 +160,26 @@ export default function BilarListingCard({
           </p>
         )}
 
-        {/* Handlarnamn */}
+        {/* Handlare + kommun */}
         {listing.organization?.name && (
           <div className="mt-2 pt-2" style={{ borderTop: '0.5px solid #F1F5F9' }}>
+            <p className="text-[10px] font-medium uppercase tracking-wide mb-0.5" style={{ color: '#94A3B8' }}>
+              Handlare
+            </p>
             {listing.organization.slug ? (
               <Link
                 href={`/handlare/${listing.organization.slug}`}
                 onClick={(e) => e.stopPropagation()}
-                className="text-[11px] truncate transition hover:underline"
+                className="text-[11px] truncate block transition hover:underline"
                 style={{ color: '#64748B' }}
               >
                 {listing.organization.name}
+                {listing.organization.city ? ` · ${listing.organization.city}` : ''}
               </Link>
             ) : (
               <p className="text-[11px] truncate" style={{ color: '#64748B' }}>
                 {listing.organization.name}
+                {listing.organization.city ? ` · ${listing.organization.city}` : ''}
               </p>
             )}
           </div>

@@ -1,9 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { useState, useEffect } from 'react'
-import { Search } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { createClient } from '../../lib/supabase/client'
 
 // 'full'       = inloggad handlare med aktiv bilar-registrering och ifylld profil → Dashboard
@@ -12,9 +10,6 @@ import { createClient } from '../../lib/supabase/client'
 type DealerStatus = 'loading' | 'full' | 'incomplete' | 'none'
 
 export default function BilarPublicHeader() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const [query, setQuery] = useState(searchParams.get('q') ?? '')
   const [status, setStatus] = useState<DealerStatus>('loading')
 
   useEffect(() => {
@@ -51,18 +46,6 @@ export default function BilarPublicHeader() {
     loadStatus()
   }, [])
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    const params = new URLSearchParams(searchParams.toString())
-    if (query.trim()) {
-      params.set('q', query.trim())
-    } else {
-      params.delete('q')
-    }
-    params.delete('page')
-    router.push(`/?${params.toString()}`)
-  }
-
   return (
     <header
       className="sticky top-0 z-40 border-b"
@@ -76,23 +59,10 @@ export default function BilarPublicHeader() {
           </span>
         </Link>
 
-        {/* Sökfält (dold på mobil) */}
-        <form onSubmit={handleSearch} className="hidden sm:flex flex-1 max-w-sm">
-          <div className="relative w-full">
-            <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
-              style={{ color: '#94A3B8' }}
-            />
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Sök märke, modell..."
-              className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border outline-none transition focus:border-[#2563EB] focus:ring-2 focus:ring-[#BFDBFE]"
-              style={{ borderColor: '#E2E8F0', color: '#0F172A', background: '#F8FAFC' }}
-            />
-          </div>
-        </form>
+        {/* Tagline (dold på mobil) */}
+        <span className="hidden sm:block text-sm" style={{ color: '#94A3B8' }}>
+          Annonser från verifierade bilhandlare
+        </span>
 
         {/* Spacer */}
         <div className="flex-1" />

@@ -62,6 +62,7 @@ export interface PublicListing {
     name: string | null
     slug: string | null
     logo_url: string | null
+    city: string | null
   } | null
   attributes: {
     fuel_type?: string
@@ -104,7 +105,7 @@ export async function getPublicListings(
   let query = supabaseAdmin
     .from('listings')
     .select(
-      'id, title, make, model, year, price, images, attributes, seller_type, organizations(name, slug, logo_url)',
+      'id, title, make, model, year, price, images, attributes, seller_type, organizations(name, slug, logo_url, city)',
       { count: 'exact' }
     )
     .eq('source_site', 'bilar')
@@ -170,6 +171,7 @@ export async function getPublicListings(
             name: (org.name as string | null) ?? null,
             slug: (org.slug as string | null) ?? null,
             logo_url: (org.logo_url as string | null) ?? null,
+            city: (org.city as string | null) ?? null,
           }
         : null,
       attributes: (row.attributes as PublicListing['attributes']) ?? {},
@@ -338,7 +340,7 @@ export async function getRelatedListings(
 
   const { data: rows, error } = await supabaseAdmin
     .from('listings')
-    .select('id, title, make, model, year, price, images, attributes, seller_type, organizations(name, slug, logo_url)')
+    .select('id, title, make, model, year, price, images, attributes, seller_type, organizations(name, slug, logo_url, city)')
     .eq('source_site', 'bilar')
     .eq('status', 'active')
     .eq('organization_id', organizationId)
@@ -481,7 +483,7 @@ export async function getOrganizationListings(
   let query = supabaseAdmin
     .from('listings')
     .select(
-      'id, title, make, model, year, price, images, attributes, seller_type, organizations(name, slug, logo_url)',
+      'id, title, make, model, year, price, images, attributes, seller_type, organizations(name, slug, logo_url, city)',
       { count: 'exact' }
     )
     .eq('organization_id', organizationId)
@@ -528,6 +530,7 @@ export async function getOrganizationListings(
             name: (org.name as string | null) ?? null,
             slug: (org.slug as string | null) ?? null,
             logo_url: (org.logo_url as string | null) ?? null,
+            city: (org.city as string | null) ?? null,
           }
         : null,
       attributes: (row.attributes as PublicListing['attributes']) ?? {},
