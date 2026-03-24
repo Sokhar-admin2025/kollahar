@@ -398,9 +398,9 @@ export default function BilarListingDetailClient({
                         <BadgeCheck className="w-4 h-4 shrink-0" style={{ color: '#2563EB' }} />
                       )}
                     </div>
-                    {(org.city || org.address) && (
+                    {org.city && (
                       <p className="text-xs" style={{ color: '#94A3B8' }}>
-                        {[org.address, org.city].filter(Boolean).join(', ')}
+                        {org.city}
                       </p>
                     )}
                   </div>
@@ -417,9 +417,9 @@ export default function BilarListingDetailClient({
                   </div>
                   <div className="text-center">
                     <p className="text-lg font-bold" style={{ color: '#0F172A' }}>
-                      {org.sold_count}
+                      {org.active_count}
                     </p>
-                    <p className="text-[11px]" style={{ color: '#94A3B8' }}>Sålda</p>
+                    <p className="text-[11px]" style={{ color: '#94A3B8' }}>Antal bilar</p>
                   </div>
                   <div className="text-center">
                     <p className="text-lg font-bold" style={{ color: '#0F172A' }}>

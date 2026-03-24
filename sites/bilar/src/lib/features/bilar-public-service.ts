@@ -14,6 +14,7 @@ export interface PublicOrganizationDetail {
   is_company_verified: boolean
   show_financing: boolean
   sold_count: number
+  active_count: number
 }
 
 export interface PublicListingDetail {
@@ -242,8 +243,8 @@ export async function getPublicListing(
   const orgRaw = Array.isArray(row.organizations) ? row.organizations[0] : row.organizations
   const orgId = (row.organization_id as string | null) ?? null
 
-  // Views count, sold count, is_company_verified, show_financing parallellt
-  const [viewsResult, soldResult, verifiedResult, financingResult] = await Promise.all([
+  // Views count, sold count, active count, is_company_verified, show_financing parallellt
+  const [viewsResult, soldResult, activeResult, verifiedResult, financingResult] = await Promise.all([
     supabaseAdmin
       .from('listing_views')
       .select('*', { count: 'exact', head: true })
@@ -254,6 +255,15 @@ export async function getPublicListing(
           .from('listing_sales')
           .select('*', { count: 'exact', head: true })
           .eq('organization_id', orgId)
+      : Promise.resolve({ count: 0 }),
+
+    orgId
+      ? supabaseAdmin
+          .from('listings')
+          .select('*', { count: 'exact', head: true })
+          .eq('organization_id', orgId)
+          .eq('source_site', 'bilar')
+          .eq('status', 'active')
       : Promise.resolve({ count: 0 }),
 
     orgId
@@ -275,6 +285,7 @@ export async function getPublicListing(
 
   const viewsCount = (viewsResult as { count: number | null }).count ?? 0
   const soldCount = (soldResult as { count: number | null }).count ?? 0
+  const activeCount = (activeResult as { count: number | null }).count ?? 0
   const isVerified = ((verifiedResult as { count: number | null }).count ?? 0) > 0
   const showFinancing =
     Boolean((financingResult as { data: { show_financing?: boolean } | null })?.data?.show_financing) ?? false
@@ -291,6 +302,7 @@ export async function getPublicListing(
         is_company_verified: isVerified,
         show_financing: showFinancing,
         sold_count: soldCount,
+        active_count: activeCount,
       }
     : null
 
