@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useTransition, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useState, useTransition, useRef, Suspense } from 'react'
+import { useRouter } from 'next/navigation'
 import { Search, SlidersHorizontal, X, ChevronDown, Loader2 } from 'lucide-react'
 import BilarListingCard from './BilarListingCard'
 import BilarPublicHeader from './BilarPublicHeader'
@@ -15,15 +15,27 @@ const MAX_PRICE = 2_000_000
 const PRICE_STEP = 10_000
 const MIN_PRICE_OPTIONS = [50000, 100000, 150000, 200000, 250000, 300000, 400000, 500000, 750000, 1000000]
 const MAX_PRICE_OPTIONS = [50000, 100000, 150000, 200000, 250000, 300000, 400000, 500000, 750000, 1000000, 1500000, 2000000]
+const CURRENT_YEAR = new Date().getFullYear()
+const YEAR_OPTIONS = Array.from({ length: CURRENT_YEAR - 1959 }, (_, i) => CURRENT_YEAR - i)
+const DEBOUNCE_MS = 400
 
 function formatPriceOption(v: number): string {
   return v.toLocaleString('sv-SE') + ' kr'
 }
-const CURRENT_YEAR = new Date().getFullYear()
-
-const YEAR_OPTIONS = Array.from({ length: CURRENT_YEAR - 1959 }, (_, i) => CURRENT_YEAR - i)
 
 // ─── Types ────────────────────────────────────────────────────────────────────
+
+interface Filters {
+  q: string
+  make: string
+  model: string
+  minPrice: number
+  maxPrice: number
+  fuelType: string
+  gearbox: string
+  yearFrom: string
+  yearTo: string
+}
 
 interface BilarHomeClientProps {
   initialListings: PublicListing[]
@@ -31,22 +43,12 @@ interface BilarHomeClientProps {
   featuredMakes: FeaturedMake[]
   favoriteIds: string[]
   isLoggedIn: boolean
-  initialFilters: {
-    q: string
-    make: string
-    model: string
-    minPrice: number
-    maxPrice: number
-    fuelType: string
-    gearbox: string
-    yearFrom: string
-    yearTo: string
-  }
+  initialFilters: Filters
   loadMoreAction: (page: number, filters: Record<string, string>) => Promise<PublicListing[]>
   toggleFavoriteAction: (listingId: string) => Promise<{ success: boolean }>
 }
 
-// ─── Inner component (needs useSearchParams) ──────────────────────────────────
+// ─── Inner component ──────────────────────────────────────────────────────────
 
 function BilarHomeInner({
   initialListings,
@@ -59,7 +61,6 @@ function BilarHomeInner({
   toggleFavoriteAction,
 }: BilarHomeClientProps) {
   const router = useRouter()
-  const searchParams = useSearchParams()
 
   // ── Filter state ───────────────────────────────────────────────────────────
   const [q, setQ] = useState(initialFilters.q)
@@ -81,48 +82,47 @@ function BilarHomeInner({
   const [isLoadingMore, startLoadMore] = useTransition()
 
   // ── Favorites state ────────────────────────────────────────────────────────
-  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(
-    new Set(initialFavoriteIds)
-  )
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set(initialFavoriteIds))
   const [loginToast, setLoginToast] = useState(false)
 
-  // ── Search & filter ────────────────────────────────────────────────────────
-  const buildParams = () => {
-    const params = new URLSearchParams()
-    if (q.trim()) params.set('q', q.trim())
-    if (make) params.set('make', make)
-    if (model) params.set('model', model)
-    if (minPrice > 0) params.set('minPrice', String(minPrice))
-    if (maxPrice < MAX_PRICE) params.set('maxPrice', String(maxPrice))
-    if (fuelType) params.set('fuelType', fuelType)
-    if (gearbox) params.set('gearbox', gearbox)
-    if (yearFrom) params.set('yearFrom', yearFrom)
-    if (yearTo) params.set('yearTo', yearTo)
-    return params
-  }
+  // ── Debounce ref ───────────────────────────────────────────────────────────
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const handleSearch = () => {
-    const params = buildParams()
-    router.push(`/?${params.toString()}`)
-    setPage(1)
-  }
+  // ── Filter application ─────────────────────────────────────────────────────
+  // Snapshot current state so onChange handlers can override a single field
+  const cf = (): Filters => ({ q, make, model, minPrice, maxPrice, fuelType, gearbox, yearFrom, yearTo })
 
-  const handleHeroSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    handleSearch()
+  const applyFilters = (filters: Filters, immediate: boolean) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+
+    const run = () => {
+      const params = new URLSearchParams()
+      if (filters.q.trim()) params.set('q', filters.q.trim())
+      if (filters.make) params.set('make', filters.make)
+      if (filters.model) params.set('model', filters.model)
+      if (filters.minPrice > 0) params.set('minPrice', String(filters.minPrice))
+      if (filters.maxPrice < MAX_PRICE) params.set('maxPrice', String(filters.maxPrice))
+      if (filters.fuelType) params.set('fuelType', filters.fuelType)
+      if (filters.gearbox) params.set('gearbox', filters.gearbox)
+      if (filters.yearFrom) params.set('yearFrom', filters.yearFrom)
+      if (filters.yearTo) params.set('yearTo', filters.yearTo)
+      startTransition(() => {
+        router.replace(`/?${params.toString()}`)
+      })
+      setPage(1)
+    }
+
+    if (immediate) run()
+    else debounceRef.current = setTimeout(run, DEBOUNCE_MS)
   }
 
   const clearFilters = () => {
-    setQ('')
-    setMake('')
-    setModel('')
-    setMinPrice(0)
-    setMaxPrice(MAX_PRICE)
-    setFuelType('')
-    setGearbox('')
-    setYearFrom('')
-    setYearTo('')
-    router.push('/')
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    setQ(''); setMake(''); setModel('')
+    setMinPrice(0); setMaxPrice(MAX_PRICE)
+    setFuelType(''); setGearbox('')
+    setYearFrom(''); setYearTo('')
+    startTransition(() => router.replace('/'))
     setPage(1)
   }
 
@@ -193,32 +193,26 @@ function BilarHomeInner({
       {/* Hero */}
       <section className="py-12 px-4" style={{ background: '#FFFFFF', borderBottom: '0.5px solid #E2E8F0' }}>
         <div className="max-w-3xl mx-auto text-center">
-          <h1 className="text-3xl sm:text-4xl font-bold mb-2" style={{ color: '#0F172A' }}>
+          <h1 className="text-3xl sm:text-4xl font-bold mb-6" style={{ color: '#0F172A' }}>
             Hitta din nästa bil
           </h1>
-          <form onSubmit={handleHeroSearch} className="flex gap-2 max-w-xl mx-auto">
-            <div className="relative flex-1">
-              <Search
-                className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5"
-                style={{ color: '#94A3B8' }}
-              />
-              <input
-                type="text"
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="Sök märke, modell..."
-                className="w-full pl-12 pr-4 py-3 rounded-xl border text-sm outline-none transition focus:border-[#2563EB] focus:ring-2 focus:ring-[#BFDBFE]"
-                style={{ borderColor: '#E2E8F0', color: '#0F172A' }}
-              />
-            </div>
-            <button
-              type="submit"
-              className="px-6 py-3 rounded-xl text-sm font-semibold text-white transition hover:opacity-90"
-              style={{ background: '#2563EB' }}
-            >
-              Sök
-            </button>
-          </form>
+          <div className="relative max-w-xl mx-auto">
+            <Search
+              className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5"
+              style={{ color: '#94A3B8' }}
+            />
+            <input
+              type="text"
+              value={q}
+              onChange={(e) => {
+                setQ(e.target.value)
+                applyFilters({ ...cf(), q: e.target.value }, false)
+              }}
+              placeholder="Sök märke, modell..."
+              className="w-full pl-12 pr-4 py-3 rounded-xl border text-sm outline-none transition focus:border-[#2563EB] focus:ring-2 focus:ring-[#BFDBFE]"
+              style={{ borderColor: '#E2E8F0', color: '#0F172A' }}
+            />
+          </div>
         </div>
       </section>
 
@@ -230,7 +224,8 @@ function BilarHomeInner({
         <div className="max-w-7xl mx-auto">
           {/* Rad 1: snabbfilter */}
           <div className="flex flex-wrap items-end gap-3">
-            {/* Märke */}
+
+            {/* Märke — dropdown → immediate */}
             <div className="min-w-[140px]">
               <label className="block text-xs font-medium mb-1" style={{ color: '#64748B' }}>
                 Märke
@@ -239,8 +234,10 @@ function BilarHomeInner({
                 <select
                   value={make}
                   onChange={(e) => {
-                    setMake(e.target.value)
-                    if (!e.target.value) setModel('')
+                    const v = e.target.value
+                    setMake(v)
+                    if (!v) setModel('')
+                    applyFilters({ ...cf(), make: v, model: v ? model : '' }, true)
                   }}
                   className={selectClass}
                   style={{ borderColor: '#E2E8F0', color: make ? '#0F172A' : '#94A3B8' }}
@@ -254,7 +251,7 @@ function BilarHomeInner({
               </div>
             </div>
 
-            {/* Modell */}
+            {/* Modell — fritext → debounce */}
             <div className="min-w-[140px]">
               <label className="block text-xs font-medium mb-1" style={{ color: '#64748B' }}>
                 Modell
@@ -262,7 +259,10 @@ function BilarHomeInner({
               <input
                 type="text"
                 value={model}
-                onChange={(e) => setModel(e.target.value)}
+                onChange={(e) => {
+                  setModel(e.target.value)
+                  applyFilters({ ...cf(), model: e.target.value }, false)
+                }}
                 disabled={!make}
                 placeholder={make ? 'T.ex. XC60' : 'Välj märke först'}
                 className="w-full px-3 py-2 border rounded-lg text-sm outline-none transition focus:border-[#2563EB] focus:ring-1 focus:ring-[#BFDBFE] disabled:bg-[#F8FAFC] disabled:text-[#94A3B8]"
@@ -270,7 +270,7 @@ function BilarHomeInner({
               />
             </div>
 
-            {/* Drivmedel */}
+            {/* Drivmedel — dropdown → immediate */}
             <div className="min-w-[130px]">
               <label className="block text-xs font-medium mb-1" style={{ color: '#64748B' }}>
                 Drivmedel
@@ -278,7 +278,10 @@ function BilarHomeInner({
               <div className="relative">
                 <select
                   value={fuelType}
-                  onChange={(e) => setFuelType(e.target.value)}
+                  onChange={(e) => {
+                    setFuelType(e.target.value)
+                    applyFilters({ ...cf(), fuelType: e.target.value }, true)
+                  }}
                   className={selectClass}
                   style={{ borderColor: '#E2E8F0', color: fuelType ? '#0F172A' : '#94A3B8' }}
                 >
@@ -291,7 +294,7 @@ function BilarHomeInner({
               </div>
             </div>
 
-            {/* Växellåda */}
+            {/* Växellåda — dropdown → immediate */}
             <div className="min-w-[120px]">
               <label className="block text-xs font-medium mb-1" style={{ color: '#64748B' }}>
                 Växellåda
@@ -299,7 +302,10 @@ function BilarHomeInner({
               <div className="relative">
                 <select
                   value={gearbox}
-                  onChange={(e) => setGearbox(e.target.value)}
+                  onChange={(e) => {
+                    setGearbox(e.target.value)
+                    applyFilters({ ...cf(), gearbox: e.target.value }, true)
+                  }}
                   className={selectClass}
                   style={{ borderColor: '#E2E8F0', color: gearbox ? '#0F172A' : '#94A3B8' }}
                 >
@@ -327,16 +333,6 @@ function BilarHomeInner({
               Mer filter
             </button>
 
-            {/* Sök-knapp */}
-            <button
-              type="button"
-              onClick={handleSearch}
-              className="px-5 py-2 rounded-lg text-sm font-semibold text-white transition hover:opacity-90"
-              style={{ background: '#2563EB' }}
-            >
-              Sök bilar
-            </button>
-
             {/* Rensa filter */}
             {hasActiveFilters && (
               <button
@@ -354,6 +350,7 @@ function BilarHomeInner({
           {/* Rad 2: utfällbara filter */}
           {showFilters && (
             <div className="mt-4 pt-4 grid grid-cols-1 sm:grid-cols-3 gap-6" style={{ borderTop: '0.5px solid #F1F5F9' }}>
+
               {/* Prisintervall */}
               <div>
                 <label className="block text-xs font-medium mb-2" style={{ color: '#64748B' }}>
@@ -366,7 +363,11 @@ function BilarHomeInner({
                     <div className="relative">
                       <select
                         value={MIN_PRICE_OPTIONS.includes(minPrice) ? String(minPrice) : ''}
-                        onChange={(e) => setMinPrice(Number(e.target.value) || 0)}
+                        onChange={(e) => {
+                          const n = Number(e.target.value) || 0
+                          setMinPrice(n)
+                          applyFilters({ ...cf(), minPrice: n }, true)
+                        }}
                         className={selectClass}
                         style={{ borderColor: '#E2E8F0', color: minPrice > 0 ? '#0F172A' : '#94A3B8' }}
                       >
@@ -380,7 +381,11 @@ function BilarHomeInner({
                     <input
                       type="number"
                       value={minPrice > 0 ? minPrice : ''}
-                      onChange={(e) => setMinPrice(Number(e.target.value) || 0)}
+                      onChange={(e) => {
+                        const n = Number(e.target.value) || 0
+                        setMinPrice(n)
+                        applyFilters({ ...cf(), minPrice: n }, false)
+                      }}
                       placeholder="eller ange belopp"
                       min={0}
                       step={PRICE_STEP}
@@ -394,7 +399,11 @@ function BilarHomeInner({
                     <div className="relative">
                       <select
                         value={maxPrice < MAX_PRICE && MAX_PRICE_OPTIONS.includes(maxPrice) ? String(maxPrice) : ''}
-                        onChange={(e) => setMaxPrice(Number(e.target.value) || MAX_PRICE)}
+                        onChange={(e) => {
+                          const n = Number(e.target.value) || MAX_PRICE
+                          setMaxPrice(n)
+                          applyFilters({ ...cf(), maxPrice: n }, true)
+                        }}
                         className={selectClass}
                         style={{ borderColor: '#E2E8F0', color: maxPrice < MAX_PRICE ? '#0F172A' : '#94A3B8' }}
                       >
@@ -410,7 +419,11 @@ function BilarHomeInner({
                     <input
                       type="number"
                       value={maxPrice < MAX_PRICE ? maxPrice : ''}
-                      onChange={(e) => setMaxPrice(Number(e.target.value) || MAX_PRICE)}
+                      onChange={(e) => {
+                        const n = Number(e.target.value) || MAX_PRICE
+                        setMaxPrice(n)
+                        applyFilters({ ...cf(), maxPrice: n }, false)
+                      }}
                       placeholder="eller ange belopp"
                       min={0}
                       step={PRICE_STEP}
@@ -422,7 +435,7 @@ function BilarHomeInner({
                 </div>
               </div>
 
-              {/* Årsmodell från */}
+              {/* Årsmodell — dropdowns → immediate */}
               <div>
                 <label className="block text-xs font-medium mb-2" style={{ color: '#64748B' }}>
                   Årsmodell
@@ -431,7 +444,10 @@ function BilarHomeInner({
                   <div className="relative flex-1">
                     <select
                       value={yearFrom}
-                      onChange={(e) => setYearFrom(e.target.value)}
+                      onChange={(e) => {
+                        setYearFrom(e.target.value)
+                        applyFilters({ ...cf(), yearFrom: e.target.value }, true)
+                      }}
                       className={selectClass}
                       style={{ borderColor: '#E2E8F0', color: yearFrom ? '#0F172A' : '#94A3B8' }}
                     >
@@ -446,7 +462,10 @@ function BilarHomeInner({
                   <div className="relative flex-1">
                     <select
                       value={yearTo}
-                      onChange={(e) => setYearTo(e.target.value)}
+                      onChange={(e) => {
+                        setYearTo(e.target.value)
+                        applyFilters({ ...cf(), yearTo: e.target.value }, true)
+                      }}
                       className={selectClass}
                       style={{ borderColor: '#E2E8F0', color: yearTo ? '#0F172A' : '#94A3B8' }}
                     >
@@ -459,6 +478,7 @@ function BilarHomeInner({
                   </div>
                 </div>
               </div>
+
             </div>
           )}
         </div>
@@ -466,13 +486,19 @@ function BilarHomeInner({
 
       {/* Resultat */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-        {/* Träffräknare */}
+
+        {/* Träffräknare + laddningsindikator */}
         <div className="flex items-center justify-between mb-5">
-          <p className="text-sm" style={{ color: '#64748B' }}>
-            {total === 0
-              ? 'Inga annonser hittades'
-              : `${total.toLocaleString('sv-SE')} ${total === 1 ? 'annons' : 'annonser'}`}
-          </p>
+          <div className="flex items-center gap-2">
+            <p className="text-sm" style={{ color: '#64748B' }}>
+              {total === 0
+                ? 'Inga annonser hittades'
+                : `${total.toLocaleString('sv-SE')} ${total === 1 ? 'annons' : 'annonser'}`}
+            </p>
+            {isPending && (
+              <Loader2 className="w-4 h-4 animate-spin" style={{ color: '#2563EB' }} />
+            )}
+          </div>
           {hasActiveFilters && (
             <button
               type="button"
@@ -486,7 +512,7 @@ function BilarHomeInner({
         </div>
 
         {/* Tom state */}
-        {listings.length === 0 && (
+        {listings.length === 0 && !isPending && (
           <div className="flex flex-col items-center justify-center py-24 text-center">
             <div
               className="w-16 h-16 rounded-full flex items-center justify-center mb-4"
@@ -507,7 +533,10 @@ function BilarHomeInner({
 
         {/* Annons-grid — 5 kolumner desktop, 2 mobil */}
         {listings.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          <div
+            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 transition-opacity duration-200"
+            style={{ opacity: isPending ? 0.5 : 1 }}
+          >
             {listings.map((listing) => (
               <BilarListingCard
                 key={listing.id}
@@ -560,7 +589,7 @@ function BilarHomeInner({
   )
 }
 
-// ─── Exported wrapper (Suspense for useSearchParams) ──────────────────────────
+// ─── Exported wrapper (Suspense for useSearchParams in child components) ──────
 
 export default function BilarHomeClient(props: BilarHomeClientProps) {
   return (
