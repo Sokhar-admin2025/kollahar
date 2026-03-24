@@ -513,7 +513,7 @@ export default function BilarInventoryClient({
                 <span />
                 <span>Bil</span>
                 <span className="text-right">Pris</span>
-                <span>Status</span>
+                <span className="text-center">Status</span>
                 <span className="text-right">Visningar</span>
                 <span className="text-right">Leads</span>
                 <span />
@@ -569,7 +569,7 @@ export default function BilarInventoryClient({
                       </p>
 
                       {/* Status — desktop */}
-                      <div className="hidden md:flex md:items-center">
+                      <div className="hidden md:flex md:items-center md:justify-center">
                         <span
                           className="rounded-full px-2.5 py-1 text-xs font-semibold whitespace-nowrap"
                           style={{ background: cfg.bg, color: cfg.text }}
