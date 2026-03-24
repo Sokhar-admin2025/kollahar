@@ -13,6 +13,12 @@ const FUEL_TYPES = ['Bensin', 'Diesel', 'El', 'Hybrid', 'Laddhybrid', 'Gas']
 const GEARBOX_TYPES = ['Manuell', 'Automat']
 const MAX_PRICE = 2_000_000
 const PRICE_STEP = 10_000
+const MIN_PRICE_OPTIONS = [50000, 100000, 150000, 200000, 250000, 300000, 400000, 500000, 750000, 1000000]
+const MAX_PRICE_OPTIONS = [50000, 100000, 150000, 200000, 250000, 300000, 400000, 500000, 750000, 1000000, 1500000, 2000000]
+
+function formatPriceOption(v: number): string {
+  return v.toLocaleString('sv-SE') + ' kr'
+}
 const CURRENT_YEAR = new Date().getFullYear()
 
 const YEAR_OPTIONS = Array.from({ length: CURRENT_YEAR - 1959 }, (_, i) => CURRENT_YEAR - i)
@@ -353,28 +359,66 @@ function BilarHomeInner({
                 <label className="block text-xs font-medium mb-2" style={{ color: '#64748B' }}>
                   Pris (SEK)
                 </label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    value={minPrice > 0 ? minPrice : ''}
-                    onChange={(e) => setMinPrice(Number(e.target.value) || 0)}
-                    placeholder="Min"
-                    min={0}
-                    step={PRICE_STEP}
-                    className="w-full px-3 py-2 border rounded-lg text-sm outline-none transition focus:border-[#2563EB] focus:ring-1 focus:ring-[#BFDBFE]"
-                    style={{ borderColor: '#E2E8F0', color: '#0F172A' }}
-                  />
-                  <span className="text-xs shrink-0" style={{ color: '#94A3B8' }}>–</span>
-                  <input
-                    type="number"
-                    value={maxPrice < MAX_PRICE ? maxPrice : ''}
-                    onChange={(e) => setMaxPrice(Number(e.target.value) || MAX_PRICE)}
-                    placeholder="Max"
-                    min={0}
-                    step={PRICE_STEP}
-                    className="w-full px-3 py-2 border rounded-lg text-sm outline-none transition focus:border-[#2563EB] focus:ring-1 focus:ring-[#BFDBFE]"
-                    style={{ borderColor: '#E2E8F0', color: '#0F172A' }}
-                  />
+                <div className="grid grid-cols-2 gap-2">
+
+                  {/* Min */}
+                  <div className="flex flex-col gap-1.5">
+                    <div className="relative">
+                      <select
+                        value={MIN_PRICE_OPTIONS.includes(minPrice) ? String(minPrice) : ''}
+                        onChange={(e) => setMinPrice(Number(e.target.value) || 0)}
+                        className={selectClass}
+                        style={{ borderColor: '#E2E8F0', color: minPrice > 0 ? '#0F172A' : '#94A3B8' }}
+                      >
+                        <option value="">Minpris</option>
+                        {MIN_PRICE_OPTIONS.map((v) => (
+                          <option key={v} value={String(v)}>{formatPriceOption(v)}</option>
+                        ))}
+                      </select>
+                      <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: '#94A3B8' }} />
+                    </div>
+                    <input
+                      type="number"
+                      value={minPrice > 0 ? minPrice : ''}
+                      onChange={(e) => setMinPrice(Number(e.target.value) || 0)}
+                      placeholder="eller ange belopp"
+                      min={0}
+                      step={PRICE_STEP}
+                      className="w-full px-3 py-2 border rounded-lg text-sm outline-none transition focus:border-[#2563EB] focus:ring-1 focus:ring-[#BFDBFE]"
+                      style={{ borderColor: '#E2E8F0', color: '#0F172A' }}
+                    />
+                  </div>
+
+                  {/* Max */}
+                  <div className="flex flex-col gap-1.5">
+                    <div className="relative">
+                      <select
+                        value={maxPrice < MAX_PRICE && MAX_PRICE_OPTIONS.includes(maxPrice) ? String(maxPrice) : ''}
+                        onChange={(e) => setMaxPrice(Number(e.target.value) || MAX_PRICE)}
+                        className={selectClass}
+                        style={{ borderColor: '#E2E8F0', color: maxPrice < MAX_PRICE ? '#0F172A' : '#94A3B8' }}
+                      >
+                        <option value="">Maxpris</option>
+                        {MAX_PRICE_OPTIONS.map((v) => (
+                          <option key={v} value={String(v)}>
+                            {v === MAX_PRICE ? '2 000 000+ kr' : formatPriceOption(v)}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: '#94A3B8' }} />
+                    </div>
+                    <input
+                      type="number"
+                      value={maxPrice < MAX_PRICE ? maxPrice : ''}
+                      onChange={(e) => setMaxPrice(Number(e.target.value) || MAX_PRICE)}
+                      placeholder="eller ange belopp"
+                      min={0}
+                      step={PRICE_STEP}
+                      className="w-full px-3 py-2 border rounded-lg text-sm outline-none transition focus:border-[#2563EB] focus:ring-1 focus:ring-[#BFDBFE]"
+                      style={{ borderColor: '#E2E8F0', color: '#0F172A' }}
+                    />
+                  </div>
+
                 </div>
               </div>
 
