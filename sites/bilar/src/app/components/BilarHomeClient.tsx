@@ -48,6 +48,11 @@ interface BilarHomeClientProps {
   toggleFavoriteAction: (listingId: string) => Promise<{ success: boolean }>
 }
 
+interface BilarHomeInnerProps extends BilarHomeClientProps {
+  showFilters: boolean
+  onToggleFilters: () => void
+}
+
 // ─── Inner component ──────────────────────────────────────────────────────────
 
 function BilarHomeInner({
@@ -59,7 +64,9 @@ function BilarHomeInner({
   initialFilters,
   loadMoreAction,
   toggleFavoriteAction,
-}: BilarHomeClientProps) {
+  showFilters,
+  onToggleFilters,
+}: BilarHomeInnerProps) {
   const router = useRouter()
 
   // ── Filter state ───────────────────────────────────────────────────────────
@@ -72,8 +79,6 @@ function BilarHomeInner({
   const [gearbox, setGearbox] = useState(initialFilters.gearbox)
   const [yearFrom, setYearFrom] = useState(initialFilters.yearFrom)
   const [yearTo, setYearTo] = useState(initialFilters.yearTo)
-  const [showFilters, setShowFilters] = useState(false)
-
   // ── Listings state ─────────────────────────────────────────────────────────
   const [listings, setListings] = useState(initialListings)
   const [total, setTotal] = useState(initialTotal)
@@ -321,7 +326,7 @@ function BilarHomeInner({
             {/* Fler filter-toggle */}
             <button
               type="button"
-              onClick={() => setShowFilters((v) => !v)}
+              onClick={onToggleFilters}
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium border transition"
               style={{
                 borderColor: showFilters ? '#2563EB' : '#E2E8F0',
@@ -592,13 +597,19 @@ function BilarHomeInner({
 // ─── Exported wrapper (Suspense for useSearchParams in child components) ──────
 
 export default function BilarHomeClient(props: BilarHomeClientProps) {
+  const [showFilters, setShowFilters] = useState(false)
   const { initialFilters: f } = props
   // Ge BilarHomeInner en ny key när servern returnerar nya sökresultat,
   // så att useState(initialListings) initialiseras med färsk data.
   const filterKey = `${f.q}|${f.make}|${f.model}|${f.minPrice}|${f.maxPrice}|${f.fuelType}|${f.gearbox}|${f.yearFrom}|${f.yearTo}`
   return (
     <Suspense fallback={null}>
-      <BilarHomeInner key={filterKey} {...props} />
+      <BilarHomeInner
+        key={filterKey}
+        {...props}
+        showFilters={showFilters}
+        onToggleFilters={() => setShowFilters((v) => !v)}
+      />
     </Suspense>
   )
 }
