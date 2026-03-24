@@ -144,25 +144,40 @@ interface ActionsMenuProps {
 
 function ActionsMenu({ listing, onUpdateStatus, onDelete, pendingId }: ActionsMenuProps) {
   const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
+  const [menuPos, setMenuPos] = useState<{ top: number; right: number } | null>(null)
+  const buttonRef = useRef<HTMLButtonElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+      if (
+        buttonRef.current && !buttonRef.current.contains(e.target as Node) &&
+        menuRef.current && !menuRef.current.contains(e.target as Node)
+      ) {
+        setOpen(false)
+      }
     }
     if (open) document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [open])
+
+  const handleOpen = () => {
+    if (!buttonRef.current) return
+    const rect = buttonRef.current.getBoundingClientRect()
+    setMenuPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right })
+    setOpen((v) => !v)
+  }
 
   const isPending = pendingId === listing.id
   const isActive = listing.status === 'active'
   const isSold = listing.status === 'sold'
 
   return (
-    <div ref={ref} className="relative inline-block">
+    <div className="relative inline-block">
       <button
+        ref={buttonRef}
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={handleOpen}
         disabled={isPending}
         className="rounded-lg p-1.5 transition hover:bg-[#F1F5F9] disabled:opacity-40"
         aria-label="Åtgärder"
@@ -170,10 +185,18 @@ function ActionsMenu({ listing, onUpdateStatus, onDelete, pendingId }: ActionsMe
         <MoreHorizontal className="h-4 w-4" style={{ color: '#64748B' }} />
       </button>
 
-      {open && (
+      {open && menuPos && (
         <div
-          className="absolute right-0 top-full z-20 mt-1 min-w-[180px] overflow-hidden rounded-xl border py-1 shadow-lg"
-          style={{ background: '#FFFFFF', borderColor: '#E2E8F0' }}
+          ref={menuRef}
+          className="min-w-[180px] overflow-hidden rounded-xl border py-1 shadow-lg"
+          style={{
+            position: 'fixed',
+            top: menuPos.top,
+            right: menuPos.right,
+            zIndex: 50,
+            background: '#FFFFFF',
+            borderColor: '#E2E8F0',
+          }}
         >
           {/* Redigera */}
           <Link
