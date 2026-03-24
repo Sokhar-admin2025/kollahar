@@ -304,6 +304,41 @@ All kod skrivs i **Cursor** med **Claude Code** (inte Cursor AI).
 
 ---
 
+## Arbetsfördelning — Claude.ai vs Cursor
+
+### Cursor + Claude Code hanterar:
+- All kod, bugfixar och implementering
+- Testning och verifiering av funktionalitet
+- Migrationsfiler och databasändringar
+- Dokumentationsuppdateringar (changelog, site-specs)
+- Promptar och instruktioner som kommer från Claude.ai
+
+### Claude.ai hanterar:
+- Strategiska beslut och arkitekturdiskussioner
+- Designförslag och UI/UX-beslut
+- War room — när något behöver diskuteras innan vi kodar
+- Prioritering och planering av nästa steg
+- Frågor som rör hela ekosystemet (Main, syskon, CC)
+
+### När Cursor ska skicka tillbaka till Claude.ai:
+Om användaren ställer frågor eller tar upp ämnen som:
+- Rör strategiska beslut ("ska vi bygga X eller Y?")
+- Kräver designbeslut ("hur ska detta se ut?")
+- Påverkar arkitekturen i hela ekosystemet
+- Handlar om prioritering ("vad ska vi göra härnäst?")
+- Är war room-diskussioner om produkten
+
+Då ska Cursor svara:
+"Det här är en strategisk/design/arkitekturfråga —
+ta den med Claude.ai i chatten så ni kan diskutera
+och fatta beslut innan vi implementerar."
+
+### Tumregel:
+Cursor bygger det som är beslutat.
+Claude.ai beslutar vad som ska byggas.
+
+---
+
 ## Kritiska regler — läs innan du skriver kod
 
 1. **Ingen Supabase direkt i UI** — alltid via `lib/features/<feature>/<feature>-service.ts`
