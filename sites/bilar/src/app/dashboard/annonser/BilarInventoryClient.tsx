@@ -333,16 +333,19 @@ export default function BilarInventoryClient({
   const handleConfirmSold = () => {
     if (!confirmSold) return
     const id = confirmSold
-    setConfirmPending(true)
+    // Optimistic: stäng dialog och uppdatera state direkt
+    setConfirmSold(null)
+    setListings((prev) => prev.map((l) => (l.id === id ? { ...l, status: 'sold' as const } : l)))
+    setPendingId(id)
     startTransition(async () => {
       const result = await updateStatusAction(id, organizationId, 'sold')
-      setConfirmSold(null)
-      setConfirmPending(false)
       if (!result.success) {
+        setListings(initialListings)
         setActionError(result.error ?? 'Kunde inte markera som såld.')
       } else {
         router.refresh()
       }
+      setPendingId(null)
     })
   }
 
