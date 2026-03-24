@@ -337,7 +337,36 @@ export default function BilarListingDetailClient({
               </div>
             )}
 
-            {/* 3. Handlarkort */}
+            {/* 3. Beskrivning */}
+            {attrs.description && (
+              <div style={cardStyle} className="p-5">
+                <h2 className="text-sm font-semibold mb-3" style={{ color: '#0F172A' }}>
+                  Beskrivning
+                </h2>
+                <p
+                  className="text-sm leading-relaxed transition-all"
+                  style={{
+                    color: '#64748B',
+                    display: '-webkit-box',
+                    WebkitBoxOrient: 'vertical' as const,
+                    WebkitLineClamp: descExpanded ? 'unset' : 3,
+                    overflow: 'hidden',
+                  }}
+                >
+                  {attrs.description}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setDescExpanded((v) => !v)}
+                  className="mt-2 text-sm font-medium transition"
+                  style={{ color: '#2563EB' }}
+                >
+                  {descExpanded ? 'Visa mindre' : 'Visa mer'}
+                </button>
+              </div>
+            )}
+
+            {/* 4. Handlarkort */}
             {org && (
               <div style={cardStyle} className="p-5">
                 <h2 className="text-sm font-semibold mb-4" style={{ color: '#0F172A' }}>
@@ -474,36 +503,7 @@ export default function BilarListingDetailClient({
               </div>
             </div>
 
-            {/* 2. Beskrivning */}
-            {attrs.description && (
-              <div style={cardStyle} className="p-5">
-                <h2 className="text-sm font-semibold mb-3" style={{ color: '#0F172A' }}>
-                  Beskrivning
-                </h2>
-                <p
-                  className="text-sm leading-relaxed transition-all"
-                  style={{
-                    color: '#64748B',
-                    display: '-webkit-box',
-                    WebkitBoxOrient: 'vertical' as const,
-                    WebkitLineClamp: descExpanded ? 'unset' : 3,
-                    overflow: 'hidden',
-                  }}
-                >
-                  {attrs.description}
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setDescExpanded((v) => !v)}
-                  className="mt-2 text-sm font-medium transition"
-                  style={{ color: '#2563EB' }}
-                >
-                  {descExpanded ? 'Visa mindre' : 'Visa mer'}
-                </button>
-              </div>
-            )}
-
-            {/* 3. Pris + CTA */}
+            {/* 2. Pris + CTA */}
             <div style={cardStyle} className="p-5">
               {listing.price ? (
                 <>
