@@ -190,10 +190,6 @@ function BilarHomeInner({
           <h1 className="text-3xl sm:text-4xl font-bold mb-2" style={{ color: '#0F172A' }}>
             Hitta din nästa bil
           </h1>
-          <p className="mb-8 text-base" style={{ color: '#64748B' }}>
-            Annonser från verifierade bilhandlare
-          </p>
-
           <form onSubmit={handleHeroSearch} className="flex gap-2 max-w-xl mx-auto">
             <div className="relative flex-1">
               <Search
