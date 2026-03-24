@@ -592,9 +592,13 @@ function BilarHomeInner({
 // ─── Exported wrapper (Suspense for useSearchParams in child components) ──────
 
 export default function BilarHomeClient(props: BilarHomeClientProps) {
+  const { initialFilters: f } = props
+  // Ge BilarHomeInner en ny key när servern returnerar nya sökresultat,
+  // så att useState(initialListings) initialiseras med färsk data.
+  const filterKey = `${f.q}|${f.make}|${f.model}|${f.minPrice}|${f.maxPrice}|${f.fuelType}|${f.gearbox}|${f.yearFrom}|${f.yearTo}`
   return (
     <Suspense fallback={null}>
-      <BilarHomeInner {...props} />
+      <BilarHomeInner key={filterKey} {...props} />
     </Suspense>
   )
 }
