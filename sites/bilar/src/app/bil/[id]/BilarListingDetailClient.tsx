@@ -34,7 +34,6 @@ interface BilarListingDetailClientProps {
     consent: boolean
   ) => Promise<{ success: boolean; error?: string }>
   onLogView: () => Promise<void>
-  onLoginRequired: () => void
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -86,7 +85,6 @@ export default function BilarListingDetailClient({
   onToggleFavorite,
   onCreateLead,
   onLogView,
-  onLoginRequired,
 }: BilarListingDetailClientProps) {
   const attrs = listing.attributes
   const org = listing.organization
@@ -112,7 +110,7 @@ export default function BilarListingDetailClient({
   const [toggling, setToggling] = useState(false)
 
   const handleFavorite = async () => {
-    if (!isLoggedIn) { onLoginRequired(); return }
+    if (!isLoggedIn) { handleLoginRequired(); return }
     setToggling(true)
     setFavorite((p) => !p)
     const result = await onToggleFavorite(listing.id)

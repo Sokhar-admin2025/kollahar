@@ -195,7 +195,6 @@ export default async function BilDetailPage({ params }: PageProps) {
       onToggleFavorite={boundToggleFavorite}
       onCreateLead={boundCreateLead}
       onLogView={boundLogView}
-      onLoginRequired={async () => {}} // hanteras i klienten
     />
   )
 }
