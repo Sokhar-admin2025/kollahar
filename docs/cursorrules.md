@@ -1,0 +1,96 @@
+# Cursor-regler — Sokhar / kollahar.se
+
+> **Denna fil finns i `docs/cursorrules.md`** — den primära platsen för all projektdokumentation.
+> Roten innehåller en tunn `.cursorrules`-pekare med de viktigaste instruktionerna som
+> Cursor behöver läsa direkt. Fullständiga regler finns här.
+
+---
+
+## Byggprincip — aldrig isolerade moduler
+
+Varje feature byggs i tre steg i samma arbetspass:
+1. Bygg — implementera feature
+2. Verifiera — kontrollera mot Supabase att data skrivs/läses korrekt
+3. Testa — bekräfta att flödet fungerar end-to-end
+
+Leverera aldrig en feature utan att ha verifierat att den
+faktiskt fungerar mot databasen.
+
+## RLS — alltid supabaseAdmin för mutationer
+
+Alla INSERT, UPDATE, DELETE mot Supabase ska använda
+supabaseAdmin (service role) i server actions och
+API-routes — aldrig anon-key eller SSR-klient.
+
+Anledning: RLS-policies kan blockera skrivningar tyst
+utan felmeddelande. supabaseAdmin garanterar att
+mutationer alltid går igenom och att vi kan filtrera
+på applikationsnivå istället.
+
+Undantag: SELECT-queries i server components kan använda
+SSR-klient med användarens session.
+
+## Felhantering — aldrig tyst
+
+Alla Supabase-anrop ska:
+- Logga fel explicit: console.error('[komponent] fel:', error)
+- Visa användarvänligt felmeddelande i UI
+- Aldrig svälja fel med tom catch-block
+
+## Verifiering efter varje DB-operation
+
+Efter INSERT/UPDATE — kontrollera att raden faktiskt
+skapades/uppdaterades:
+const { data, error } = await supabaseAdmin.from('...').insert(...)
+if (!data || data.length === 0) throw new Error('Ingen rad skapades')
+
+## End-to-end-tänk
+
+Innan du levererar en feature, ställ dig frågorna:
+- Har jag verifierat att data faktiskt skrivs till DB?
+- Har jag verifierat att data läses tillbaka korrekt?
+- Fungerar flödet för en ny användare utan befintlig data?
+- Hanteras tomma states och fel på ett bra sätt?
+
+## Arbetsfördelning
+
+Cursor + Claude Code bygger och implementerar.
+Claude.ai (chatten) beslutar vad som ska byggas.
+
+Om användaren ställer strategiska frågor, designfrågor
+eller prioriteringsfrågor — svara:
+"Det här är en strategisk fråga — ta den med Claude.ai
+så ni kan diskutera och besluta innan vi implementerar."
+
+---
+
+## Kodningsbeteende
+- Du är en expert Senior Fullstack Developer specialiserad på Next.js (App Router),
+  TypeScript, Supabase och Tailwind CSS.
+- Tänk "Safety first": RLS, auth-checks, audit-logs för adminflöden.
+- Om en ny feature berör inloggade vyer, kontrollera om den hör hemma i
+  `/dashboard` (huvudapp) eller Command Center innan du skriver kod.
+
+## Styling & ikoner
+- **Tailwind CSS** exklusivt — inga inline-styles utöver enstaka specialfall.
+- **`lucide-react`** för alla ikoner i båda appar.
+- **Huvudapp:** Minimalistisk, mobile-first, mycket whitespace ("Vimla-stil").
+- **Command Center:** Neo-brutalistisk — tjocka ramar (`border-2`/`border-4`),
+  starka accentfärger (gul, grön, orange), ljus grund med kontrastsektioner.
+
+## Importregler i `command-center`
+- **Aldrig `@/`-alias** i `command-center/src/**` — använd alltid relativa imports.
+  Detta är kritiskt för Vercel-builden.
+  ```ts
+  // Rätt
+  import { createClient } from "../lib/supabase/server";
+  // Fel — kraschar Vercel
+  import { createClient } from "@/lib/supabase/server";
+  ```
+
+## Kommunikation mellan appar
+- Huvudapp och Command Center kommunicerar **enbart** via Supabase (data)
+  eller explicita URLs (`MAIN_APP_URL`) — aldrig via delad UI-kod.
+
+## Tillgänglighet
+- Ha EAA-regler i åtanke vid komponentbygge (semantisk HTML, ARIA, kontrast).
