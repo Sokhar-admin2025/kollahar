@@ -551,6 +551,7 @@ Migrations ligger i `supabase/migrations/`:
 - `20260320100000_organizations_address_profiles_completion.sql`: Lägger till `address` och `city` (text, nullable) på `organizations` för handlaradress i syskon-registreringsflödet. Lägger till `profile_completed` (boolean NOT NULL DEFAULT false) och `reminder_count` (integer NOT NULL DEFAULT 0) på `profiles` för att spåra om steg 3 i registreringsflödet är slutfört samt antal påminnelse-e-post skickade.
 - `20260320200000_organizations_show_financing.sql`: Lägger till `show_financing` (boolean NOT NULL DEFAULT false) på `organizations` för att aktivera finansieringsmodulen per handlare på annonsdetaljsidan (bilar.kollahar.se).
 - `20260324100000_listings_status_paused.sql`: Utökar `listings_status_check` med `'paused'` — saknades sedan `20260230000000_listings_draft_status.sql`, gav 23514 vid statusbyte i bilar-dashboarden.
+- `20260326100000_leads_buyer_name_phone_nullable.sql`: Gör `buyer_name` och `buyer_phone` nullable på `leads` — möjliggör INSERT från syskon-sajters publika lead-formulär (bilar) där phone ej samlas in och namn lagras i `internal_note`.
 
 ### Legacy image backfill (engångskörning)
 

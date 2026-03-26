@@ -89,6 +89,7 @@ async function createPublicLeadAction(
       organization_id: organizationId,
       seller_id: sellerId,
       buyer_id: user?.id ?? null,
+      buyer_name: name.trim() || 'Anonym gäst',
       buyer_email: consent ? email : null,
       status: 'new',
       is_guest: !user,
