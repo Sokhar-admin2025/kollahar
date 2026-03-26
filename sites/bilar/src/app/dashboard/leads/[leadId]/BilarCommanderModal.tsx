@@ -9,6 +9,7 @@ interface BilarCommanderModalProps {
   leadId: string
   organizationId: string
   currentAssignedTo: string | null
+  currentUserId: string
   orgMembers: OrgMember[]
   onClose: () => void
   reassignAction: (
@@ -18,8 +19,15 @@ interface BilarCommanderModalProps {
   ) => Promise<{ success: boolean; error?: string }>
 }
 
-function initials(name: string | null): string {
-  if (!name) return '?'
+function displayName(member: OrgMember): string {
+  if (member.full_name?.trim()) return member.full_name.trim()
+  if (member.email) return member.email.split('@')[0]
+  return 'Okänt namn'
+}
+
+function initials(member: OrgMember): string {
+  const name = displayName(member)
+  if (name === 'Okänt namn') return '?'
   return name
     .split(' ')
     .map((w) => w[0])
@@ -32,6 +40,7 @@ export default function BilarCommanderModal({
   leadId,
   organizationId,
   currentAssignedTo,
+  currentUserId,
   orgMembers,
   onClose,
   reassignAction,
@@ -106,26 +115,27 @@ export default function BilarCommanderModal({
 
           {/* Medlemslista */}
           <div className="max-h-72 overflow-y-auto px-2 py-2">
-            {orgMembers.length === 0 ? (
-              <p className="px-3 py-4 text-center text-sm" style={{ color: '#94A3B8' }}>
-                Inga teammedlemmar hittades.
+            {orgMembers.filter((m) => m.id !== currentUserId).length === 0 ? (
+              <p className="px-3 py-6 text-center text-sm" style={{ color: '#94A3B8' }}>
+                Du har inga teammedlemmar att omfördela till. Bjud in teammedlemmar under Inställningar.
               </p>
             ) : (
               orgMembers.map((member) => {
                 const isCurrent = member.id === currentAssignedTo
                 const isSelected = selected?.id === member.id
+                const isSelf = member.id === currentUserId
 
                 return (
                   <button
                     key={member.id}
                     type="button"
                     onClick={() => handleSelect(member)}
-                    disabled={isCurrent}
+                    disabled={isCurrent || isSelf}
                     className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition"
                     style={{
                       background: isSelected ? '#EFF6FF' : undefined,
-                      cursor: isCurrent ? 'default' : 'pointer',
-                      opacity: isCurrent ? 0.6 : 1,
+                      cursor: isCurrent || isSelf ? 'default' : 'pointer',
+                      opacity: isCurrent || isSelf ? 0.5 : 1,
                     }}
                   >
                     {/* Avatar */}
@@ -137,22 +147,27 @@ export default function BilarCommanderModal({
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
                           src={member.avatar_url}
-                          alt={member.full_name ?? ''}
+                          alt={displayName(member)}
                           className="h-full w-full rounded-full object-cover"
                         />
                       ) : (
-                        initials(member.full_name)
+                        initials(member)
                       )}
                     </div>
 
                     {/* Namn */}
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium" style={{ color: '#0F172A' }}>
-                        {member.full_name ?? 'Okänt namn'}
+                        {displayName(member)}
                       </p>
                       {isCurrent && (
                         <p className="text-[11px]" style={{ color: '#94A3B8' }}>
                           Nuvarande
+                        </p>
+                      )}
+                      {isSelf && !isCurrent && (
+                        <p className="text-[11px]" style={{ color: '#94A3B8' }}>
+                          Du
                         </p>
                       )}
                     </div>
@@ -189,7 +204,7 @@ export default function BilarCommanderModal({
                 <p className="mb-3 text-sm" style={{ color: '#64748B' }}>
                   Omfördela till{' '}
                   <span className="font-semibold" style={{ color: '#0F172A' }}>
-                    {selected.full_name ?? 'vald profil'}
+                    {displayName(selected)}
                   </span>
                   ? Detta loggas i leadets historik.
                 </p>

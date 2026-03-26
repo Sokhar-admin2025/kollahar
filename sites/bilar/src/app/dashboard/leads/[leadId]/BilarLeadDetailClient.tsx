@@ -717,6 +717,7 @@ export default function BilarLeadDetailClient({
           leadId={initialLead.id}
           organizationId={organizationId}
           currentAssignedTo={initialLead.assigned_to}
+          currentUserId={currentUserId}
           orgMembers={orgMembers}
           onClose={() => setCommanderOpen(false)}
           reassignAction={reassignAction}

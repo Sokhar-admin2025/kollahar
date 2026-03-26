@@ -448,14 +448,17 @@ export async function updateLeadStatus(
 export interface OrgMember {
   id: string
   full_name: string | null
+  email: string | null
   avatar_url: string | null
 }
 
 export async function getOrganizationMembers(
-  supabase: SupabaseClient,
+  _supabase: SupabaseClient,
   organizationId: string
 ): Promise<OrgMember[]> {
-  const { data, error } = await supabase
+  if (!supabaseAdmin) return []
+
+  const { data, error } = await supabaseAdmin
     .from('profiles')
     .select('id, full_name, avatar_url')
     .eq('organization_id', organizationId)
@@ -466,9 +469,21 @@ export async function getOrganizationMembers(
     return []
   }
 
-  return (data ?? []).map((row) => ({
+  const rows = data ?? []
+
+  // Hämta e-post från auth.users för att kunna visa som fallback när full_name saknas
+  const emailMap: Record<string, string> = {}
+  await Promise.all(
+    rows.map(async (row) => {
+      const { data: u } = await supabaseAdmin!.auth.admin.getUserById(String(row.id))
+      if (u?.user?.email) emailMap[String(row.id)] = u.user.email
+    })
+  )
+
+  return rows.map((row) => ({
     id: String(row.id),
     full_name: (row.full_name as string | null) ?? null,
+    email: emailMap[String(row.id)] ?? null,
     avatar_url: (row.avatar_url as string | null) ?? null,
   }))
 }
