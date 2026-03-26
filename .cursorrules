@@ -6,6 +6,66 @@ explicit motivering.
 
 ---
 
+# Cursorrules — Sokhar / kollahar.se
+
+## Byggprincip — aldrig isolerade moduler
+
+Varje feature byggs i tre steg i samma arbetspass:
+1. Bygg — implementera feature
+2. Verifiera — kontrollera mot Supabase att data skrivs/läses korrekt
+3. Testa — bekräfta att flödet fungerar end-to-end
+
+Leverera aldrig en feature utan att ha verifierat att den
+faktiskt fungerar mot databasen.
+
+## RLS — alltid supabaseAdmin för mutationer
+
+Alla INSERT, UPDATE, DELETE mot Supabase ska använda
+supabaseAdmin (service role) i server actions och
+API-routes — aldrig anon-key eller SSR-klient.
+
+Anledning: RLS-policies kan blockera skrivningar tyst
+utan felmeddelande. supabaseAdmin garanterar att
+mutationer alltid går igenom och att vi kan filtrera
+på applikationsnivå istället.
+
+Undantag: SELECT-queries i server components kan använda
+SSR-klient med användarens session.
+
+## Felhantering — aldrig tyst
+
+Alla Supabase-anrop ska:
+- Logga fel explicit: console.error('[komponent] fel:', error)
+- Visa användarvänligt felmeddelande i UI
+- Aldrig svälja fel med tom catch-block
+
+## Verifiering efter varje DB-operation
+
+Efter INSERT/UPDATE — kontrollera att raden faktiskt
+skapades/uppdaterades:
+const { data, error } = await supabaseAdmin.from('...').insert(...)
+if (!data || data.length === 0) throw new Error('Ingen rad skapades')
+
+## End-to-end-tänk
+
+Innan du levererar en feature, ställ dig frågorna:
+- Har jag verifierat att data faktiskt skrivs till DB?
+- Har jag verifierat att data läses tillbaka korrekt?
+- Fungerar flödet för en ny användare utan befintlig data?
+- Hanteras tomma states och fel på ett bra sätt?
+
+## Arbetsfördelning
+
+Cursor + Claude Code bygger och implementerar.
+Claude.ai (chatten) beslutar vad som ska byggas.
+
+Om användaren ställer strategiska frågor, designfrågor
+eller prioriteringsfrågor — svara:
+"Det här är en strategisk fråga — ta den med Claude.ai
+så ni kan diskutera och besluta innan vi implementerar."
+
+---
+
 # CURSOR-SPECIFIKA REGLER
 
 ## Kodningsbeteende

@@ -364,6 +364,11 @@ Claude.ai beslutar vad som ska byggas.
 9. **Efter manuell SQL i prod:** kör `NOTIFY pgrst, 'reload schema';`
 10. **Expert gate** — vid ändringar i RLS, organization_id, FK eller auth-kopplad
     access: se checklistan i `docs/02-BACKEND_DATABASE.md`
+11. **supabaseAdmin för mutationer** — använd alltid service role för INSERT/UPDATE/DELETE;
+    RLS-policies kan blockera skrivningar tyst utan felmeddelande
+12. **Verifiera DB-operationer** — kontrollera alltid att INSERT/UPDATE faktiskt skapade/ändrade en rad; returnera fel om `data` är null eller tom
+13. **Explicit felloggning** — logga alltid `console.error('[komponent] fel:', error)` och visa användarvänligt meddelande i UI; aldrig tyst felhantering
+14. **Bygg end-to-end** — leverera aldrig en feature utan att ha verifierat att data skrivs till och läses från databasen korrekt
 
 ---
 
