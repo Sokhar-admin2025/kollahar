@@ -474,10 +474,10 @@ export default function BilarLeadsClient({
               >
                 <span>Köpare</span>
                 <span>Bil</span>
-                <span>Status</span>
-                <span>Källa</span>
-                <span>SLA</span>
-                <span>Tid</span>
+                <span className="w-[88px]">Status</span>
+                <span className="w-[56px]">Källa</span>
+                <span className="w-[100px]">SLA</span>
+                <span className="w-[88px] text-right">Tid</span>
               </div>
 
               {/* Rader */}
@@ -524,7 +524,7 @@ export default function BilarLeadsClient({
                     {/* Status */}
                     <div
                       onClick={(e) => e.stopPropagation()}
-                      className="hidden md:block"
+                      className="hidden w-[88px] md:block"
                     >
                       <StatusDropdown
                         leadId={lead.id}
@@ -535,17 +535,17 @@ export default function BilarLeadsClient({
                     </div>
 
                     {/* Källa */}
-                    <div className="hidden md:block">
+                    <div className="hidden w-[56px] md:block">
                       <SourceBadge site={lead.source_site} />
                     </div>
 
                     {/* SLA */}
-                    <div className="hidden md:block">
+                    <div className="hidden w-[100px] md:block">
                       <SlaIndicator lead={lead} now={now} />
                     </div>
 
                     {/* Tid */}
-                    <p className="hidden text-right text-[11px] md:block" style={{ color: '#94A3B8' }}>
+                    <p className="hidden w-[88px] text-right text-[11px] md:block" style={{ color: '#94A3B8' }}>
                       {relativeTime(lead.created_at, now)}
                     </p>
 
