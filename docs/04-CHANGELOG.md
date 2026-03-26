@@ -10,6 +10,32 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ---
 
+## [1.5.2] - 2026-03-26
+
+### ✨ Tillagt — bilar.kollahar.se inställningssida
+
+#### Dashboard — Inställningar (`/dashboard/installningar`)
+- **Kontaktkanaler:** Org-nivå standardinställning för Visa telefonnummer, Visa e-post och Aktivera chatt. Sparas direkt vid toggle via `updateOrgSettings()` (service role). Kräver migration `20260326110000_organizations_contact_channels.sql`.
+- **Notifieringar:** Toggle för e-postavisering vid nya leads (`profiles.email_notifications`). Sparas via `updateProfileSettings()`.
+- **Säkerhet:** Knapp för att skicka lösenordsåterställningslänk till inloggad användares e-post via Supabase Auth.
+- **UX:** Optimistisk UI (toggle uppdateras direkt, återställs vid fel). Inline toast-feedback (success/error). Ingen sidofladdning.
+- **Service-lager:** `bilar-settings-service.ts` med `getSettings()`, `updateOrgSettings()`, `updateProfileSettings()`.
+- **Server Actions:** `settings-actions.ts` med `updateOrgSettingsAction`, `updateProfileSettingsAction`, `sendPasswordResetAction`.
+
+### 🗄️ Migrationer
+- `20260326100000_leads_buyer_name_phone_nullable.sql` — gör `leads.buyer_name` och `leads.buyer_phone` nullable (behövs för gäst-förfrågningar utan telefon).
+- `20260326110000_organizations_contact_channels.sql` — lägger till `show_phone`, `show_email`, `contact_via_chat` på `organizations`-tabellen som org-nivå-defaults.
+
+### 🐛 Bugfixar — bilar.kollahar.se
+
+- **Realtidsfilter:** Annonserna försvann efter soft navigation. Root cause: `router.replace()` i `startTransition` remonterar inte Client Components — `useState(initialListings)` fick inte uppdaterade props. Löst med `filterKey` som key-prop på `BilarHomeInner` som tvingar remount.
+- **"Mer filter" kollapsade:** Panelen stängdes varje gång filter ändrades pga att `showFilters`-state låg i `BilarHomeInner` som remonterades. Löst genom att flytta `showFilters` till yttre wrapper `BilarHomeClient` som aldrig remonteras.
+- **"Skicka förfrågan" toast-fel:** `leads.buyer_name NOT NULL` + INSERT utan värde → Supabase 23502-fel. Löst med migration (nullable) och explicit `buyer_name: name.trim() || 'Anonym gäst'` i `createPublicLeadAction`.
+- **Commander-modal "Okänt namn":** `profiles.full_name` null visade "Okänt namn". Fallback: `full_name → email lokaldel → 'Okänt namn'`. Tom state när inga andra teammedlemmar finns.
+- **Leads-kolumnalignment:** STATUS, KÄLLA, SLA, TID-rubriker missmatchade med datarader. Löst med explicita `w-[Xpx]` på både headers och dataceller.
+
+---
+
 ## [1.5.1] - 2026-03-21
 
 ### 🐛 Bugfixar — bilar.kollahar.se registreringsflöde (end-to-end-testning)
