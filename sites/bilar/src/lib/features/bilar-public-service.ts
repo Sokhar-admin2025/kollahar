@@ -409,6 +409,9 @@ export interface DealerProfile {
   is_company_verified: boolean
   active_count: number
   sold_count: number
+  show_phone: boolean
+  show_email: boolean
+  contact_via_chat: boolean
 }
 
 export interface DealerListingsFilters {
@@ -427,7 +430,7 @@ export async function getOrganizationBySlug(
 
   const { data: org, error } = await supabaseAdmin
     .from('organizations')
-    .select('id, name, slug, logo_url, address, city, created_at')
+    .select('id, name, slug, logo_url, address, city, created_at, show_phone, show_email, contact_via_chat')
     .eq('slug', slug)
     .maybeSingle()
 
@@ -466,6 +469,9 @@ export async function getOrganizationBySlug(
     is_company_verified: ((verifiedResult as { count: number | null }).count ?? 0) > 0,
     active_count: (activeResult as { count: number | null }).count ?? 0,
     sold_count: (soldResult as { count: number | null }).count ?? 0,
+    show_phone: Boolean((org as { show_phone?: boolean }).show_phone ?? false),
+    show_email: Boolean((org as { show_email?: boolean }).show_email ?? false),
+    contact_via_chat: Boolean((org as { contact_via_chat?: boolean }).contact_via_chat ?? true),
   }
 }
 

@@ -2,7 +2,7 @@
 
 import { useState, useTransition, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { BadgeCheck, ChevronDown, Loader2 } from 'lucide-react'
+import { BadgeCheck, ChevronDown, Loader2, Phone, Mail, MessageSquare } from 'lucide-react'
 import BilarPublicHeader from '../../components/BilarPublicHeader'
 import BilarListingCard from '../../components/BilarListingCard'
 import BilarDualRangeSlider from '../../components/BilarDualRangeSlider'
@@ -189,7 +189,7 @@ function DealerProfileInner({
               </p>
 
               {/* Stats */}
-              <div className="flex flex-wrap gap-6">
+              <div className="flex flex-wrap gap-6 mb-4">
                 <div>
                   <p className="text-xl font-bold" style={{ color: '#0F172A' }}>
                     {dealer.active_count}
@@ -207,6 +207,39 @@ function DealerProfileInner({
                   <p className="text-xs" style={{ color: '#94A3B8' }}>Betyg</p>
                 </div>
               </div>
+
+              {/* Kontaktkanaler */}
+              {(dealer.show_phone || dealer.show_email || dealer.contact_via_chat) && (
+                <div className="flex flex-wrap gap-2">
+                  {dealer.show_phone && (
+                    <span
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
+                      style={{ background: '#EFF6FF', color: '#2563EB', border: '0.5px solid #BFDBFE' }}
+                    >
+                      <Phone size={12} strokeWidth={2} />
+                      Telefon
+                    </span>
+                  )}
+                  {dealer.show_email && (
+                    <span
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
+                      style={{ background: '#EFF6FF', color: '#2563EB', border: '0.5px solid #BFDBFE' }}
+                    >
+                      <Mail size={12} strokeWidth={2} />
+                      E-post
+                    </span>
+                  )}
+                  {dealer.contact_via_chat && (
+                    <span
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
+                      style={{ background: '#EFF6FF', color: '#2563EB', border: '0.5px solid #BFDBFE' }}
+                    >
+                      <MessageSquare size={12} strokeWidth={2} />
+                      Chatt via annons
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>

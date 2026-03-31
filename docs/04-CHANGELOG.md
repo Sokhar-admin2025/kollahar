@@ -10,6 +10,18 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ---
 
+## [1.5.4] - 2026-03-31
+
+### ✨ Tillagt — bilar.kollahar.se publik handlarprofil (Test 11)
+
+#### `/handlare/[slug]` — Kontaktkanaler
+
+- **Kontaktkanaler i hero:** Handlarens hero-sektion visar nu vilka kontaktsätt som är aktiva baserat på `organizations.show_phone`, `organizations.show_email` och `organizations.contact_via_chat`. Om ett fält är `false` döljs den kontaktvägen för besökaren. Visas som blå badges (Telefon / E-post / Chatt via annons) med Phone-, Mail- och MessageSquare-ikoner från lucide-react.
+- **`DealerProfile`-typ:** Utökad med `show_phone`, `show_email`, `contact_via_chat` (boolean).
+- **`getOrganizationBySlug()`:** Hämtar nu de tre kontaktkanalsfälten från `organizations`-tabellen och returnerar dem i `DealerProfile`.
+
+---
+
 ## [1.5.3] - 2026-03-31
 
 ### 🐛 Bugfixar — bilar.kollahar.se
