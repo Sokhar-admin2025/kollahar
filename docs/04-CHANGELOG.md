@@ -10,6 +10,14 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ---
 
+## [1.5.3] - 2026-03-31
+
+### 🐛 Bugfixar — bilar.kollahar.se
+
+- **Inställningssidan laddade inte:** `getSettings()` i `bilar-settings-service.ts` använde den inloggade användarens sessionsklient för att läsa från `organizations`-tabellen. Tabellen saknar en explicit SELECT-policy — om RLS är aktiverat blockeras frågan tyst och returnerar `null`. Löst genom att `getSettings()` nu använder `supabaseAdmin` för organizations-queryn, konsekvent med hur `updateOrgSettings()` och `updateProfileSettings()` redan fungerade. Dessutom lades explicit felloggning till på alla queries (profile-fel, org-fel, saknad organization_id, ej initialiserad admin-klient) så att rotkausen syns direkt i server-loggen.
+
+---
+
 ## [1.5.2] - 2026-03-26
 
 ### ✨ Tillagt — bilar.kollahar.se inställningssida

@@ -22,26 +22,50 @@ export interface BilarSettings {
 /**
  * Hämtar inställningar för inloggad användare: org-kanaler + profilnotiser.
  * Returnerar null om användaren inte är inloggad eller saknar organisation.
+ *
+ * Notera: organizations-queryn använder supabaseAdmin eftersom organizations-tabellen
+ * saknar en explicit SELECT-policy — vanlig klient blockeras tyst av RLS.
  */
 export async function getSettings(supabase: SupabaseClient): Promise<BilarSettings | null> {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('organization_id, email_notifications')
     .eq('id', user.id)
     .single()
 
-  if (!profile?.organization_id) return null
+  if (profileError) {
+    console.error('[bilar-settings-service] getSettings profile-fel:', profileError)
+    return null
+  }
 
-  const { data: org } = await supabase
+  if (!profile?.organization_id) {
+    console.error('[bilar-settings-service] getSettings: ingen organization_id på profil', user.id)
+    return null
+  }
+
+  if (!supabaseAdmin) {
+    console.error('[bilar-settings-service] getSettings: supabaseAdmin ej initialiserad')
+    return null
+  }
+
+  const { data: org, error: orgError } = await supabaseAdmin
     .from('organizations')
     .select('id, show_phone, show_email, contact_via_chat')
     .eq('id', profile.organization_id)
     .single()
 
-  if (!org) return null
+  if (orgError) {
+    console.error('[bilar-settings-service] getSettings org-fel:', orgError)
+    return null
+  }
+
+  if (!org) {
+    console.error('[bilar-settings-service] getSettings: ingen org hittades för id', profile.organization_id)
+    return null
+  }
 
   return {
     org: {
