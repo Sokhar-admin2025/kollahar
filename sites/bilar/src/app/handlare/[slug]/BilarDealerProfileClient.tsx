@@ -419,9 +419,13 @@ function DealerProfileInner({
 // ─── Export med Suspense ──────────────────────────────────────────────────────
 
 export default function BilarDealerProfileClient(props: BilarDealerProfileClientProps) {
+  const { initialFilters: f } = props
+  // Ge DealerProfileInner en ny key när servern returnerar nya filterresultat,
+  // så att useState(initialListings) initialiseras med färsk data.
+  const filterKey = `${f.make}|${f.minPrice}|${f.maxPrice}`
   return (
     <Suspense fallback={null}>
-      <DealerProfileInner {...props} />
+      <DealerProfileInner key={filterKey} {...props} />
     </Suspense>
   )
 }
