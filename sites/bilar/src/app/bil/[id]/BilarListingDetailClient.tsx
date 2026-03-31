@@ -492,7 +492,7 @@ export default function BilarListingDetailClient({
                 <SpecRow label="Årsmodell" value={listing.year ? String(listing.year) : null} />
                 <SpecRow
                   label="Miltal"
-                  value={attrs.mileage ? attrs.mileage.toLocaleString('sv-SE') + ' km' : null}
+                  value={attrs.mileage ? `${attrs.mileage.toLocaleString('sv-SE')} mil` : null}
                 />
                 <SpecRow label="Drivmedel" value={attrs.fuel_type ?? null} />
                 <SpecRow label="Växellåda" value={attrs.gearbox ?? null} />

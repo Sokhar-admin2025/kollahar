@@ -446,13 +446,13 @@ export default function BilarListingForm({
         <div className="grid grid-cols-2 gap-4 mb-4">
           {/* Miltal */}
           <div>
-            <label className={labelClass} style={{ color: '#64748B' }}>Miltal (km)</label>
+            <label className={labelClass} style={{ color: '#64748B' }}>Miltal (mil)</label>
             <input
               type="text"
               inputMode="numeric"
               value={mileage}
               onChange={(e) => setMileage(formatNumber(e.target.value))}
-              placeholder="T.ex. 45000"
+              placeholder="T.ex. 750" // 750 mil = 7 500 km
               className={inputClass}
               style={{ borderColor: '#E2E8F0', color: '#0F172A' }}
             />

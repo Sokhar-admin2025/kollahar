@@ -19,7 +19,8 @@ function formatPrice(price: number): string {
 }
 
 function formatMileage(mileage: number): string {
-  return mileage.toLocaleString('sv-SE') + ' km'
+  // mileage lagras i mil i databasen
+  return mileage.toLocaleString('sv-SE') + ' mil'
 }
 
 export default function BilarListingCard({
