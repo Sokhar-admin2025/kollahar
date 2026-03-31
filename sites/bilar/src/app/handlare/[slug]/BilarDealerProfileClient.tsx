@@ -89,31 +89,24 @@ function DealerProfileInner({
     setTimeout(() => setLoginToast(false), 3000)
   }
 
-  // ── Sök / filter ──────────────────────────────────────────────────────────
-  const buildParams = () => {
-    const params = new URLSearchParams(searchParams.toString())
-    if (make) params.set('make', make)
-    else params.delete('make')
-    if (minPrice > 0) params.set('minPrice', String(minPrice))
-    else params.delete('minPrice')
-    if (maxPrice < MAX_PRICE) params.set('maxPrice', String(maxPrice))
-    else params.delete('maxPrice')
-    params.delete('page')
-    return params
-  }
-
-  const handleSearch = () => {
-    router.push(`?${buildParams().toString()}`)
+  // ── Filter ────────────────────────────────────────────────────────────────
+  const applyFilters = (newMake: string, newMin: number, newMax: number) => {
+    const params = new URLSearchParams()
+    if (newMake) params.set('make', newMake)
+    if (newMin > 0) params.set('minPrice', String(newMin))
+    if (newMax < MAX_PRICE) params.set('maxPrice', String(newMax))
     setPage(1)
-    startTransition(() => {})
+    startTransition(() => {
+      router.push(`?${params.toString()}`)
+    })
   }
 
   const handleClear = () => {
     setMake('')
     setMinPrice(0)
     setMaxPrice(MAX_PRICE)
-    router.push('?')
     setPage(1)
+    startTransition(() => { router.push('?') })
   }
 
   const hasActiveFilters = make || minPrice > 0 || maxPrice < MAX_PRICE
@@ -266,7 +259,7 @@ function DealerProfileInner({
               <div className="relative">
                 <select
                   value={make}
-                  onChange={(e) => setMake(e.target.value)}
+                  onChange={(e) => { setMake(e.target.value); applyFilters(e.target.value, minPrice, maxPrice) }}
                   className="w-full px-3 py-2 border rounded-lg text-sm outline-none transition focus:border-[#2563EB] bg-white appearance-none"
                   style={{ borderColor: '#E2E8F0', color: make ? '#0F172A' : '#94A3B8' }}
                 >
@@ -292,7 +285,7 @@ function DealerProfileInner({
               <div className="relative">
                 <select
                   value={MIN_PRICE_OPTIONS.includes(minPrice) ? String(minPrice) : ''}
-                  onChange={(e) => setMinPrice(Number(e.target.value) || 0)}
+                  onChange={(e) => { const n = Number(e.target.value) || 0; setMinPrice(n); applyFilters(make, n, maxPrice) }}
                   className="w-36 px-3 py-2 border rounded-lg text-sm outline-none transition focus:border-[#2563EB] appearance-none bg-white"
                   style={{ borderColor: '#E2E8F0', color: minPrice > 0 ? '#0F172A' : '#94A3B8' }}
                 >
@@ -311,7 +304,7 @@ function DealerProfileInner({
               <div className="relative">
                 <select
                   value={maxPrice < MAX_PRICE && MAX_PRICE_OPTIONS.includes(maxPrice) ? String(maxPrice) : ''}
-                  onChange={(e) => setMaxPrice(Number(e.target.value) || MAX_PRICE)}
+                  onChange={(e) => { const n = Number(e.target.value) || MAX_PRICE; setMaxPrice(n); applyFilters(make, minPrice, n) }}
                   className="w-36 px-3 py-2 border rounded-lg text-sm outline-none transition focus:border-[#2563EB] appearance-none bg-white"
                   style={{ borderColor: '#E2E8F0', color: maxPrice < MAX_PRICE ? '#0F172A' : '#94A3B8' }}
                 >
@@ -327,17 +320,9 @@ function DealerProfileInner({
             </div>
           </div>
 
-          {/* Knappar */}
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleSearch}
-              className="px-5 py-2 rounded-lg text-sm font-semibold text-white transition hover:opacity-90"
-              style={{ background: '#2563EB' }}
-            >
-              Filtrera
-            </button>
-            {hasActiveFilters && (
+          {/* Rensa */}
+          {hasActiveFilters && (
+            <div className="flex items-end pb-0.5">
               <button
                 type="button"
                 onClick={handleClear}
@@ -346,8 +331,8 @@ function DealerProfileInner({
               >
                 Rensa
               </button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </section>
 
