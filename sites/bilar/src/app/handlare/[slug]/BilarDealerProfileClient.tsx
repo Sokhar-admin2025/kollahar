@@ -27,7 +27,12 @@ interface BilarDealerProfileClientProps {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const MAX_PRICE = 2_000_000
-const PRICE_STEP = 10_000
+const MIN_PRICE_OPTIONS = [50000, 100000, 150000, 200000, 250000, 300000, 400000, 500000, 750000, 1000000]
+const MAX_PRICE_OPTIONS = [50000, 100000, 150000, 200000, 250000, 300000, 400000, 500000, 750000, 1000000, 1500000, 2000000]
+
+function formatPriceOption(v: number): string {
+  return v.toLocaleString('sv-SE') + ' kr'
+}
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -282,33 +287,43 @@ function DealerProfileInner({
           <div className="flex items-end gap-2">
             <div>
               <label className="block text-xs font-medium mb-1" style={{ color: '#64748B' }}>
-                Minpris (kr)
+                Minpris
               </label>
-              <input
-                type="number"
-                value={minPrice > 0 ? minPrice : ''}
-                onChange={(e) => setMinPrice(Number(e.target.value) || 0)}
-                placeholder="0"
-                min={0}
-                step={PRICE_STEP}
-                className="w-32 px-3 py-2 border rounded-lg text-sm outline-none transition focus:border-[#2563EB] focus:ring-1 focus:ring-[#BFDBFE]"
-                style={{ borderColor: '#E2E8F0', color: '#0F172A' }}
-              />
+              <div className="relative">
+                <select
+                  value={MIN_PRICE_OPTIONS.includes(minPrice) ? String(minPrice) : ''}
+                  onChange={(e) => setMinPrice(Number(e.target.value) || 0)}
+                  className="w-36 px-3 py-2 border rounded-lg text-sm outline-none transition focus:border-[#2563EB] appearance-none bg-white"
+                  style={{ borderColor: '#E2E8F0', color: minPrice > 0 ? '#0F172A' : '#94A3B8' }}
+                >
+                  <option value="">Minpris</option>
+                  {MIN_PRICE_OPTIONS.map((v) => (
+                    <option key={v} value={String(v)}>{formatPriceOption(v)}</option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: '#94A3B8' }} />
+              </div>
             </div>
             <div>
               <label className="block text-xs font-medium mb-1" style={{ color: '#64748B' }}>
-                Maxpris (kr)
+                Maxpris
               </label>
-              <input
-                type="number"
-                value={maxPrice < MAX_PRICE ? maxPrice : ''}
-                onChange={(e) => setMaxPrice(Number(e.target.value) || MAX_PRICE)}
-                placeholder="Ingen gräns"
-                min={0}
-                step={PRICE_STEP}
-                className="w-36 px-3 py-2 border rounded-lg text-sm outline-none transition focus:border-[#2563EB] focus:ring-1 focus:ring-[#BFDBFE]"
-                style={{ borderColor: '#E2E8F0', color: '#0F172A' }}
-              />
+              <div className="relative">
+                <select
+                  value={maxPrice < MAX_PRICE && MAX_PRICE_OPTIONS.includes(maxPrice) ? String(maxPrice) : ''}
+                  onChange={(e) => setMaxPrice(Number(e.target.value) || MAX_PRICE)}
+                  className="w-36 px-3 py-2 border rounded-lg text-sm outline-none transition focus:border-[#2563EB] appearance-none bg-white"
+                  style={{ borderColor: '#E2E8F0', color: maxPrice < MAX_PRICE ? '#0F172A' : '#94A3B8' }}
+                >
+                  <option value="">Maxpris</option>
+                  {MAX_PRICE_OPTIONS.map((v) => (
+                    <option key={v} value={String(v)}>
+                      {v === MAX_PRICE ? '2 000 000+ kr' : formatPriceOption(v)}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: '#94A3B8' }} />
+              </div>
             </div>
           </div>
 
