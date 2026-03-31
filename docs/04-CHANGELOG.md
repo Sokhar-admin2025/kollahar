@@ -10,6 +10,23 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ---
 
+## [1.5.5] - 2026-03-31
+
+### 🐛 Bugfixar & förbättringar — bilar.kollahar.se handlarprofil
+
+#### `/handlare/[slug]` — Prisfilter och kontaktknappar
+
+- **Prisfilter:** Tog bort `BilarDualRangeSlider` från handlarprofilens filterfält. Ersatt med två enkla `number`-inputs (Minpris / Maxpris) som följer samma state- och URL-param-konvention som övriga filter.
+- **Klickbara kontaktknappar:** Telefon-badge är nu en `<a href="tel:...">` som visar och länkar till `organizations.phone`. E-post-badge är en `<a href="mailto:...">` som visar och länkar till `organizations.email`. Knapparna renderas bara om respektive `show_phone`/`show_email` är `true` **och** att värdet faktiskt finns i databasen.
+- **`DealerProfile`-typ:** Utökas med `phone: string | null` och `email: string | null`.
+- **`getOrganizationBySlug()`:** Hämtar nu `phone` och `email` från `organizations`.
+
+### 🗄️ Migrationer
+
+- `20260331110000_organizations_phone_email.sql` — lägger till `phone` och `email` (text, nullable) på `organizations`-tabellen.
+
+---
+
 ## [1.5.4] - 2026-03-31
 
 ### ✨ Tillagt — bilar.kollahar.se publik handlarprofil (Test 11)

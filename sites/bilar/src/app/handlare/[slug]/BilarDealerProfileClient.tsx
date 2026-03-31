@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { BadgeCheck, ChevronDown, Loader2, Phone, Mail, MessageSquare } from 'lucide-react'
 import BilarPublicHeader from '../../components/BilarPublicHeader'
 import BilarListingCard from '../../components/BilarListingCard'
-import BilarDualRangeSlider from '../../components/BilarDualRangeSlider'
 import type { DealerProfile, PublicListing } from '../../../lib/features/bilar-public-service'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -211,23 +210,25 @@ function DealerProfileInner({
               {/* Kontaktkanaler */}
               {(dealer.show_phone || dealer.show_email || dealer.contact_via_chat) && (
                 <div className="flex flex-wrap gap-2">
-                  {dealer.show_phone && (
-                    <span
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
+                  {dealer.show_phone && dealer.phone && (
+                    <a
+                      href={`tel:${dealer.phone}`}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition hover:opacity-80"
                       style={{ background: '#EFF6FF', color: '#2563EB', border: '0.5px solid #BFDBFE' }}
                     >
                       <Phone size={12} strokeWidth={2} />
-                      Telefon
-                    </span>
+                      {dealer.phone}
+                    </a>
                   )}
-                  {dealer.show_email && (
-                    <span
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
+                  {dealer.show_email && dealer.email && (
+                    <a
+                      href={`mailto:${dealer.email}`}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition hover:opacity-80"
                       style={{ background: '#EFF6FF', color: '#2563EB', border: '0.5px solid #BFDBFE' }}
                     >
                       <Mail size={12} strokeWidth={2} />
-                      E-post
-                    </span>
+                      {dealer.email}
+                    </a>
                   )}
                   {dealer.contact_via_chat && (
                     <span
@@ -278,18 +279,37 @@ function DealerProfileInner({
           )}
 
           {/* Prisintervall */}
-          <div className="min-w-[240px]">
-            <BilarDualRangeSlider
-              label="Pris (SEK)"
-              min={0}
-              max={MAX_PRICE}
-              minValue={minPrice}
-              maxValue={maxPrice}
-              onMinChange={setMinPrice}
-              onMaxChange={setMaxPrice}
-              step={PRICE_STEP}
-              unit=" kr"
-            />
+          <div className="flex items-end gap-2">
+            <div>
+              <label className="block text-xs font-medium mb-1" style={{ color: '#64748B' }}>
+                Minpris (kr)
+              </label>
+              <input
+                type="number"
+                value={minPrice > 0 ? minPrice : ''}
+                onChange={(e) => setMinPrice(Number(e.target.value) || 0)}
+                placeholder="0"
+                min={0}
+                step={PRICE_STEP}
+                className="w-32 px-3 py-2 border rounded-lg text-sm outline-none transition focus:border-[#2563EB] focus:ring-1 focus:ring-[#BFDBFE]"
+                style={{ borderColor: '#E2E8F0', color: '#0F172A' }}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium mb-1" style={{ color: '#64748B' }}>
+                Maxpris (kr)
+              </label>
+              <input
+                type="number"
+                value={maxPrice < MAX_PRICE ? maxPrice : ''}
+                onChange={(e) => setMaxPrice(Number(e.target.value) || MAX_PRICE)}
+                placeholder="Ingen gräns"
+                min={0}
+                step={PRICE_STEP}
+                className="w-36 px-3 py-2 border rounded-lg text-sm outline-none transition focus:border-[#2563EB] focus:ring-1 focus:ring-[#BFDBFE]"
+                style={{ borderColor: '#E2E8F0', color: '#0F172A' }}
+              />
+            </div>
           </div>
 
           {/* Knappar */}

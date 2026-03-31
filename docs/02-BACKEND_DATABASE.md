@@ -552,6 +552,8 @@ Migrations ligger i `supabase/migrations/`:
 - `20260320200000_organizations_show_financing.sql`: Lägger till `show_financing` (boolean NOT NULL DEFAULT false) på `organizations` för att aktivera finansieringsmodulen per handlare på annonsdetaljsidan (bilar.kollahar.se).
 - `20260324100000_listings_status_paused.sql`: Utökar `listings_status_check` med `'paused'` — saknades sedan `20260230000000_listings_draft_status.sql`, gav 23514 vid statusbyte i bilar-dashboarden.
 - `20260326100000_leads_buyer_name_phone_nullable.sql`: Gör `buyer_name` och `buyer_phone` nullable på `leads` — möjliggör INSERT från syskon-sajters publika lead-formulär (bilar) där phone ej samlas in och namn lagras i `internal_note`.
+- `20260326110000_organizations_contact_channels.sql`: Lägger till `show_phone`, `show_email`, `contact_via_chat` (boolean NOT NULL) på `organizations` som org-nivå-defaults för kontaktkanaler.
+- `20260331110000_organizations_phone_email.sql`: Lägger till `phone` och `email` (text, nullable) på `organizations` — visas som klickbara tel:/mailto:-länkar på publik handlarprofil om respektive show-flagga är true.
 
 ### Legacy image backfill (engångskörning)
 
