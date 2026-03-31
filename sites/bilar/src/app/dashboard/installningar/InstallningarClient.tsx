@@ -271,7 +271,7 @@ export default function InstallningarClient({ settings }: { settings: BilarSetti
       {/* Toast */}
       {toast && (
         <div
-          className="fixed bottom-6 right-6 flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-medium shadow-lg"
+          className="fixed top-[68px] left-1/2 -translate-x-1/2 flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-medium shadow-lg"
           style={{
             background: toast.type === 'success' ? '#0F172A' : '#FEF2F2',
             color: toast.type === 'success' ? '#FFFFFF' : '#DC2626',
