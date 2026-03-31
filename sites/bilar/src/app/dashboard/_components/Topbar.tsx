@@ -1,6 +1,6 @@
 'use client'
 
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { Bell, LogOut } from 'lucide-react'
 import { createClient } from '../../../lib/supabase/client'
 
@@ -19,13 +19,14 @@ interface TopbarProps {
 
 export function Topbar({ orgName, logoUrl }: TopbarProps) {
   const pathname = usePathname()
-  const router = useRouter()
   const title = ROUTE_TITLES[pathname] ?? 'Dashboard'
 
   const handleSignOut = async () => {
     const supabase = createClient()
     await supabase.auth.signOut()
-    router.push('/login')
+    // Full navigation — rensar router-cache och säkerställer att proxy
+    // kör med ny (tom) session, precis som login-flödet gör.
+    window.location.href = '/login'
   }
 
   return (

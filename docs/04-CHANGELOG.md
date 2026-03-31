@@ -10,6 +10,20 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ---
 
+## [1.5.6] - 2026-03-31
+
+### 🐛 Bugfixar — bilar.kollahar.se auth-loop (Test 12)
+
+- **Middleware saknades helt:** `src/proxy.ts` innehöll all guard-logik men Next.js kräver att filen heter exakt `middleware.ts`. Inga guards körde — oinloggade användare kom direkt åt `/dashboard`. Löst genom att skapa `src/middleware.ts` som re-exporterar `proxy as middleware` och `config` från `proxy.ts`.
+- **Utloggning med soft navigation:** `Topbar.tsx` använde `router.push('/login')` efter `signOut()`, vilket lämnar router-cache intakt och kan visa skyddade sidor. Bytt till `window.location.href = '/login'` (full reload) — konsekvent med hur inloggningen fungerar.
+
+**Auth-loop verifierad:**
+- Oinloggad → `/dashboard` → omdirigeras till `/login` ✓
+- Inloggad → `/login` → `window.location.href = '/dashboard'` → proxy kör guards → landar på `/dashboard` ✓
+- Utloggning → `signOut()` + `window.location.href = '/login'` → full reload, session rensad ✓
+
+---
+
 ## [1.5.5] - 2026-03-31
 
 ### 🐛 Bugfixar & förbättringar — bilar.kollahar.se handlarprofil
