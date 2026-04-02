@@ -45,11 +45,11 @@ export default function ImportPage() {
     <div style={{ padding: '32px', maxWidth: '640px' }}>
       <div style={{ marginBottom: '28px' }}>
         <h1 style={{ fontSize: '22px', fontWeight: 600, color: '#0F172A', marginBottom: '6px' }}>
-          Importera Smistabil CSV
+          Importera annonser via CSV
         </h1>
         <p style={{ fontSize: '14px', color: '#64748B', lineHeight: '1.5' }}>
-          Ladda upp en CSV-exportfil från Smistabil. Befintliga annonser uppdateras automatiskt
-          baserat på annons-ID. Bilder hämtas och lagras internt.
+          Ladda upp en CSV-fil med dina fordon. Befintliga annonser uppdateras automatiskt —
+          nya läggs till. Bilder hämtas och lagras internt.
         </p>
       </div>
 
