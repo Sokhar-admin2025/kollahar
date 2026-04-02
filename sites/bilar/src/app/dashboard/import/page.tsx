@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Upload, CheckCircle2 } from 'lucide-react'
+import { Upload, CheckCircle2, Download } from 'lucide-react'
 import { toast } from 'sonner'
 
 // Cirkelindikator — radius 28, circumference ≈ 175.9
@@ -148,7 +148,7 @@ export default function ImportPage() {
             ['Gearbox', 'Växellåda'],
             ['Horse_Power', 'Hästkrafter'],
             ['Color', 'Färg'],
-            ['Image_*', 'Bild-URL:er (en per kolumn)'],
+            ['Image_1, Image_2 …', 'Bild-URL:er (en per kolumn)'],
             ['Equipment_List', 'Utrustningslista (fritext)'],
           ].map(([col, label]) => (
             <div key={col} style={{ display: 'flex', gap: '6px', alignItems: 'baseline' }}>
@@ -158,6 +158,24 @@ export default function ImportPage() {
               <span style={{ fontSize: '12px', color: '#475569' }}>{label}</span>
             </div>
           ))}
+        </div>
+        <div style={{ marginTop: '12px', paddingTop: '10px', borderTop: '1px solid #BAE6FD' }}>
+          <a
+            href="/kollahar-import-template.csv"
+            download="kollahar-import-template.csv"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontSize: '12px',
+              fontWeight: 500,
+              color: '#0369A1',
+              textDecoration: 'none',
+            }}
+          >
+            <Download size={13} />
+            Ladda ned template
+          </a>
         </div>
       </div>
 
