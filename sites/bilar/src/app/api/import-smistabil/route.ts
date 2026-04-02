@@ -101,7 +101,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Inga giltiga rader hittades i CSV-filen.' }, { status: 400 })
     }
 
-    const results = { created: 0, failed: 0, errors: [] as string[] }
+    const results = { created: 0, updated: 0, failed: 0, errors: [] as string[] }
     const imageUrlCache = new Map<string, string>()
 
     for (let i = 0; i < rows.length; i++) {
@@ -122,49 +122,84 @@ export async function POST(request: Request) {
         }
       }
 
-      const payload: Record<string, unknown> = {
-        title: row.title,
-        description: row.description,
-        price: row.price,
-        make: row.make ?? null,
-        model: row.model ?? null,
-        year: row.year ?? null,
-        mileage: row.mileage ?? null,
-        fuel_type: row.fuel_type ?? null,
-        transmission: row.transmission ?? null,
-        engine_power: row.engine_power ?? null,
-        images: internalImageUrls,
-        attributes: row.attributes,
-        user_id: user.id,
-        organization_id: organizationId,
-        seller_type: 'company',
-        source_site: 'bilar',
-        category: 'cars',
-        status: 'active',
-        location: '',
-        contact_via_chat: true,
-        show_phone: false,
-        show_email: false,
-      }
+      // Kontrollera om annonsen redan finns (matchning på user_id + external_id)
+      const existingRow = row.external_id
+        ? await supabaseAdmin
+            .from('listings')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('external_id', row.external_id)
+            .maybeSingle()
+            .then((r) => r.data)
+        : null
 
-      if (row.external_id) payload.external_id = row.external_id
-      if (row.external_url) payload.external_url = row.external_url
+      if (existingRow) {
+        // Befintlig annons — uppdatera bara feed-fält, bevara manuellt redigerat innehåll
+        const feedUpdate: Record<string, unknown> = {
+          price: row.price,
+          mileage: row.mileage ?? null,
+          fuel_type: row.fuel_type ?? null,
+          transmission: row.transmission ?? null,
+          engine_power: row.engine_power ?? null,
+          external_url: row.external_url ?? null,
+        }
+        // Uppdatera bilder bara om importen faktiskt levererade nya
+        if (internalImageUrls.length > 0) feedUpdate.images = internalImageUrls
 
-      const { error } = await supabaseAdmin
-        .from('listings')
-        .upsert(payload, {
-          onConflict: 'user_id,external_id',
-          ignoreDuplicates: false,
-        })
-        .select('id')
-        .single()
+        const { error } = await supabaseAdmin
+          .from('listings')
+          .update(feedUpdate)
+          .eq('id', (existingRow as { id: string }).id)
 
-      if (error) {
-        results.failed++
-        results.errors.push(`${row.title}: ${error.message}`)
-        console.error('[bilar-import-smistabil] upsert error', row.title, error)
+        if (error) {
+          results.failed++
+          results.errors.push(`${row.title}: ${error.message}`)
+          console.error('[bilar-import-smistabil] update error', row.title, error)
+        } else {
+          results.updated++
+        }
       } else {
-        results.created++
+        // Ny annons — INSERT med alla fält
+        const insertPayload: Record<string, unknown> = {
+          title: row.title,
+          description: row.description,
+          price: row.price,
+          make: row.make ?? null,
+          model: row.model ?? null,
+          year: row.year ?? null,
+          mileage: row.mileage ?? null,
+          fuel_type: row.fuel_type ?? null,
+          transmission: row.transmission ?? null,
+          engine_power: row.engine_power ?? null,
+          images: internalImageUrls,
+          attributes: row.attributes,
+          user_id: user.id,
+          organization_id: organizationId,
+          seller_type: 'company',
+          source_site: 'bilar',
+          category: 'cars',
+          status: 'active',
+          location: '',
+          contact_via_chat: true,
+          show_phone: false,
+          show_email: false,
+        }
+        if (row.external_id) insertPayload.external_id = row.external_id
+        if (row.external_url) insertPayload.external_url = row.external_url
+
+        const { error } = await supabaseAdmin
+          .from('listings')
+          .insert(insertPayload)
+          .select('id')
+          .single()
+
+        if (error) {
+          results.failed++
+          results.errors.push(`${row.title}: ${error.message}`)
+          console.error('[bilar-import-smistabil] insert error', row.title, error)
+        } else {
+          results.created++
+        }
       }
 
       if (i < rows.length - 1) await delay(200)
@@ -174,7 +209,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: `Importerat: ${results.created} annonser (nytt + uppdaterat), ${results.failed} misslyckades.`,
+      message: `${results.created} nya annonser skapades, ${results.updated} uppdaterades, ${results.failed} misslyckades.`,
       ...results,
     })
   } catch (err) {
