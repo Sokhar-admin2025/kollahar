@@ -63,7 +63,7 @@ export default function BilarListingCard({
   return (
     <Link
       href={`/bil/${listing.id}`}
-      className="group block rounded-xl overflow-hidden transition-shadow hover:shadow-md"
+      className="group flex flex-col h-full rounded-xl overflow-hidden transition-shadow hover:shadow-md"
       style={{ background: '#FFFFFF', border: '0.5px solid #E2E8F0' }}
     >
       {/* Bild */}
@@ -123,7 +123,7 @@ export default function BilarListingCard({
       </div>
 
       {/* Kortinnehåll */}
-      <div className="p-3">
+      <div className="p-3 flex flex-col flex-grow">
         {/* Märke */}
         {listing.make && (
           <p className="text-[11px] font-medium uppercase tracking-wide mb-0.5" style={{ color: '#94A3B8' }}>
@@ -136,30 +136,34 @@ export default function BilarListingCard({
           {listing.model || listing.title}
         </p>
 
-        {/* Spec-chips */}
-        {specs.length > 0 && (
-          <div className="flex flex-wrap gap-1 mb-2">
-            {specs.map((spec) => (
-              <span
-                key={spec}
-                className="px-1.5 py-0.5 rounded text-[11px]"
-                style={{ background: '#F1F5F9', color: '#64748B' }}
-              >
-                {spec}
-              </span>
-            ))}
-          </div>
-        )}
+        {/* Spec-chips — flex-grow håller pris och handlare nere */}
+        <div className="flex-grow">
+          {specs.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {specs.map((spec) => (
+                <span
+                  key={spec}
+                  className="px-1.5 py-0.5 rounded text-[11px]"
+                  style={{ background: '#F1F5F9', color: '#64748B' }}
+                >
+                  {spec}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Pris */}
-        <p className="text-base font-bold" style={{ color: '#2563EB' }}>
-          {listing.price ? formatPrice(listing.price) : 'Pris ej angivet'}
-        </p>
-        {listing.price && (
-          <p className="text-[11px]" style={{ color: '#94A3B8' }}>
-            inkl. moms
+        <div className="mt-2">
+          <p className="text-base font-bold" style={{ color: '#2563EB' }}>
+            {listing.price ? formatPrice(listing.price) : 'Pris ej angivet'}
           </p>
-        )}
+          {listing.price && (
+            <p className="text-[11px]" style={{ color: '#94A3B8' }}>
+              inkl. moms
+            </p>
+          )}
+        </div>
 
         {/* Handlare + kommun */}
         {listing.organization?.name && (
