@@ -2,14 +2,15 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutGrid, Users, Car, BarChart2, Settings } from 'lucide-react'
+import { LayoutGrid, Users, Car, BarChart2, Upload, Settings } from 'lucide-react'
 
 const NAV_ITEMS = [
-  { href: '/dashboard',             icon: LayoutGrid, label: 'Översikt'     },
-  { href: '/dashboard/leads',       icon: Users,      label: 'Leads'        },
-  { href: '/dashboard/annonser',    icon: Car,        label: 'Annonser'     },
-  { href: '/dashboard/statistik',   icon: BarChart2,  label: 'Statistik'   },
-  { href: '/dashboard/installningar', icon: Settings, label: 'Inställningar' },
+  { href: '/dashboard',               icon: LayoutGrid, label: 'Översikt'       },
+  { href: '/dashboard/leads',         icon: Users,      label: 'Leads'          },
+  { href: '/dashboard/annonser',      icon: Car,        label: 'Annonser'       },
+  { href: '/dashboard/statistik',     icon: BarChart2,  label: 'Statistik'      },
+  { href: '/dashboard/import',        icon: Upload,     label: 'Importera CSV'  },
+  { href: '/dashboard/installningar', icon: Settings,   label: 'Inställningar'  },
 ]
 
 export function Sidebar() {

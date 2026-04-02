@@ -10,6 +10,26 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ---
 
+## [1.6.0] - 2026-04-02
+
+### ✨ Tillagt — bilar.kollahar.se: CSV-import (Smistabil)
+
+#### Import-pipeline portad från Main
+- **`sites/bilar/src/lib/import/smistabil-csv-parser.ts`** — Parser för Smistabil CSV-export, anpassad för bilar: returnerar `BilarImportRow[]` med `make`, `model`, `year`, `mileage`, `fuel_type`, `transmission`, `engine_power`, `attributes`, `images`, `external_id` och `external_url`.
+- **`sites/bilar/src/lib/import/equipment-parser.ts`** — Identisk logik som Main, parsear utrustningssträngar från CSV.
+- **`sites/bilar/src/lib/import/image-fetcher.ts`** — Hämtar externa bild-URL:er, laddar upp till Supabase Storage (`listing-images`) med SHA256-baserade deterministiska sökvägar. Återanvänder befintliga objekt utan re-upload.
+
+#### API-route
+- **`sites/bilar/src/app/api/import-smistabil/route.ts`** — POST-endpoint som tar emot CSV-fil, verifierar att användaren är `company` och har kopplad `organization_id`, sätter `source_site: 'bilar'` och `organization_id` på varje annons, upsert:ar på `(user_id, external_id)` för deduplicering. Stödjer `maxDuration: 300` för tunga bild-importer.
+
+#### Dashboard-sida
+- **`sites/bilar/src/app/dashboard/import/page.tsx`** — Drag-and-drop-liknande CSV-uppladdning med bilar design tokens (inline styles, blå knapp `#2563EB`). Visar filnamn, filstorlek, framstegsindikator och fellistning per rad.
+
+#### Navigering
+- **`Sidebar.tsx`** — Import-länk (Upload-ikon) tillagd mellan Statistik och Inställningar.
+
+---
+
 ## [1.5.7] - 2026-04-02
 
 ### ✨ Tillagt — Main: integration av bilar-annonser
