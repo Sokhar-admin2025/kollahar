@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Urbanist } from 'next/font/google'
+import { Toaster } from 'sonner'
 import './globals.css'
 
 const urbanist = Urbanist({
@@ -30,7 +31,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="sv">
-      <body className={urbanist.variable}>{children}</body>
+      <body className={urbanist.variable}>
+        {children}
+        <Toaster position="top-center" richColors />
+      </body>
     </html>
   )
 }

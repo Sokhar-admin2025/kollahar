@@ -1,20 +1,82 @@
 'use client'
 
-import { useState } from 'react'
-import { Upload } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { Upload, CheckCircle2 } from 'lucide-react'
+import { toast } from 'sonner'
+
+// Cirkelindikator — radius 28, circumference ≈ 175.9
+const RADIUS = 28
+const CIRCUMFERENCE = 2 * Math.PI * RADIUS
+
+function ProgressCircle({ progress }: { progress: number }) {
+  const offset = CIRCUMFERENCE - (progress / 100) * CIRCUMFERENCE
+  return (
+    <svg width="72" height="72" style={{ transform: 'rotate(-90deg)' }}>
+      {/* Spår */}
+      <circle
+        cx="36"
+        cy="36"
+        r={RADIUS}
+        fill="none"
+        stroke="#E2E8F0"
+        strokeWidth="5"
+      />
+      {/* Framsteg */}
+      <circle
+        cx="36"
+        cy="36"
+        r={RADIUS}
+        fill="none"
+        stroke="#2563EB"
+        strokeWidth="5"
+        strokeLinecap="round"
+        strokeDasharray={CIRCUMFERENCE}
+        strokeDashoffset={offset}
+        style={{ transition: 'stroke-dashoffset 0.4s ease' }}
+      />
+    </svg>
+  )
+}
 
 export default function ImportPage() {
   const [file, setFile] = useState<File | null>(null)
   const [status, setStatus] = useState<'idle' | 'uploading' | 'done' | 'error'>('idle')
-  const [message, setMessage] = useState<string>('')
   const [errors, setErrors] = useState<string[]>([])
+  // Simulerad framstegsprocent (API:et ger ingen ström — vi animerar till 90% och hoppar till 100 vid klart)
+  const [progress, setProgress] = useState(0)
+  const progressInterval = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (progressInterval.current) clearInterval(progressInterval.current)
+    }
+  }, [])
+
+  const startProgressSimulation = () => {
+    setProgress(0)
+    progressInterval.current = setInterval(() => {
+      setProgress((prev) => {
+        if (prev >= 88) {
+          clearInterval(progressInterval.current!)
+          return 88
+        }
+        return prev + Math.random() * 4 + 1
+      })
+    }, 400)
+  }
+
+  const finishProgress = () => {
+    if (progressInterval.current) clearInterval(progressInterval.current)
+    setProgress(100)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!file) return
+
     setStatus('uploading')
-    setMessage('')
     setErrors([])
+    startProgressSimulation()
 
     try {
       const formData = new FormData()
@@ -25,21 +87,28 @@ export default function ImportPage() {
       })
       const data = await res.json()
 
+      finishProgress()
+
       if (!res.ok) {
         setStatus('error')
-        setMessage(data.error ?? `Fel: ${res.status}`)
+        toast.error(data.error ?? `Import misslyckades (${res.status})`)
         return
       }
 
       setStatus('done')
-      setMessage(data.message ?? 'Import klar.')
-      setErrors(Array.isArray(data.errors) ? data.errors : [])
       setFile(null)
+      const errs: string[] = Array.isArray(data.errors) ? data.errors : []
+      setErrors(errs)
+      toast.success('Importen lyckades! Ditt lager är nu uppdaterat.')
     } catch (err) {
+      finishProgress()
       setStatus('error')
-      setMessage(err instanceof Error ? err.message : 'Något gick fel.')
+      toast.error(err instanceof Error ? err.message : 'Något gick fel.')
     }
   }
+
+  const isUploading = status === 'uploading'
+  const isDone = status === 'done'
 
   return (
     <div style={{ padding: '32px', maxWidth: '640px' }}>
@@ -54,22 +123,24 @@ export default function ImportPage() {
       </div>
 
       <form onSubmit={handleSubmit}>
+        {/* Filval */}
         <div
           style={{
-            border: '2px dashed #E2E8F0',
+            border: `2px dashed ${file ? '#2563EB' : '#E2E8F0'}`,
             borderRadius: '10px',
             padding: '32px 24px',
             textAlign: 'center',
-            background: '#F8FAFC',
+            background: file ? '#EFF6FF' : '#F8FAFC',
             marginBottom: '20px',
-            cursor: 'pointer',
+            cursor: isUploading ? 'default' : 'pointer',
+            transition: 'border-color 0.15s, background 0.15s',
           }}
-          onClick={() => document.getElementById('csv-file-input')?.click()}
+          onClick={() => !isUploading && document.getElementById('csv-file-input')?.click()}
         >
-          <Upload size={28} style={{ color: '#94A3B8', margin: '0 auto 12px' }} />
+          <Upload size={28} style={{ color: file ? '#2563EB' : '#94A3B8', margin: '0 auto 12px' }} />
           {file ? (
             <div>
-              <p style={{ fontSize: '14px', fontWeight: 500, color: '#0F172A' }}>{file.name}</p>
+              <p style={{ fontSize: '14px', fontWeight: 500, color: '#1D4ED8' }}>{file.name}</p>
               <p style={{ fontSize: '12px', color: '#64748B', marginTop: '4px' }}>
                 {(file.size / 1024).toFixed(1)} KB
               </p>
@@ -77,7 +148,7 @@ export default function ImportPage() {
           ) : (
             <div>
               <p style={{ fontSize: '14px', fontWeight: 500, color: '#334155' }}>
-                Klicka för att välja CSV-fil
+                Välj fil att importera
               </p>
               <p style={{ fontSize: '12px', color: '#94A3B8', marginTop: '4px' }}>
                 .csv eller .txt, max 10 MB
@@ -89,56 +160,107 @@ export default function ImportPage() {
             type="file"
             accept=".csv,.txt"
             style={{ display: 'none' }}
-            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+            disabled={isUploading}
+            onChange={(e) => {
+              setFile(e.target.files?.[0] ?? null)
+              setStatus('idle')
+              setErrors([])
+            }}
           />
         </div>
 
-        <button
-          type="submit"
-          disabled={!file || status === 'uploading'}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '10px 20px',
-            background: !file || status === 'uploading' ? '#94A3B8' : '#2563EB',
-            color: '#FFFFFF',
-            border: 'none',
-            borderRadius: '8px',
-            fontSize: '14px',
-            fontWeight: 500,
-            cursor: !file || status === 'uploading' ? 'not-allowed' : 'pointer',
-            transition: 'background 0.15s',
-          }}
-        >
-          <Upload size={16} />
-          {status === 'uploading' ? 'Importerar…' : 'Importera'}
-        </button>
+        {/* Importera-knapp / Pågår-vy */}
+        {isUploading ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+            <div style={{ position: 'relative', width: '72px', height: '72px', flexShrink: 0 }}>
+              <ProgressCircle progress={progress} />
+              <span
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  color: '#2563EB',
+                }}
+              >
+                {Math.round(progress)}%
+              </span>
+            </div>
+            <p style={{ fontSize: '14px', color: '#334155', lineHeight: '1.5' }}>
+              Importerar fordon och optimerar bilder…
+            </p>
+          </div>
+        ) : isDone ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <CheckCircle2 size={22} style={{ color: '#16A34A', flexShrink: 0 }} />
+            <p style={{ fontSize: '14px', fontWeight: 500, color: '#166534' }}>
+              Importen är klar.
+            </p>
+            <button
+              type="button"
+              onClick={() => { setStatus('idle'); setErrors([]) }}
+              style={{
+                marginLeft: 'auto',
+                fontSize: '13px',
+                color: '#2563EB',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                textDecoration: 'underline',
+              }}
+            >
+              Importera igen
+            </button>
+          </div>
+        ) : (
+          <button
+            type="submit"
+            disabled={!file}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '10px 20px',
+              background: !file ? '#94A3B8' : '#2563EB',
+              color: '#FFFFFF',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '14px',
+              fontWeight: 500,
+              cursor: !file ? 'not-allowed' : 'pointer',
+              transition: 'background 0.15s',
+            }}
+          >
+            <Upload size={16} />
+            Importera
+          </button>
+        )}
       </form>
 
-      {message && (
+      {/* Felrapport */}
+      {errors.length > 0 && (
         <div
           style={{
-            marginTop: '24px',
+            marginTop: '28px',
             padding: '16px',
             borderRadius: '8px',
-            background: status === 'error' ? '#FEF2F2' : '#F0FDF4',
-            border: `1px solid ${status === 'error' ? '#FECACA' : '#BBF7D0'}`,
-            color: status === 'error' ? '#991B1B' : '#166534',
-            fontSize: '14px',
-            lineHeight: '1.5',
+            background: '#FFF7ED',
+            border: '1px solid #FED7AA',
           }}
         >
-          {message}
-          {errors.length > 0 && (
-            <ul style={{ marginTop: '12px', paddingLeft: '20px', fontSize: '13px' }}>
-              {errors.map((err, i) => (
-                <li key={i} style={{ marginBottom: '4px' }}>
-                  {err}
-                </li>
-              ))}
-            </ul>
-          )}
+          <p style={{ fontSize: '13px', fontWeight: 600, color: '#9A3412', marginBottom: '10px' }}>
+            {errors.length} {errors.length === 1 ? 'rad' : 'rader'} gick inte igenom
+          </p>
+          <ul style={{ paddingLeft: '18px', fontSize: '13px', color: '#7C2D12', lineHeight: '1.6' }}>
+            {errors.map((err, i) => (
+              <li key={i} style={{ marginBottom: '4px' }}>
+                {err}
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </div>
