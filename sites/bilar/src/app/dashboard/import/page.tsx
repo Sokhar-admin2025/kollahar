@@ -131,7 +131,7 @@ export default function ImportPage() {
         >
           {message}
           {errors.length > 0 && (
-            <ul style={{ marginTop: '12px', paddingLeft: '20px', fontSize: '13px', spaceY: '4px' }}>
+            <ul style={{ marginTop: '12px', paddingLeft: '20px', fontSize: '13px' }}>
               {errors.map((err, i) => (
                 <li key={i} style={{ marginBottom: '4px' }}>
                   {err}
