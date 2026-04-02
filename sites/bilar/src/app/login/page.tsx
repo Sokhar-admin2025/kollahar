@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, ArrowLeft } from 'lucide-react'
 import { createClient } from '../../lib/supabase/client'
 
 export default function LoginPage() {
@@ -39,11 +39,19 @@ export default function LoginPage() {
     <main className="min-h-screen bg-bg-page flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-sm">
 
-        {/* Logotyp */}
-        <div className="text-center mb-8">
-          <span className="text-2xl font-bold text-brand-blue tracking-tight">
+        {/* Logotyp + tillbaka */}
+        <div className="flex items-center justify-between mb-8">
+          <Link href="/" className="text-2xl font-bold text-brand-blue tracking-tight">
             Kolla<span className="text-text-primary">Bilar</span>
-          </span>
+          </Link>
+          <Link
+            href="/"
+            className="flex items-center gap-1.5 text-sm transition hover:opacity-80"
+            style={{ color: '#64748B' }}
+          >
+            <ArrowLeft size={14} strokeWidth={2} />
+            Tillbaka
+          </Link>
         </div>
 
         <div className="bg-bg-card rounded-xl border border-border-standard" style={{ padding: '18px' }}>
