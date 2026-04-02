@@ -56,11 +56,11 @@ export default function ImportPage() {
     setProgress(0)
     progressInterval.current = setInterval(() => {
       setProgress((prev) => {
-        if (prev >= 88) {
-          clearInterval(progressInterval.current!)
-          return 88
-        }
-        return prev + Math.random() * 4 + 1
+        // Snabb fas: 0→75% på ~8s
+        if (prev < 75) return prev + Math.random() * 4 + 1
+        // Långsam fas: 75→96% under resten av väntetiden (aldrig fryst)
+        if (prev < 96) return prev + Math.random() * 0.3 + 0.1
+        return prev
       })
     }, 400)
   }
@@ -228,9 +228,16 @@ export default function ImportPage() {
                 {Math.round(progress)}%
               </span>
             </div>
-            <p style={{ fontSize: '14px', color: '#334155', lineHeight: '1.5' }}>
-              Importerar fordon och optimerar bilder…
-            </p>
+            <div>
+              <p style={{ fontSize: '14px', color: '#334155', lineHeight: '1.5' }}>
+                Importerar fordon och optimerar bilder…
+              </p>
+              {progress >= 75 && (
+                <p style={{ fontSize: '12px', color: '#94A3B8', marginTop: '4px' }}>
+                  Hämtar och lagrar bilder — detta kan ta någon minut.
+                </p>
+              )}
+            </div>
           </div>
         ) : isDone ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
