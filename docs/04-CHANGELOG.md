@@ -28,6 +28,10 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 #### Navigering
 - **`Sidebar.tsx`** — Import-länk (Upload-ikon) tillagd mellan Statistik och Inställningar.
 
+#### Generalisering av import-UI och parser-kontrakt (refactor)
+- **`dashboard/import/page.tsx`** — Rubrik ändrad till "Importera lager". Beskrivning generaliserad. Knapptext "Välj fil från ditt affärssystem". Informationsruta med alla förväntade CSV-kolumner och deras DB-mappning tillagd.
+- **`smistabil-csv-parser.ts`** — Döpt om internt till KSF v1 (Kollahär Standard Format version 1) via JSDoc. Fullständigt kolumnkontrakt dokumenterat: obligatoriska kolumner, fordonsdata, beskrivning, bilder och deduplicering. Loggvarning adderad om priskolumn eller namnkolumn saknas i inläst fil.
+
 ---
 
 ## [1.5.7] - 2026-04-02

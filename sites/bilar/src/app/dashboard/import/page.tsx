@@ -112,14 +112,53 @@ export default function ImportPage() {
 
   return (
     <div style={{ padding: '32px', maxWidth: '640px' }}>
-      <div style={{ marginBottom: '28px' }}>
+      <div style={{ marginBottom: '24px' }}>
         <h1 style={{ fontSize: '22px', fontWeight: 600, color: '#0F172A', marginBottom: '6px' }}>
-          Importera annonser via CSV
+          Importera lager
         </h1>
         <p style={{ fontSize: '14px', color: '#64748B', lineHeight: '1.5' }}>
-          Ladda upp en CSV-fil med dina fordon. Befintliga annonser uppdateras automatiskt —
-          nya läggs till. Bilder hämtas och lagras internt.
+          Ladda upp din lagerfil i CSV-format. Systemet matchar automatiskt dina fordon och
+          uppdaterar priser, beskrivningar och bilder.
         </p>
+      </div>
+
+      {/* Kolumnguide */}
+      <div
+        style={{
+          marginBottom: '24px',
+          padding: '14px 16px',
+          borderRadius: '8px',
+          background: '#F0F9FF',
+          border: '1px solid #BAE6FD',
+        }}
+      >
+        <p style={{ fontSize: '12px', fontWeight: 600, color: '#0369A1', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          Förväntade kolumner i CSV-filen
+        </p>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 24px' }}>
+          {[
+            ['Registration_Number', 'Registreringsnummer'],
+            ['Car_Name / name', 'Fordonsnamn (titel)'],
+            ['Car_Make', 'Märke'],
+            ['Car_Model', 'Modell'],
+            ['Year', 'Årsmodell'],
+            ['Car_Price / price', 'Pris (inkl. moms)'],
+            ['Mileage', 'Miltal'],
+            ['Fuel', 'Drivmedel'],
+            ['Gearbox', 'Växellåda'],
+            ['Horse_Power', 'Hästkrafter'],
+            ['Color', 'Färg'],
+            ['Image_*', 'Bild-URL:er (en per kolumn)'],
+            ['Equipment_List', 'Utrustningslista (fritext)'],
+          ].map(([col, label]) => (
+            <div key={col} style={{ display: 'flex', gap: '6px', alignItems: 'baseline' }}>
+              <code style={{ fontSize: '11px', color: '#0369A1', background: '#E0F2FE', padding: '1px 5px', borderRadius: '3px', whiteSpace: 'nowrap' }}>
+                {col}
+              </code>
+              <span style={{ fontSize: '12px', color: '#475569' }}>{label}</span>
+            </div>
+          ))}
+        </div>
       </div>
 
       <form onSubmit={handleSubmit}>
@@ -148,7 +187,7 @@ export default function ImportPage() {
           ) : (
             <div>
               <p style={{ fontSize: '14px', fontWeight: 500, color: '#334155' }}>
-                Välj fil att importera
+                Välj fil från ditt affärssystem
               </p>
               <p style={{ fontSize: '12px', color: '#94A3B8', marginTop: '4px' }}>
                 .csv eller .txt, max 10 MB

@@ -1,6 +1,40 @@
 /**
- * Parser för Smistabil CSV-export — bilar.kollahar.se-anpassning.
- * Identisk logik som Main, men utan demo-genericering och med bilar-specifika defaults.
+ * Parser för Kollahär Standard Format v1 — bilar.kollahar.se
+ *
+ * Filen implementerar KSF v1 (Kollahär Standard Format version 1), primärt testat
+ * mot Smistabil CSV-export men designat för att vara generellt för bilhandlare.
+ *
+ * ─── OBLIGATORISKA KOLUMNER ───────────────────────────────────────────────────
+ * Minst en av dessa måste finnas för att en rad ska inkluderas:
+ *   Car_Price | price          → price (kr inkl. moms, rader med price ≤ 0 filtreras bort)
+ *
+ * ─── FORDONSDATA ─────────────────────────────────────────────────────────────
+ *   Car_Name | name | name_1   → title       (annonsrubrik, max 100 tecken)
+ *   Car_Make                   → make        (märke, t.ex. "Volvo")
+ *   Car_Model                  → model       (modell, t.ex. "XC60")
+ *   Year | data2               → year        (årsmodell, heltal)
+ *   Mileage | data3            → mileage     (miltal, heltal i mil)
+ *   Fuel                       → fuel_type   (normaliseras: Bensin/Diesel/El/Hybrid/Gas)
+ *   Gearbox                    → transmission (normaliseras: Automat/Manuell)
+ *   Horse_Power | Engine_Power | Power → engine_power (hk, heltal)
+ *   Color                      → attributes.color
+ *   Registration_Number        → attributes.reg_nr
+ *
+ * ─── BESKRIVNING & UTRUSTNING ────────────────────────────────────────────────
+ *   Car_Description | description → description (max 5000 tecken)
+ *   Equipment_List             → attributes.equipment (parseas till string[])
+ *
+ * ─── BILDER ──────────────────────────────────────────────────────────────────
+ *   Alla kolumner vars namn innehåller "image" (case-insensitive) → images[]
+ *   Värden kan vara komma-, semikolon- eller radbrytningsseparerade URL:er.
+ *
+ * ─── DEDUPLICERING ───────────────────────────────────────────────────────────
+ *   item_page_link             → external_id (extraheras ur URL-fragment #/objekt/ID)
+ *                                external_url
+ *
+ * ─── LOGGNING VID SAKNADE KOLUMNER ───────────────────────────────────────────
+ * Om ingen av de kända priskolumnerna hittas loggas en varning.
+ * Använd detta för att snabbt felsöka när handlare byter affärssystem.
  */
 
 import { parse } from 'csv-parse/sync'
@@ -124,6 +158,18 @@ export function parseSmistabilCsv(csvContent: string): BilarImportRow[] {
     relax_column_count: true,
     trim: true,
   }) as Record<string, string>[]
+
+  if (records.length > 0) {
+    const headers = Object.keys(records[0])
+    const hasPriceCol = headers.some((h) => h === 'price' || h === 'Car_Price' || h === 'data')
+    const hasNameCol = headers.some((h) => h === 'Car_Name' || h === 'name' || h === 'name_1')
+    if (!hasPriceCol) {
+      console.warn('[ksf-parser] Varning: Ingen priskolumn (Car_Price, price) hittades i CSV. Kontrollera exporten från affärssystemet.')
+    }
+    if (!hasNameCol) {
+      console.warn('[ksf-parser] Varning: Ingen namnkolumn (Car_Name, name) hittades i CSV. Titlar kommer att saknas.')
+    }
+  }
 
   const rows: BilarImportRow[] = []
 
