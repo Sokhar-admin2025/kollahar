@@ -244,6 +244,10 @@ export async function createListing(
       description: data.attributes.description || '',
       location: '',
       attributes: data.attributes,
+      // Dedikerade kolumner — används av Mains filter för miltals-, drivmedels- och växellåda-sökning
+      mileage: data.attributes.mileage ?? null,
+      fuel_type: data.attributes.fuel_type ?? null,
+      transmission: data.attributes.gearbox ?? null,
       organization_id: organizationId,
       user_id: userId,
       seller_type: 'company',
@@ -325,6 +329,10 @@ export async function updateListing(
       contact_phone: data.contact_phone || null,
       show_email: data.show_email,
       attributes: data.attributes,
+      // Dedikerade kolumner — hålls i sync med attributes vid uppdatering
+      mileage: data.attributes.mileage ?? null,
+      fuel_type: data.attributes.fuel_type ?? null,
+      transmission: data.attributes.gearbox ?? null,
     })
     .eq('id', listingId)
     .eq('organization_id', organizationId)

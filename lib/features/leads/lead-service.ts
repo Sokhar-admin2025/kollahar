@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { supabaseAdmin } from '@/lib/supabase/admin'
 
 /** Kontrollera om det redan finns en lead för konversationen. */
 export async function getLeadByConversationId(
@@ -30,6 +31,20 @@ export async function createLead(params: {
 }): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient()
 
+  // Hämta source_site från annonsen så att leadet taggas korrekt —
+  // leads från bilar-annonser ska dyka upp i bilar-dashboardens LeadOS.
+  let sourceSite = 'main'
+  if (supabaseAdmin) {
+    const { data: listingRow } = await supabaseAdmin
+      .from('listings')
+      .select('source_site')
+      .eq('id', params.listingId)
+      .maybeSingle()
+    if (listingRow?.source_site) {
+      sourceSite = String(listingRow.source_site)
+    }
+  }
+
   const { error } = await supabase.from('leads').insert({
     conversation_id: params.conversationId,
     listing_id: params.listingId,
@@ -42,6 +57,7 @@ export async function createLead(params: {
     assigned_to: params.sellerId,
     is_guest: false,
     source: 'lead_card',
+    source_site: sourceSite,
     status: 'new',
   })
 

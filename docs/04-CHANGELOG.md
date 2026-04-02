@@ -10,6 +10,22 @@ Formatet är baserat på [Keep a Changelog](https://keepachangelog.com/sv/1.0.0/
 
 ---
 
+## [1.5.7] - 2026-04-02
+
+### ✨ Tillagt — Main: integration av bilar-annonser
+
+#### Annonsvisning i Main
+- **Redan klart:** `getListings` i Main filtrerar inte på `source_site` — bilar-annonser visas redan i sökresultaten.
+- **Klick-routing:** `/annons/[id]` hämtar annons efter ID oavsett `source_site` — fungerar utan ändringar.
+
+#### Filter-mismatch åtgärdad (bilar → Main)
+- **`bilar-listings-service.ts` (`createListing` + `updateListing`):** Skriver nu även dedikerade kolumner `mileage`, `fuel_type` och `transmission` vid INSERT och UPDATE, mappade från `attributes.mileage`, `attributes.fuel_type` och `attributes.gearbox`. Main filtrerar på dessa dedikerade kolumner — bilar-annonser svarar nu korrekt på Mains miltal-, drivmedels- och växellåda-filter.
+
+#### Lead-routing
+- **`lead-service.ts` (`createLead`):** Hämtar annonsens `source_site` via `supabaseAdmin` och sätter det på leadet vid INSERT. Leads från bilar-annonser taggas `source_site: 'bilar'` och dyker upp korrekt i bilar-dashboardens LeadOS.
+
+---
+
 ## [1.5.6] - 2026-03-31
 
 ### 🐛 Bugfixar — bilar.kollahar.se auth-loop (Test 12)
