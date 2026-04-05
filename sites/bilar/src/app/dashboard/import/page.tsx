@@ -42,6 +42,7 @@ export default function ImportPage() {
   const [file, setFile] = useState<File | null>(null)
   const [status, setStatus] = useState<'idle' | 'uploading' | 'done' | 'error'>('idle')
   const [errors, setErrors] = useState<string[]>([])
+  const [skipped, setSkipped] = useState<string[]>([])
   // Simulerad framstegsprocent (API:et ger ingen ström — vi animerar till 90% och hoppar till 100 vid klart)
   const [progress, setProgress] = useState(0)
   const progressInterval = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -97,8 +98,8 @@ export default function ImportPage() {
 
       setStatus('done')
       setFile(null)
-      const errs: string[] = Array.isArray(data.errors) ? data.errors : []
-      setErrors(errs)
+      setErrors(Array.isArray(data.errors) ? data.errors : [])
+      setSkipped(Array.isArray(data.skippedTitles) ? data.skippedTitles : [])
       toast.success('Importen lyckades! Ditt lager är nu uppdaterat.')
     } catch (err) {
       finishProgress()
@@ -265,7 +266,7 @@ export default function ImportPage() {
             </p>
             <button
               type="button"
-              onClick={() => { setStatus('idle'); setErrors([]) }}
+              onClick={() => { setStatus('idle'); setErrors([]); setSkipped([]) }}
               style={{
                 marginLeft: 'auto',
                 fontSize: '13px',
@@ -304,11 +305,35 @@ export default function ImportPage() {
         )}
       </form>
 
+      {/* Rapport: befintliga (hoppades över) */}
+      {skipped.length > 0 && (
+        <div
+          style={{
+            marginTop: '24px',
+            padding: '16px',
+            borderRadius: '8px',
+            background: '#F8FAFC',
+            border: '1px solid #E2E8F0',
+          }}
+        >
+          <p style={{ fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '10px' }}>
+            {skipped.length} {skipped.length === 1 ? 'annons' : 'annonser'} redan i lager (uppdateras ej)
+          </p>
+          <ul style={{ paddingLeft: '18px', fontSize: '13px', color: '#64748B', lineHeight: '1.6' }}>
+            {skipped.map((title, i) => (
+              <li key={i} style={{ marginBottom: '4px' }}>
+                {title}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {/* Felrapport */}
       {errors.length > 0 && (
         <div
           style={{
-            marginTop: '28px',
+            marginTop: '16px',
             padding: '16px',
             borderRadius: '8px',
             background: '#FFF7ED',

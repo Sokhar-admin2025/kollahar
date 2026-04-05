@@ -101,7 +101,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Inga giltiga rader hittades i CSV-filen.' }, { status: 400 })
     }
 
-    const results = { created: 0, updated: 0, failed: 0, errors: [] as string[] }
+    const results = { created: 0, skipped: 0, failed: 0, errors: [] as string[], skippedTitles: [] as string[] }
     const imageUrlCache = new Map<string, string>()
 
     for (let i = 0; i < rows.length; i++) {
@@ -134,30 +134,9 @@ export async function POST(request: Request) {
         : null
 
       if (existingRow) {
-        // Befintlig annons — uppdatera bara feed-fält, bevara manuellt redigerat innehåll
-        const feedUpdate: Record<string, unknown> = {
-          price: row.price,
-          mileage: row.mileage ?? null,
-          fuel_type: row.fuel_type ?? null,
-          transmission: row.transmission ?? null,
-          engine_power: row.engine_power ?? null,
-          external_url: row.external_url ?? null,
-        }
-        // Uppdatera bilder bara om importen faktiskt levererade nya
-        if (internalImageUrls.length > 0) feedUpdate.images = internalImageUrls
-
-        const { error } = await supabaseAdmin
-          .from('listings')
-          .update(feedUpdate)
-          .eq('id', (existingRow as { id: string }).id)
-
-        if (error) {
-          results.failed++
-          results.errors.push(`${row.title}: ${error.message}`)
-          console.error('[bilar-import-smistabil] update error', row.title, error)
-        } else {
-          results.updated++
-        }
+        // Befintlig annons — hoppa över, alla ändringar görs i plattformen
+        results.skipped++
+        results.skippedTitles.push(row.title)
       } else {
         // Ny annons — INSERT med alla fält
         const insertPayload: Record<string, unknown> = {
@@ -209,7 +188,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: `${results.created} nya annonser skapades, ${results.updated} uppdaterades, ${results.failed} misslyckades.`,
+      message: `${results.created} nya annonser skapades, ${results.skipped} befintliga (uppdateras ej), ${results.failed} misslyckades.`,
       ...results,
     })
   } catch (err) {
